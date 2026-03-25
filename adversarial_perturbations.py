@@ -61,7 +61,7 @@ def prompt_injection(codice):
 ### Caricamento modelli
 
 risultati_attacco_PJ = []
-df_modello_TP = pd.read_csv("/home/samuele/Desktop/Tesi_code/CSV tesi/dataset_TP.csv")
+df_modello_TP = pd.read_csv("CSV tesi/dataset_TP.csv")
 
 for model_name, config in models_config.items():
     print("\n" + "="*60)
@@ -137,7 +137,7 @@ for model_name, config in models_config.items():
 
 ### Salvataggio globale
 df_attacchi = pd.DataFrame(risultati_attacco_PJ)
-df_attacchi.to_csv("/home/samuele/Desktop/Tesi_code/CSV tesi/risultati_attacco_PJ.csv", index=False)
+df_attacchi.to_csv("CSV tesi/risultati_attacco_PJ.csv", index=False)
 
 ### PERTURBATION 
 
@@ -217,4 +217,4 @@ for model_name, config in models_config.items():
 
 ### Salvataggio globale
 df_attacchi = pd.DataFrame(risultati_attacco_adversarial)
-df_attacchi.to_csv("/home/samuele/Desktop/Tesi_code/CSV tesi/risultati_attacco_adversarial_perturbation.csv", index=False)
+df_attacchi.to_csv("CSV tesi/risultati_attacco_adversarial_perturbation.csv", index=False)

@@ -18,7 +18,7 @@ from utils import evaluate_response
 # 2) Opaque Predicates: inserisco condizioni fittizie che non alterano il flusso logico ma rendono il codice più "rumoroso" e difficile da analizzare.
 # 3) Macro Obfuscation: aggiungo macro come #define
 
-df_modello_TP = pd.read_csv("/home/samuele/Desktop/Tesi_code/CSV tesi/dataset_TP.csv")
+df_modello_TP = pd.read_csv("CSV tesi/dataset_TP.csv")
 def semantic_renaming(codice):
     codice = str(codice)
 
@@ -57,7 +57,7 @@ def advanced_adversarial_attack(codice):
 
 ### CICLO DI ATTACCO ###
 risultati_attacco_advanced = []
-aa_TP = pd.read_csv("/home/samuele/Desktop/Tesi_code/CSV tesi/dataset_TP.csv")
+aa_TP = pd.read_csv("CSV tesi/dataset_TP.csv")
 
 for model_name, config in models_config.items():
     print("\n" + "="*60)
@@ -135,4 +135,4 @@ for model_name, config in models_config.items():
 
 # Salvataggio
 df_advanced = pd.DataFrame(risultati_attacco_advanced)
-df_advanced.to_csv("/home/samuele/Desktop/Tesi_code/CSV tesi/risultati_attacco_advanced.csv", index=False)
+df_advanced.to_csv("CSV tesi/risultati_attacco_advanced.csv", index=False)

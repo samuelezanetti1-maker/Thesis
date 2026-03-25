@@ -25,7 +25,7 @@ models_config = {
 }
 
 
-path = "/home/samuele/Desktop/dataset_tesi.csv"
+path = "CSV tesi/dataset_tesi.csv"
 df_globale = pd.read_csv(path)
 df_globale = df_globale.head(10)  
 

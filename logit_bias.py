@@ -28,7 +28,7 @@ class BiasLogitsProcessor(LogitsProcessor):
             scores[:, token_id] -= self.penalty_val
         return scores
         
-lb_TP = pd.read_csv("/home/samuele/Desktop/Tesi_code/CSV tesi/dataset_TP.csv")
+lb_TP = pd.read_csv("CSV tesi/dataset_TP.csv")
 risultati_attacco_logits = []
 
 for model_name, config in models_config.items():
@@ -40,7 +40,7 @@ for model_name, config in models_config.items():
         continue
 
     nome_modello_pulito = model_name.replace("/", "_")
-    percorso_txt = f"/home/samuele/Desktop/Tesi_code/txt_tesi/Steering/Log_Risposte_Logits_{nome_modello_pulito}.txt"
+    percorso_txt = f"txt_tesi/Steering/Log_Risposte_Logits_{nome_modello_pulito}.txt"
 
     with open(percorso_txt, "w", encoding="utf-8") as f_log:
         f_log.write(f"=== LOG RISPOSTE LOGIT BIAS: {model_name} ===\n")
@@ -154,5 +154,5 @@ for model_name, config in models_config.items():
 
 # Salvataggio
 df_logits = pd.DataFrame(risultati_attacco_logits)
-df_logits.to_csv(f"/home/samuele/Desktop/Tesi_code/CSV tesi/risultati_attacco_logits.csv", index=False)
+df_logits.to_csv(f"CSV tesi/risultati_attacco_logits.csv", index=False)
 

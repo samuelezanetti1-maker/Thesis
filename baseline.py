@@ -19,7 +19,7 @@ for model_name, config in models_config.items():
     print("="*60)
 
     nome_modello_pulito = model_name.replace("/", "_")
-    percorso_txt = f"/home/samuele/Desktop/Tesi_code/txt_tesi/Log_Risposte_Baseline_{nome_modello_pulito}.txt"
+    percorso_txt = f"txt_tesi/Log_Risposte_Baseline_{nome_modello_pulito}.txt"
 
     with open(percorso_txt, "w", encoding="utf-8") as f_log:
         f_log.write(f"=== LOG RISPOSTE GREZZE: {model_name} ===\n\n")
@@ -90,7 +90,7 @@ for model_name, config in models_config.items():
     # 3. Salvataggio risultati
     nome_file_safe = model_name.replace('/', '_')
     df_risultati = pd.DataFrame(risultati_baseline)
-    df_risultati.to_csv(f"/home/samuele/Desktop/Tesi_code/CSV tesi/risultati_baseline.csv", index=False)
+    df_risultati.to_csv(f"CSV tesi/risultati_baseline.csv", index=False)
     print(f"\n Risultati di {nome_corto} salvati in 'risultati_baseline_{nome_file_safe}.csv'")
 
     # 4. Pulizia memoria
@@ -106,7 +106,7 @@ for model_name, config in models_config.items():
     torch.cuda.empty_cache() # Svuota fisicamente la memoria video della scheda grafica
 
 
-file_csv = "/home/samuele/Desktop/Tesi_code/CSV tesi/risultati_baseline.csv"
+file_csv = "CSV tesi/risultati_baseline.csv"
 print(f" Lettura del file: {file_csv}")
 
 
@@ -167,7 +167,7 @@ try:
 
     # --- CREAZIONE CSV PULITO ---
     df_finale = df[['modello', 'target_vero', 'target_predetto', 'codice']]
-    df_finale.to_csv("/home/samuele/Desktop/Tesi_code/CSV tesi/risultati_semplificati.csv", index=False)
+    df_finale.to_csv("CSV tesi/risultati_semplificati.csv", index=False)
     
     # Check dei non classificati
     non_capiti = len(df[df['target_predetto'] == "Non Classificato"])
@@ -178,12 +178,12 @@ except FileNotFoundError:
     print(f" Errore: Il file {file_csv} non è stato trovato nella cartella.")
 
 ### Divisione dataset TP
-risultati_baseline_semplificati = "/home/samuele/Desktop/Tesi_code/CSV tesi/risultati_semplificati.csv"
+risultati_baseline_semplificati = "CSV tesi/risultati_semplificati.csv"
 
 df = pd.read_csv(risultati_baseline_semplificati)
 df_modello_TP = is_true_positive(df)
-df_modello_TP.to_csv("/home/samuele/Desktop/Tesi_code/CSV tesi/dataset_TP.csv", index=False)
+df_modello_TP.to_csv("CSV tesi/dataset_TP.csv", index=False)
 df_modello_TN = is_true_negative(df)
-df_modello_TN.to_csv("/home/samuele/Desktop/Tesi_code/CSV tesi/dataset_TN.csv", index=False)
+df_modello_TN.to_csv("CSV tesi/dataset_TN.csv", index=False)
 df_modello_TRUE = pd.concat([df_modello_TP, df_modello_TN])
-df_modello_TRUE.to_csv("/home/samuele/Desktop/Tesi_code/CSV tesi/dataset_TRUE.csv", index=False)
+df_modello_TRUE.to_csv("CSV tesi/dataset_TRUE.csv", index=False)

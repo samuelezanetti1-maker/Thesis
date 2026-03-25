@@ -3,11 +3,11 @@ import os
 
 # Percorsi dei file 
 percorsi = {
-    "Adversarial Perturbations": "/home/samuele/Tesi_code/Desktop/CSV tesi/risultati_attacco_adversarial_perturbation.csv",
-    "Prompt Injection": "/home/samuele/Tesi_code/Desktop/CSV tesi/risultati_attacco_PJ.csv",
-    "Activation Steering": "/home/samuele/Tesi_code/Desktop/CSV tesi/risultati_attacco_steering.csv",
-    "Advanced Adversarial": "/home/samuele/Tesi_code/Desktop/CSV tesi/risultati_attacco_advanced.csv",
-    "Logit Bias": "/home/samuele/Tesi_code/Desktop/CSV tesi/risultati_attacco_logits.csv"
+    "Adversarial Perturbations": "CSV tesi/risultati_attacco_adversarial_perturbation.csv",
+    "Prompt Injection": "CSV tesi/risultati_attacco_PJ.csv",
+    "Activation Steering": "CSV tesi/risultati_attacco_steering.csv",
+    "Advanced Adversarial": "CSV tesi/risultati_attacco_advanced.csv",
+    "Logit Bias": "CSV tesi/risultati_attacco_logits.csv"
 }
 
 colonne_predizione = {
@@ -53,7 +53,7 @@ if not df_riepilogo.empty:
     tabella_finale = tabella_finale.fillna(0.0)
     
     # Salviamo il CSV bellissimo e pronto per Excel/LaTex
-    percorso_salvataggio = "/home/samuele/Desktop/Tesi_code/CSV tesi/RIEPILOGO_FINALE_ASR.csv"
+    percorso_salvataggio = "CSV tesi/RIEPILOGO_FINALE_ASR.csv"
     tabella_finale.to_csv(percorso_salvataggio)
     
     print("\nTabella di riepilogo generata con successo!")

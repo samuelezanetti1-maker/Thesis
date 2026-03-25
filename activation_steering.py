@@ -60,7 +60,7 @@ def crea_hook_offensiva(vettore_tensore, moltiplicatore):
 
 os.makedirs("attivazioni", exist_ok=True)
 
-df_modello_TRUE = pd.read_csv("/home/samuele/Desktop/Tesi_code/CSV tesi/dataset_TRUE.csv")
+df_modello_TRUE = pd.read_csv("CSV tesi/dataset_TRUE.csv")
 
 for model_name, config in models_config.items():
 
@@ -186,7 +186,7 @@ for model_name in models_config.keys():
 
 moltiplicatore_steering = 10 #più alto più forte 
 
-df_TP = pd.read_csv("/home/samuele/Desktop/Tesi_code/CSV tesi/dataset_TP.csv")
+df_TP = pd.read_csv("CSV tesi/dataset_TP.csv")
 risultati_attacco_steering = []
 
 ### CICLO DI ATTACCO
@@ -287,4 +287,4 @@ for model_name, config in models_config.items():
 
 # Salvataggio
 df_steering = pd.DataFrame(risultati_attacco_steering)
-df_steering.to_csv("/home/samuele/Desktop/Tesi_code/CSV tesi/risultati_attacco_steering.csv", index=False)
+df_steering.to_csv("CSV tesi/risultati_attacco_steering.csv", index=False)
