@@ -1,5 +1,6 @@
 import os
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
 
 import pandas as pd
 import torch
@@ -60,7 +61,7 @@ def crea_hook_offensiva(vettore_tensore, moltiplicatore):
 
 os.makedirs("attivazioni", exist_ok=True)
 
-df_modello_TRUE = pd.read_csv("CSV tesi/dataset_TRUE.csv")
+df_modello_TRUE = pd.read_csv("CSV tesi/Dataset/dataset_TRUE.csv")
 
 for model_name, config in models_config.items():
 
@@ -186,7 +187,7 @@ for model_name in models_config.keys():
 
 moltiplicatore_steering = 10 #più alto più forte 
 
-df_TP = pd.read_csv("CSV tesi/dataset_TP.csv")
+df_TP = pd.read_csv("CSV tesi/Dataset/dataset_TP.csv")
 risultati_attacco_steering = []
 
 ### CICLO DI ATTACCO
@@ -194,6 +195,13 @@ for model_name, config in models_config.items():
     print("\n" + "="*60)
     print(f"INIZIO ATTACCO STEERING CON IL MODELLO: {model_name}")
     print("="*60)
+
+    nome_modello_pulito = model_name.replace("/", "_")
+    percorso_txt = f"txt_tesi/Risposte Steering/Log_Risposte_Steering_{nome_modello_pulito}.txt"
+
+    with open(percorso_txt, "w", encoding="utf-8") as f_log:
+        f_log.write(f"=== LOG RISPOSTE STEERING: {model_name} ===\n")
+        f_log.write("="*60 + "\n\n")
 
     # trovo i TP per questo modello
     df_mod = df_TP[df_TP['modello'] == model_name]
@@ -252,6 +260,11 @@ for model_name, config in models_config.items():
         
         output_ids = generated_ids[0][len(inputs.input_ids[0]):]
         risposta_steered = tokenizer.decode(output_ids, skip_special_tokens=True)
+
+        with open(percorso_txt, "a", encoding="utf-8") as f_log:
+            f_log.write(f"Snippet ID {index}:\n")
+            f_log.write(f"{risposta_steered}\n")
+            f_log.write("-" * 50 + "\n\n")
         
         risposta_pulita = risposta_steered.replace('\n', ' ')
         print(f"      ID {index} Nuova Risposta: {risposta_pulita[:80]}...")

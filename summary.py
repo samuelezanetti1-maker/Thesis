@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
 
 # Percorsi dei file 
 percorsi = {

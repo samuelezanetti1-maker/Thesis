@@ -1,5 +1,6 @@
 import os
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
 
 import pandas as pd
 import torch
@@ -61,7 +62,7 @@ def prompt_injection(codice):
 ### Caricamento modelli
 
 risultati_attacco_PJ = []
-df_modello_TP = pd.read_csv("CSV tesi/dataset_TP.csv")
+df_modello_TP = pd.read_csv("CSV tesi/Dataset/dataset_TP.csv")
 
 for model_name, config in models_config.items():
     print("\n" + "="*60)
@@ -72,6 +73,13 @@ for model_name, config in models_config.items():
     if len(df_mod) == 0:
         print(f"\nNessun TP da attaccare per {model_name}")
         continue
+
+    nome_modello_pulito = model_name.replace("/", "_")
+    percorso_txt = f"txt_tesi/Risposte Prompt Injections/Log_Risposte_Prompt_Injection_{nome_modello_pulito}.txt"
+
+    with open(percorso_txt, "w", encoding="utf-8") as f_log:
+        f_log.write(f"=== LOG RISPOSTE PROMPT INJECTION: {model_name} ===\n")
+        f_log.write("="*60 + "\n\n")
     
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForCausalLM.from_pretrained(
@@ -105,6 +113,11 @@ for model_name, config in models_config.items():
         )
         output_ids_adv = generated_ids_adv[0][len(model_inputs.input_ids[0]):]
         risposta_adv = tokenizer.decode(output_ids_adv, skip_special_tokens=True)
+
+        with open(percorso_txt, "a", encoding="utf-8") as f_log:
+            f_log.write(f"Snippet ID {index}:\n")
+            f_log.write(f"{risposta_adv}\n")
+            f_log.write("-" * 50 + "\n\n")
         
         risposta_pulita_adv = risposta_adv.replace('\n', ' ')
         print(f"\n RISPOSTA PERTURBATA: {risposta_pulita_adv[:120]}...")
@@ -152,6 +165,13 @@ for model_name, config in models_config.items():
     if len(df_mod) == 0:
         print(f"\nNessun TP da attaccare per {model_name}")
         continue
+
+    nome_modello_pulito = model_name.replace("/", "_")
+    percorso_txt_p = f"txt_tesi/Risposte Perturbations/Log_Risposte_Perturbation_{nome_modello_pulito}.txt"
+
+    with open(percorso_txt_p, "w", encoding="utf-8") as f_log:
+        f_log.write(f"=== LOG RISPOSTE PERTURBATION: {model_name} ===\n")
+        f_log.write("="*60 + "\n\n")
     
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForCausalLM.from_pretrained(
@@ -185,6 +205,11 @@ for model_name, config in models_config.items():
         )
         output_ids_adv = generated_ids_adv[0][len(model_inputs.input_ids[0]):]
         risposta_adv = tokenizer.decode(output_ids_adv, skip_special_tokens=True)
+
+        with open(percorso_txt_p, "a", encoding="utf-8") as f_log:
+            f_log.write(f"Snippet ID {index}:\n")
+            f_log.write(f"{risposta_adv}\n")
+            f_log.write("-" * 50 + "\n\n")
         
         risposta_pulita_adv = risposta_adv.replace('\n', ' ')
         print(f"\n RISPOSTA PERTURBATA: {risposta_pulita_adv[:120]}...")

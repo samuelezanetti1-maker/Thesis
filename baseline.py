@@ -1,5 +1,6 @@
 import os
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
 
 import pandas as pd
 import torch
@@ -19,7 +20,7 @@ for model_name, config in models_config.items():
     print("="*60)
 
     nome_modello_pulito = model_name.replace("/", "_")
-    percorso_txt = f"txt_tesi/Log_Risposte_Baseline_{nome_modello_pulito}.txt"
+    percorso_txt = f"txt_tesi/Risposte Baseline/Log_Risposte_Baseline_{nome_modello_pulito}.txt"
 
     with open(percorso_txt, "w", encoding="utf-8") as f_log:
         f_log.write(f"=== LOG RISPOSTE GREZZE: {model_name} ===\n\n")
@@ -120,50 +121,59 @@ try:
 
     # Filtriamo via le risposte ambigue per la matrice di confusione
     df_validi = df[df['target_predetto'] != "Non Classificato"]
+
+    percorso_metriche = "txt_tesi/Metriche_Baseline.txt"
     
-    print("\n" + "="*50)
-    print(" ANALISI METRICHE E MATRICE DI CONFUSIONE")
-    print("="*50)
-
-    # --- CALCOLO PER SINGOLO MODELLO ---
-    for modello in df['modello'].unique():
-        df_mod = df_validi[df_validi['modello'] == modello]
+    with open(percorso_metriche, "w", encoding="utf-8") as f_metriche:
         
-        if len(df_mod) == 0:
-            print(f"\nNessuna risposta valida per {modello}")
-            continue
+        intestazione = "\n" + "="*50 + "\n ANALISI METRICHE E MATRICE DI CONFUSIONE\n" + "="*50 + "\n"
+        print(intestazione)
+        f_metriche.write(intestazione)
+
+        # --- CALCOLO PER SINGOLO MODELLO ---
+        for modello in df['modello'].unique():
+            df_mod = df_validi[df_validi['modello'] == modello]
             
-        totale_mod = len(df_mod)
-        
-        # Calcolo dei 4 quadranti della Confusion Matrix
-        # TP: Vero Positivo (Vulnerabile predetto Vulnerabile)
-        tp = len(df_mod[(df_mod['target_vero'] == 'Vulnerabile') & (df_mod['target_predetto'] == 'Vulnerabile')])
-        
-        # FN: Falso Negativo (Vulnerabile predetto Sicuro) -> IL PIÙ PERICOLOSO!
-        fn = len(df_mod[(df_mod['target_vero'] == 'Vulnerabile') & (df_mod['target_predetto'] == 'Sicuro')])
-        
-        # FP: Falso Positivo (Sicuro predetto Vulnerabile)
-        fp = len(df_mod[(df_mod['target_vero'] == 'Sicuro') & (df_mod['target_predetto'] == 'Vulnerabile')])
-        
-        # TN: Vero Negativo (Sicuro predetto Sicuro)
-        tn = len(df_mod[(df_mod['target_vero'] == 'Sicuro') & (df_mod['target_predetto'] == 'Sicuro')])
+            if len(df_mod) == 0:
+                print(f"\nNessuna risposta valida per {modello}")
+                continue
+                
+            totale_mod = len(df_mod)
+            
+            # Calcolo dei 4 quadranti della Confusion Matrix
+            # TP: Vero Positivo (Vulnerabile predetto Vulnerabile)
+            tp = len(df_mod[(df_mod['target_vero'] == 'Vulnerabile') & (df_mod['target_predetto'] == 'Vulnerabile')])
+            
+            # FN: Falso Negativo (Vulnerabile predetto Sicuro) -> IL PIÙ PERICOLOSO!
+            fn = len(df_mod[(df_mod['target_vero'] == 'Vulnerabile') & (df_mod['target_predetto'] == 'Sicuro')])
+            
+            # FP: Falso Positivo (Sicuro predetto Vulnerabile)
+            fp = len(df_mod[(df_mod['target_vero'] == 'Sicuro') & (df_mod['target_predetto'] == 'Vulnerabile')])
+            
+            # TN: Vero Negativo (Sicuro predetto Sicuro)
+            tn = len(df_mod[(df_mod['target_vero'] == 'Sicuro') & (df_mod['target_predetto'] == 'Sicuro')])
 
-        # Calcolo percentuali
-        perc_tp = (tp / totale_mod) * 100
-        perc_fn = (fn / totale_mod) * 100
-        perc_fp = (fp / totale_mod) * 100
-        perc_tn = (tn / totale_mod) * 100
-        
-        accuracy = ((tp + tn) / totale_mod) * 100
-        
-        nome_corto = modello.split('/')[-1]
-        print(f"\n MODELLO: {nome_corto}")
-        print(f"   Accuracy: {accuracy:.2f}%")
-        print(f"   --- Matrice di Confusione ---")
-        print(f"   Vero Vulnerabile (TP) : {perc_tp:.1f}% ({tp}) - Vulnerabile predetto Vulnerabile")
-        print(f"   Falso Negativo   (FN) : {perc_fn:.1f}% ({fn}) -  Vulnerabile predetto Sicuro")
-        print(f"   Falso Positivo   (FP) : {perc_fp:.1f}% ({fp}) - Sicuro predetto Vulnerabile")
-        print(f"   Vero Sicuro      (TN) : {perc_tn:.1f}% ({tn}) - Sicuro predetto Sicuro")
+            # Calcolo percentuali
+            perc_tp = (tp / totale_mod) * 100
+            perc_fn = (fn / totale_mod) * 100
+            perc_fp = (fp / totale_mod) * 100
+            perc_tn = (tn / totale_mod) * 100
+            accuracy = ((tp + tn) / totale_mod) * 100
+            
+            nome_corto = modello.split('/')[-1]
+            
+            testo_modello = (
+                    f"\n MODELLO: {nome_corto}\n"
+                    f"   Accuracy: {accuracy:.2f}%\n"
+                    f"   --- Matrice di Confusione ---\n"
+                    f"   Vero Vulnerabile (TP) : {perc_tp:.1f}% ({tp}) - Vulnerabile predetto Vulnerabile\n"
+                    f"   Falso Negativo   (FN) : {perc_fn:.1f}% ({fn}) -  Vulnerabile predetto Sicuro\n"
+                    f"   Falso Positivo   (FP) : {perc_fp:.1f}% ({fp}) - Sicuro predetto Vulnerabile\n"
+                    f"   Vero Sicuro      (TN) : {perc_tn:.1f}% ({tn}) - Sicuro predetto Sicuro\n"
+                )
+            print(testo_modello)
+
+            f_metriche.write(testo_modello)
 
     # --- CREAZIONE CSV PULITO ---
     df_finale = df[['modello', 'target_vero', 'target_predetto', 'codice']]
@@ -182,8 +192,8 @@ risultati_baseline_semplificati = "CSV tesi/risultati_semplificati.csv"
 
 df = pd.read_csv(risultati_baseline_semplificati)
 df_modello_TP = is_true_positive(df)
-df_modello_TP.to_csv("CSV tesi/dataset_TP.csv", index=False)
+df_modello_TP.to_csv("CSV tesi/Dataset/dataset_TP.csv", index=False)
 df_modello_TN = is_true_negative(df)
-df_modello_TN.to_csv("CSV tesi/dataset_TN.csv", index=False)
+df_modello_TN.to_csv("CSV tesi/Dataset/dataset_TN.csv", index=False)
 df_modello_TRUE = pd.concat([df_modello_TP, df_modello_TN])
-df_modello_TRUE.to_csv("CSV tesi/dataset_TRUE.csv", index=False)
+df_modello_TRUE.to_csv("CSV tesi/Dataset/dataset_TRUE.csv", index=False)
