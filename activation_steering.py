@@ -1,3 +1,5 @@
+from config import models_config
+
 import os
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
@@ -8,7 +10,6 @@ import gc
 import numpy as np
 
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from config import models_config
 from utils import evaluate_response
 
 # cattura il tensore mentre passa per il layer scelto e lo copia nella RAM

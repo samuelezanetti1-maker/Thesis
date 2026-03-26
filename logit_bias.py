@@ -1,3 +1,4 @@
+from config import models_config
 import os
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
@@ -10,7 +11,6 @@ import re
 import numpy as np
 
 from transformers import AutoModelForCausalLM, AutoTokenizer, LogitsProcessorList, LogitsProcessor
-from config import models_config
 from utils import evaluate_response_logit
 
 ### Voglio andare a modificare i token con parola True dando penalità e invece ai False do un boost, cerco di forzare così la risposta.

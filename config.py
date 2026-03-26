@@ -1,7 +1,13 @@
 # config.py
+import os
+
 import pandas as pd
 import torch
 from transformers import BitsAndBytesConfig
+
+os.environ["HF_TOKEN"] = "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"
+os.environ["HF_HOME"] = os.path.expanduser("~/.cache/huggingface")
+os.environ["HF_HUB_CACHE"] = "/scratch_share/bislab/HF_HUB_CACHE/"
 
 
 config_4bit = BitsAndBytesConfig(

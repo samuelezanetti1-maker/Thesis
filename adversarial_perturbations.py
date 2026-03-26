@@ -1,3 +1,4 @@
+from config import models_config
 import os
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
@@ -9,7 +10,6 @@ import random
 import re
 
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from config import models_config
 from utils import evaluate_response
 
 # 3 Tecniche di Perturbazione

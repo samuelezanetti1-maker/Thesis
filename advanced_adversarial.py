@@ -1,3 +1,4 @@
+from config import models_config
 import os
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
@@ -10,7 +11,6 @@ import re
 import numpy as np
 
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from config import models_config
 from utils import evaluate_response
 
 ### Cambiamo forma e parole del codice senza alterarne la logica, per vedere se il modello riesce comunque a riconoscere la vulnerabilità o se si confonde.

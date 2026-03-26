@@ -1,3 +1,4 @@
+from config import models_config
 import os
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
@@ -8,7 +9,6 @@ import gc
 
 
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from config import models_config, df_globale
 from utils import traduci_target_reale, evaluate_response, is_true_positive, is_true_negative
 
 risultati_baseline = []
