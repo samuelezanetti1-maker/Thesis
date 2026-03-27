@@ -1,14 +1,31 @@
 #utils.py
+import re
+
 # 1. Estrae la predizione del modello e la converte in testo
 def evaluate_response(response):
     response = str(response).lower()
     
-    if "final_verdict: true" in response:
-        return "Vulnerabile"
-    elif "final_verdict: false" in response:
-        return "Sicuro"
-    else:
-        return "Non Classificato"
+    # 1. Pulizia preventiva degli artefatti tipici di tokenizer (DeepSeek ecc.)
+    response = response.replace('ġ', ' ').replace('ċ', ' ').replace('\n', ' ')
+    
+    # 2. Ricerca con RegEx: Cerca 'final_verdict' seguito da qualsiasi 
+    # carattere (spazi, due punti, ecc.) fino a trovare 'true' o 'false'
+    match = re.search(r'final_verdict.*?(\btrue\b|\bfalse\b)', response)
+    
+    if match:
+        verdetto = match.group(1)
+        if verdetto == 'true':
+            return "Vulnerabile"
+        elif verdetto == 'false':
+            return "Sicuro"
+            
+    # 3. Fallback di emergenza: se non scrive "final_verdict" ma dice chiaramente solo true o false
+    elif "true" in response and "false" not in response:
+         return "Vulnerabile"
+    elif "false" in response and "true" not in response:
+         return "Sicuro"
+         
+    return "Non Classificato"
 
 # 2. Converte il target reale in testo
 def traduci_target_reale(target):
