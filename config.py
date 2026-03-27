@@ -47,7 +47,7 @@ models_config = {
 path = "CSV tesi/Dataset/dataset_tesi.csv"
 df_globale = pd.read_csv(path)
 df_globale = df_globale.sample(n=100, random_state=42).copy()
-#df_globale = df_globale.head(10)  
+df_globale = df_globale.head(10)  
 
 
 

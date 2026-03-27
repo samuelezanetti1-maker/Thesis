@@ -147,6 +147,11 @@ for model_name, config in models_config.items():
 steering_vectors = {}
 
 for model_name in models_config.keys():
+
+    if model_name not in memoria_layer_centrali:
+        print(f"Attenzione: non abbiamo attivazioni per {model_name}, saltando il calcolo dello steering vector.")
+        continue
+
     nome_file_safe = model_name.replace('/', '_')
     layer_corretto = memoria_layer_centrali[model_name]
     file_pkl = f"attivazioni/vettori_{nome_file_safe}_layer_{layer_corretto}.pkl"
@@ -193,6 +198,11 @@ risultati_attacco_steering = []
 
 ### CICLO DI ATTACCO
 for model_name, config in models_config.items():
+
+    if model_name not in memoria_layer_centrali:
+        print(f"Attenzione: non abbiamo attivazioni per {model_name}, saltando l'attacco steering.")
+        continue 
+
     print("\n" + "="*60)
     print(f"INIZIO ATTACCO STEERING CON IL MODELLO: {model_name}")
     print("="*60)
