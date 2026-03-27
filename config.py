@@ -5,9 +5,7 @@ import pandas as pd
 import torch
 from transformers import BitsAndBytesConfig
 
-os.environ["HF_TOKEN"] = "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"
-os.environ["HF_HOME"] = os.path.expanduser("~/.cache/huggingface")
-os.environ["HF_HUB_CACHE"] = "/scratch_share/bislab/HF_HUB_CACHE/"
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
 
 config_4bit = BitsAndBytesConfig(
@@ -37,7 +35,7 @@ models_config = {
     "Qwen/Qwen2.5-Coder-7B-Instruct": {"dtype": torch.float16},
     
     # Famiglia Llama (Meta)
-    "meta-llama/Meta-Llama-3.1-8B-Instruct": {"dtype": torch.float16},
+    "meta-llama/Llama-3.1-8B-Instruct": {"dtype": torch.float16},
     "codellama/CodeLlama-7b-Instruct-hf": {"dtype": torch.float16},
     
     # Famiglia DeepSeek

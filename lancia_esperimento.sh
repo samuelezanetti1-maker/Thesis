@@ -11,10 +11,26 @@
 module purge
 module load amd/gcc-8.5.0/miniforge3
 
-source activate tesi_env
 
-export HF_HOME="/scratch_share/bislab/HF_HUB_CACHE/"
-export HUGGINGFACE_HUB_CACHE="/scratch_share/bislab/HF_HUB_CACHE/"
-export HF_DATASETS_CACHE="/scratch_share/bislab/HF_XET_CACHE/"
+eval "$(conda shell.bash hook)"
+conda activate tesi_env
 
-python master_run.py
+echo "======================="
+python3 -c "import torch; print('>>> GPU VISTA DA PYTORCH;', torch.cuda.is_available()); print('>>> MODELLO GPU:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'Nessuna')"
+echo "======================"
+
+export MIO_SCRATCH="/scratch_share/bislab/HF_USER_CACHE/$USER"
+
+mkdir -p "$MIO_SCRATCH/modelli_tesi"
+mkdir -p job_logs
+
+export HF_HUB_CACHE="$MIO_SCRATCH/modelli_tesi"
+export HF_HOME="$HOME/.cache/huggingface"
+export HF_HUB_DISABLE_FILE_LOCKS=1
+export HF_TOKEN="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"
+
+pwd; hostname; date
+
+python3 master_run.py
+
+date

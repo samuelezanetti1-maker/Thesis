@@ -1,4 +1,4 @@
-from config import models_config
+from config import models_config, df_globale
 import os
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
