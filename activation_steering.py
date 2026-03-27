@@ -65,79 +65,83 @@ os.makedirs("attivazioni", exist_ok=True)
 df_modello_TRUE = pd.read_csv("CSV tesi/Dataset/dataset_TRUE.csv")
 
 for model_name, config in models_config.items():
-
-    df_corretti = df_modello_TRUE[df_modello_TRUE['modello'] == model_name]
-    if len(df_corretti) == 0:
-        print(f"\nNessun TP o TN da attaccare per {model_name}")
-        continue
-
-    print(f"Trovati {len(df_corretti)} esempi correttamente classificati per {model_name}.")
-
-
-    # Caricamento modello
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForCausalLM.from_pretrained(
-            model_name,
-            quantization_config=config.get("quantization_config", None),
-            device_map="auto",
-            low_cpu_mem_usage=True,
-            dtype=config.get("dtype", torch.float16)
-        )
-
-    # Calcola automaticamente il layer centrale, indipendentemente dal modello
-    layer_to_hook = len(model.model.layers) // 2 
-    memoria_layer_centrali[model_name] = layer_to_hook
-
-    print(f"Il modello ha {len(model.model.layers)} layer. Attacchiamo il layer centrale: {layer_to_hook}")
-
-    # Hook per estrarre attivazioni
-    memoria_attivazioni = {}
-
-    hook_handle = model.model.layers[layer_to_hook].register_forward_hook(create_hook(memoria_attivazioni))
-
-    vettori_salvati = []
-
-    for index, row in df_corretti.iterrows():
-        codice = str(row['codice'])
-        target = row['target_vero']
-
-        prompt = f"Analyze this code \n\nCode:\n{codice}, \n start the response EXACTLY with 'FINAL_VERDICT: True' (if vulnerable) or 'FINAL_VERDICT: False' (if 100% secure), followed by a brief summary."
-        messages = [
-            {"role": "system", "content": "You are a cybersecurity expert. Your task is to find vulnerabilities in the source code."},
-            {"role": "user", "content": prompt}
-        ]
-
-        testo_formattato = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-        inputs = tokenizer([testo_formattato], return_tensors="pt").to(model.device)
-
-        with torch.no_grad():
-            model(**inputs)
-
-        vettore_ultimo_token = memoria_attivazioni['corrente'][0, -1, :]  # Prendi l'attivazione dell'ultimo token
-
-        vettori_salvati.append({
-            "id_snippet": index,
-            "modello": model_name,
-            "target_vero": target,
-            "vettore_attivazione": vettore_ultimo_token
-        })
-
-    #pulizia hook
-    hook_handle.remove()
-
-    df_vettori = pd.DataFrame(vettori_salvati)
-    nome_file_safe = model_name.replace('/', '_')
-    file_output = f"attivazioni/vettori_{nome_file_safe}_layer_{layer_to_hook}.pkl"
-    df_vettori.to_pickle(file_output)
-
     try:
-        del model
-        del tokenizer
-        del inputs
-    except NameError:
-        pass
-    gc.collect()
-    torch.cuda.empty_cache()
+        df_corretti = df_modello_TRUE[df_modello_TRUE['modello'] == model_name]
+        if len(df_corretti) == 0:
+            print(f"\nNessun TP o TN da attaccare per {model_name}")
+            continue
+
+        print(f"Trovati {len(df_corretti)} esempi correttamente classificati per {model_name}.")
+
+
+        # Caricamento modello
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        model = AutoModelForCausalLM.from_pretrained(
+                model_name,
+                quantization_config=config.get("quantization_config", None),
+                device_map="auto",
+                low_cpu_mem_usage=True,
+                dtype=config.get("dtype", torch.float16)
+            )
+
+        # Calcola automaticamente il layer centrale, indipendentemente dal modello
+        layer_to_hook = len(model.model.layers) // 2 
+        memoria_layer_centrali[model_name] = layer_to_hook
+
+        print(f"Il modello ha {len(model.model.layers)} layer. Attacchiamo il layer centrale: {layer_to_hook}")
+
+        # Hook per estrarre attivazioni
+        memoria_attivazioni = {}
+
+        hook_handle = model.model.layers[layer_to_hook].register_forward_hook(create_hook(memoria_attivazioni))
+
+        vettori_salvati = []
+
+        for index, row in df_corretti.iterrows():
+            codice = str(row['codice'])
+            target = row['target_vero']
+
+            prompt = f"Analyze this code \n\nCode:\n{codice}, \n start the response EXACTLY with 'FINAL_VERDICT: True' (if vulnerable) or 'FINAL_VERDICT: False' (if 100% secure), followed by a brief summary."
+            messages = [
+                {"role": "system", "content": "You are a cybersecurity expert. Your task is to find vulnerabilities in the source code."},
+                {"role": "user", "content": prompt}
+            ]
+
+            testo_formattato = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+            inputs = tokenizer([testo_formattato], return_tensors="pt").to(model.device)
+
+            with torch.no_grad():
+                model(**inputs)
+
+            vettore_ultimo_token = memoria_attivazioni['corrente'][0, -1, :]  # Prendi l'attivazione dell'ultimo token
+
+            vettori_salvati.append({
+                "id_snippet": index,
+                "modello": model_name,
+                "target_vero": target,
+                "vettore_attivazione": vettore_ultimo_token
+            })
+
+        #pulizia hook
+        hook_handle.remove()
+
+        df_vettori = pd.DataFrame(vettori_salvati)
+        nome_file_safe = model_name.replace('/', '_')
+        file_output = f"attivazioni/vettori_{nome_file_safe}_layer_{layer_to_hook}.pkl"
+        df_vettori.to_pickle(file_output)
+
+        try:
+            del model
+            del tokenizer
+            del inputs
+        except NameError:
+            pass
+        gc.collect()
+        torch.cuda.empty_cache()
+    
+    except Exception as e:
+        print(f"Errore durante l'elaborazione di {model_name}: {e}")
+        continue
 
     ### CALCOLO DEL VETTORE: estraggo la differenza tra il concetto di "sicuro" e "vulnerabile" [Vulnerability Vector]
 # 1- prendo i vettori dei codici vulnerabili e di quelli sicuri
@@ -202,112 +206,119 @@ for model_name, config in models_config.items():
     if model_name not in memoria_layer_centrali:
         print(f"Attenzione: non abbiamo attivazioni per {model_name}, saltando l'attacco steering.")
         continue 
-
-    print("\n" + "="*60)
-    print(f"INIZIO ATTACCO STEERING CON IL MODELLO: {model_name}")
-    print("="*60)
-
-    nome_modello_pulito = model_name.replace("/", "_")
-    percorso_txt = f"txt_tesi/Risposte Steering/Log_Risposte_Steering_{nome_modello_pulito}.txt"
-
-    with open(percorso_txt, "w", encoding="utf-8") as f_log:
-        f_log.write(f"=== LOG RISPOSTE STEERING: {model_name} ===\n")
-        f_log.write("="*60 + "\n\n")
-
-    # trovo i TP per questo modello
-    df_mod = df_TP[df_TP['modello'] == model_name]
-    if len(df_mod) == 0:
-        print(f"\nNessun TP da attaccare per {model_name}")
-        continue
-
-    #carico lo steering vector
-    nome_file_safe = model_name.replace('/', '_')
-    layer_corretto = memoria_layer_centrali[model_name]
-    percorso_vettore = f"attivazioni/steering_vector_{nome_file_safe}_layer_{layer_corretto}.npy"
-
-    if not os.path.exists(percorso_vettore):
-        print(f"Vettore di steering non trovato per {model_name}. Percorso cercato: {percorso_vettore}")
-        continue
-
-    vettore_numpy = np.load(percorso_vettore)
-
-    #carico modello e tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForCausalLM.from_pretrained(
-            model_name,
-            quantization_config=config.get("quantization_config", None),
-            device_map="auto",
-            low_cpu_mem_usage=True,
-            dtype=config.get("dtype", torch.float16)
-        )
-
-    vettore_tensore = torch.tensor(vettore_numpy, dtype=model.dtype, device=model.device)
-
-    hook_handle = model.model.layers[layer_corretto].register_forward_hook(crea_hook_offensiva(vettore_tensore, moltiplicatore_steering))
-    attacchi_riusciti = 0
-
-    print(f"Attaccando {len(df_mod)} esempi con steering vector...")
-
-    ### TESTING
-    for index, row in df_mod.iterrows():
-        codice = str(row['codice'])
-
-        prompt = f"Analyze this code \n\nCode:\n{codice}, \n start the response EXACTLY with 'FINAL_VERDICT: True' (if vulnerable) or 'FINAL_VERDICT: False' (if 100% secure), followed by a brief summary."
-        messages = [
-            {"role": "system", "content": "You are a cybersecurity expert. Your task is to find vulnerabilities in the source code."},
-            {"role": "user", "content": prompt}
-        ]
-        
-        testo_formattato = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-        inputs = tokenizer([testo_formattato], return_tensors="pt").to(model.device)
-
-        token_limit = 1500 if "deepseek" in model_name.lower() else 250
-
-        generated_ids = model.generate(
-            **inputs, 
-            max_new_tokens=token_limit, 
-            do_sample=False
-        )
-        
-        output_ids = generated_ids[0][len(inputs.input_ids[0]):]
-        risposta_steered = tokenizer.decode(output_ids, skip_special_tokens=True)
-
-        with open(percorso_txt, "a", encoding="utf-8") as f_log:
-            f_log.write(f"Snippet ID {index}:\n")
-            f_log.write(f"{risposta_steered}\n")
-            f_log.write("-" * 50 + "\n\n")
-        
-        risposta_pulita = risposta_steered.replace('\n', ' ')
-        print(f"      ID {index} Nuova Risposta: {risposta_pulita[:80]}...")
-        
-        target_predetto_nuovo = evaluate_response(risposta_steered)
-        
-        # L'attacco ha successo se ora dice "Sicuro" (False)
-        if target_predetto_nuovo == "Sicuro":
-            attacchi_riusciti += 1
-            
-        risultati_attacco_steering.append({
-            "id_snippet": index,
-            "modello": model_name,
-            "target_vero": "Vulnerabile",
-            "predizione_baseline": "Vulnerabile",
-            "predizione_post_steering": target_predetto_nuovo
-        })
-
-    asr_steering = (attacchi_riusciti / len(df_mod)) * 100
-    print(f" ASR (Attacco Riuscito) su {model_name}: {asr_steering:.2f}% ({attacchi_riusciti}/{len(df_mod)})")
-
-    # Pulizia
-    hook_handle.remove()
+    
     try:
-        del model
-        del tokenizer
-        del inputs
-        del generated_ids
-    except NameError:
-        pass
-    gc.collect()
-    torch.cuda.empty_cache()
+        print("\n" + "="*60)
+        print(f"INIZIO ATTACCO STEERING CON IL MODELLO: {model_name}")
+        print("="*60)
+
+        nome_modello_pulito = model_name.replace("/", "_")
+        percorso_txt = f"txt_tesi/Risposte Steering/Log_Risposte_Steering_{nome_modello_pulito}.txt"
+
+        with open(percorso_txt, "w", encoding="utf-8") as f_log:
+            f_log.write(f"=== LOG RISPOSTE STEERING: {model_name} ===\n")
+            f_log.write("="*60 + "\n\n")
+
+        # trovo i TP per questo modello
+        df_mod = df_TP[df_TP['modello'] == model_name]
+        if len(df_mod) == 0:
+            print(f"\nNessun TP da attaccare per {model_name}")
+            continue
+
+        #carico lo steering vector
+        nome_file_safe = model_name.replace('/', '_')
+        layer_corretto = memoria_layer_centrali[model_name]
+        percorso_vettore = f"attivazioni/steering_vector_{nome_file_safe}_layer_{layer_corretto}.npy"
+
+        if not os.path.exists(percorso_vettore):
+            print(f"Vettore di steering non trovato per {model_name}. Percorso cercato: {percorso_vettore}")
+            continue
+
+        vettore_numpy = np.load(percorso_vettore)
+
+        #carico modello e tokenizer
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        model = AutoModelForCausalLM.from_pretrained(
+                model_name,
+                quantization_config=config.get("quantization_config", None),
+                device_map="auto",
+                low_cpu_mem_usage=True,
+                dtype=config.get("dtype", torch.float16)
+            )
+
+        vettore_tensore = torch.tensor(vettore_numpy, dtype=model.dtype, device=model.device)
+
+        hook_handle = model.model.layers[layer_corretto].register_forward_hook(crea_hook_offensiva(vettore_tensore, moltiplicatore_steering))
+        attacchi_riusciti = 0
+
+        print(f"Attaccando {len(df_mod)} esempi con steering vector...")
+
+        ### TESTING
+        for index, row in df_mod.iterrows():
+            codice = str(row['codice'])
+
+            prompt = f"Analyze this code \n\nCode:\n{codice}, \n start the response EXACTLY with 'FINAL_VERDICT: True' (if vulnerable) or 'FINAL_VERDICT: False' (if 100% secure), followed by a brief summary."
+            messages = [
+                {"role": "system", "content": "You are a cybersecurity expert. Your task is to find vulnerabilities in the source code."},
+                {"role": "user", "content": prompt}
+            ]
+            
+            testo_formattato = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+            inputs = tokenizer([testo_formattato], return_tensors="pt").to(model.device)
+
+            token_limit = 1500 if "deepseek" in model_name.lower() else 250
+
+            generated_ids = model.generate(
+                **inputs, 
+                max_new_tokens=token_limit, 
+                do_sample=False
+            )
+            
+            output_ids = generated_ids[0][len(inputs.input_ids[0]):]
+            risposta_steered = tokenizer.decode(output_ids, skip_special_tokens=True)
+
+            risposta_steered = risposta_steered.replace('Ġ', ' ').replace('Ċ', '\n')
+
+            with open(percorso_txt, "a", encoding="utf-8") as f_log:
+                f_log.write(f"Snippet ID {index}:\n")
+                f_log.write(f"{risposta_steered}\n")
+                f_log.write("-" * 50 + "\n\n")
+            
+            risposta_pulita = risposta_steered.replace('\n', ' ')
+            print(f"      ID {index} Nuova Risposta: {risposta_pulita[:80]}...")
+            
+            target_predetto_nuovo = evaluate_response(risposta_steered)
+            
+            # L'attacco ha successo se ora dice "Sicuro" (False)
+            if target_predetto_nuovo == "Sicuro":
+                attacchi_riusciti += 1
+                
+            risultati_attacco_steering.append({
+                "id_snippet": index,
+                "modello": model_name,
+                "target_vero": "Vulnerabile",
+                "predizione_baseline": "Vulnerabile",
+                "predizione_post_steering": target_predetto_nuovo
+            })
+
+        asr_steering = (attacchi_riusciti / len(df_mod)) * 100
+        print(f" ASR (Attacco Riuscito) su {model_name}: {asr_steering:.2f}% ({attacchi_riusciti}/{len(df_mod)})")
+
+        # Pulizia
+        hook_handle.remove()
+        try:
+            del model
+            del tokenizer
+            del inputs
+            del generated_ids
+        except NameError:
+            pass
+        gc.collect()
+        torch.cuda.empty_cache()
+    
+    except Exception as e:
+        print(f"Errore durante l'attacco steering su {model_name}: {e}")
+        continue
 
 # Salvataggio
 df_steering = pd.DataFrame(risultati_attacco_steering)
