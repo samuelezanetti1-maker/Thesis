@@ -13,6 +13,7 @@ from utils import traduci_target_reale, evaluate_response, is_true_positive, is_
 
 risultati_baseline = []
 df = df_globale.copy()
+print(df.shape)
 
 for model_name, config in models_config.items():
     print("\n" + "="*60)

@@ -8,7 +8,8 @@ percorsi = {
     "Prompt Injection": "CSV tesi/risultati_attacco_PJ.csv",
     "Activation Steering": "CSV tesi/risultati_attacco_steering.csv",
     "Advanced Adversarial": "CSV tesi/risultati_attacco_advanced.csv",
-    "Logit Bias": "CSV tesi/risultati_attacco_logits.csv"
+    "Logit Bias": "CSV tesi/risultati_attacco_logits.csv",
+    "Snipe Steering": "CSV tesi/risultati_attacco_mirato_steering.csv",
 }
 
 colonne_predizione = {
@@ -16,7 +17,8 @@ colonne_predizione = {
     "Prompt Injection": "target_predetto_pj",
     "Activation Steering": "predizione_post_steering",
     "Advanced Adversarial": "target_predetto_adv",
-    "Logit Bias": "predizione_post_bias"
+    "Logit Bias": "predizione_post_bias",
+    "Snipe Steering": "predizione_post_steering"
 }
 
 dati_riepilogo = []

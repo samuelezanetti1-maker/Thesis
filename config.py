@@ -6,6 +6,8 @@ import torch
 from transformers import BitsAndBytesConfig
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
+os.environ["HF_TOKEN"] = "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"
 
 
 config_4bit = BitsAndBytesConfig(
@@ -46,8 +48,8 @@ models_config = {
 
 path = "CSV tesi/Dataset/dataset_tesi.csv"
 df_globale = pd.read_csv(path)
-df_globale = df_globale.sample(n=100, random_state=42).copy()
-df_globale = df_globale.head(10)  
+#df_globale = df_globale.sample(n=150, random_state=42).copy()
+#df_globale = df_globale.head(10)  
 
 
 
