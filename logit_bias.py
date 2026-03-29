@@ -108,7 +108,8 @@ for model_name, config in models_config.items():
                 **inputs, 
                 max_new_tokens=token_limit, 
                 do_sample=False,
-                logits_processor=logits_processor_list
+                logits_processor=logits_processor_list,
+                pad_token_id=tokenizer.eos_token_id
             )
             
         output_ids = generated_ids[0][len(inputs.input_ids[0]):]

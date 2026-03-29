@@ -66,7 +66,8 @@ for model_name, config in models_config.items():
         generated_ids_base = model.generate(
             **model_inputs, 
             max_new_tokens=token_limit, 
-            do_sample=False
+            do_sample=False,
+            pad_token_id=tokenizer.eos_token_id
         )
         output_ids_base = generated_ids_base[0][len(model_inputs.input_ids[0]):]
         risposta_base = tokenizer.decode(output_ids_base, skip_special_tokens=True)

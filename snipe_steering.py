@@ -120,7 +120,7 @@ for model_name, config in models_config.items():
 
             token_limit = 1500 if "deepseek" in model_name.lower() else 250
 
-            generated_ids = model.generate(**inputs, max_new_tokens=token_limit, do_sample=False)
+            generated_ids = model.generate(**inputs, max_new_tokens=token_limit, do_sample=False, pad_token_id=tokenizer.eos_token_id)
             output_ids = generated_ids[0][len(inputs.input_ids[0]):]
             risposta_steered = tokenizer.decode(output_ids, skip_special_tokens=True)
 
