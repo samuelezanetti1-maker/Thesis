@@ -8,7 +8,7 @@ gc.collect()
 torch.cuda.empty_cache()
 
 script_to_launch = [
-    "baseline.py",
+   # "baseline.py",
     # "adversarial_perturbations.py",
     "activation_steering.py",
     # "advanced_adversarial.py",
