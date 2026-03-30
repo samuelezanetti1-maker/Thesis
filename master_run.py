@@ -9,10 +9,10 @@ torch.cuda.empty_cache()
 
 script_to_launch = [
    # "baseline.py",
-     "adversarial_perturbations.py",
+    # "adversarial_perturbations.py",
     #"activation_steering.py",
     #"fast_steering.py",
-    # "advanced_adversarial.py",
+     "advanced_adversarial.py",
     # "logit_bias.py",
     # "summary.py",
     # "analisi_mec.py",
