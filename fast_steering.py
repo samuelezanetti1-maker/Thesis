@@ -20,8 +20,8 @@ moltiplicatori_per_modello = {
     "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": [10],
     "deepseek-ai/deepseek-coder-6.7b-instruct": [8]
 }
+  
 
-#moltiplicatori_default = [5, 10]
 
 df_TP = pd.read_csv("CSV tesi/Dataset/dataset_TP.csv")
 risultati_attacco_steering = []
@@ -65,7 +65,7 @@ for model_name, config in models_config.items():
 
     try:
         # Recuperiamo la lista dei moltiplicatori specifici per QUESTO modello
-        moltiplicatori_correnti = moltiplicatori_per_modello.get(model_name, moltiplicatori_default)
+        moltiplicatori_correnti = moltiplicatori_per_modello.get(model_name)
         print(f"Userò questi moltiplicatori: {moltiplicatori_correnti}")
 
         print("Caricamento modello e tokenizer in corso...")
