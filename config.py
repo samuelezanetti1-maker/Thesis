@@ -33,12 +33,12 @@ config_4bit = BitsAndBytesConfig(
 ### Versione cluster
 models_config = {
     # Famiglia Qwen (Alibaba)
-    "Qwen/Qwen2.5-7B-Instruct": {"dtype": torch.float16},
-    "Qwen/Qwen2.5-Coder-7B-Instruct": {"dtype": torch.float16},
+    #"Qwen/Qwen2.5-7B-Instruct": {"dtype": torch.float16},
+    #"Qwen/Qwen2.5-Coder-7B-Instruct": {"dtype": torch.float16},
     
     # # Famiglia Llama (Meta)
-    # "meta-llama/Llama-3.1-8B-Instruct": {"dtype": torch.float16},
-    # "codellama/CodeLlama-7b-Instruct-hf": {"dtype": torch.float16},
+     "meta-llama/Llama-3.1-8B-Instruct": {"dtype": torch.float16},
+     "codellama/CodeLlama-7b-Instruct-hf": {"dtype": torch.float16},
     
     # # Famiglia DeepSeek
     # "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": {"dtype": torch.float16},
