@@ -9,7 +9,7 @@ import json
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-#os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
+os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
 
 # Creiamo le cartelle per i risultati
 os.makedirs("attivazioni_totali", exist_ok=True)
@@ -79,29 +79,41 @@ for model_name, config in models_config.items():
                 elif target == 'Sicuro':
                     attivazioni_sicuri[layer_idx].append(vettore_ultimo_token)
 
-        # --- FASE 2: Calcolo della Sensibilità Layer by Layer ---
-        print("\nCalcolo dei centroidi e delle magnitudo per il grafico...")
+        # --- FASE 2: Calcolo e Salvataggio MASSIVO (.npy e .pkl) ---
+        print("\nCalcolo centroidi e salvataggio file .npy e .pkl per tutti i layer...")
         magnitudo_layer = []
         
         nome_file_safe = model_name.replace('/', '_')
         
         for layer_idx in range(num_layers):
             if len(attivazioni_vulnerabili[layer_idx]) == 0 or len(attivazioni_sicuri[layer_idx]) == 0:
+                magnitudo_layer.append(0) # Per non sfalsare il grafico
                 continue
                 
-            # 1. Centroidi
+            # 1. Centroidi e Vettore Steering
             media_vuln = np.mean(np.stack(attivazioni_vulnerabili[layer_idx]), axis=0)
             media_sicuro = np.mean(np.stack(attivazioni_sicuri[layer_idx]), axis=0)
-            
-            # 2. Vettore Attacco/Steering per questo layer
             vettore_steering = media_vuln - media_sicuro
             
-            # Salviamo il vettore per poterlo usare in futuro (Step 2 della tesi)
+            # 2. Salvataggio Vettore Steering (.npy) per il Layer Sweep sul cluster
             np.save(f"attivazioni_totali/steering_vector_{nome_file_safe}_layer_{layer_idx}.npy", vettore_steering)
             
-            # 3. Calcolo Norma L2 (quanto è "forte" la differenza in questo layer)
+            # 3. Creazione e Salvataggio del DataFrame (.pkl) per il Probing in locale
+            dati_pkl = []
+            for vec in attivazioni_vulnerabili[layer_idx]:
+                dati_pkl.append({"target_vero": "Vulnerabile", "vettore_attivazione": vec})
+            for vec in attivazioni_sicuri[layer_idx]:
+                dati_pkl.append({"target_vero": "Sicuro", "vettore_attivazione": vec})
+                
+            df_pkl = pd.DataFrame(dati_pkl)
+            df_pkl.to_pickle(f"attivazioni_totali/vettori_{nome_file_safe}_layer_{layer_idx}.pkl")
+            
+            # 4. Calcolo Norma L2 per la campana
             norma = np.linalg.norm(vettore_steering)
             magnitudo_layer.append(norma)
+            
+            if layer_idx % 10 == 0:
+                print(f"   => Salvato Layer {layer_idx}/{num_layers}...")
 
         # --- FASE 3: Disegno del Grafico a Campana ---
         if magnitudo_layer:
@@ -126,17 +138,16 @@ for model_name, config in models_config.items():
             bersagli_steering[model_name] = layer_tmp
 
         # Pulizia memoria
-        del model
-        del tokenizer
-        del inputs
-        del outputs
-        del attivazioni_vulnerabili
-        del attivazioni_sicuri
+        try:
+            del model, tokenizer, inputs, outputs
+            del attivazioni_vulnerabili, attivazioni_sicuri
+        except NameError:
+            pass
         gc.collect()
         torch.cuda.empty_cache()
 
     except Exception as e:
-        print(f"Errore su {model_name}: {e}")
+        print(f"Errore critico su {model_name}: {e}")
         continue
 
 with open("bersagli_steering.json", "w") as f:

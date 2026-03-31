@@ -13,9 +13,9 @@ script_to_launch = [
     #"activation_steering.py",
     #"fast_steering.py",
     # "advanced_adversarial.py",
-     "logit_bias.py",
+    # "logit_bias.py",
     # "summary.py",
-    # "analisi_mec.py",
+     "analisi_mec.py",
     # "snipe_steering.py"
 
 ]
