@@ -16,9 +16,9 @@ script_to_launch = [
     # "logit_bias.py",
     # "summary.py",
     # "analisi_mec.py",
-     "layer_sweep.py",
+    # "layer_sweep.py",
     #"probing_steering.py",
-    # "snipe_steering.py"
+     "snipe_steering.py"
 
 ]
 
