@@ -2,6 +2,7 @@ from config import models_config
 import os
 import pandas as pd
 import numpy as np
+import joblib
 import glob
 import re
 import matplotlib.pyplot as plt
@@ -58,6 +59,15 @@ for model_name, config in models_config.items():
         # Aumentiamo max_iter perché i vettori a volte sono complessi da separare
         prober = LogisticRegression(max_iter=1000, random_state=42, class_weight='balanced')
         prober.fit(X_train, y_train)
+
+        # --- AGGIUNTA PER LA SENTINELLA ---
+        # Creiamo la cartella per i prober salvati
+        nome_modello_pulito = nome_modello.replace("/", "_")
+        cartella_probers = f"probers_salvati/{nome_modello_pulito}"
+        os.makedirs(cartella_probers, exist_ok=True)
+        
+        # Salviamo il "cervello" del prober in un file
+        joblib.dump(prober, f"{cartella_probers}/prober_layer_{layer_idx}.pkl")
         
         # Valutiamo l'accuratezza sul Test Set
         predizioni = prober.predict(X_test)
@@ -90,8 +100,9 @@ for model_name, config in models_config.items():
     plt.tight_layout()
 
     # Salviamo il grafico in alta qualità
+    os.makedirs("Probing baseline", exist_ok=True)
     nome_file_grafico = f"Probing_{nome_modello.replace('/', '_')}.png"
-    plt.savefig(nome_file_grafico, dpi=300)
+    plt.savefig(f"Probing baseline/{nome_file_grafico}", dpi=300)
     print(f"\nGrafico salvato con successo: {nome_file_grafico}")
 
     
