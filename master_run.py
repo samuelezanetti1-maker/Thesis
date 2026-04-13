@@ -19,8 +19,9 @@ script_to_launch = [
     # "layer_sweep.py",
     #"probing_steering.py",
     # "snipe_steering.py",
-    "mass_diagnostic.py",
-    "plot_probing_mass.py"
+    #"mass_diagnostic.py",
+    #"plot_probing_mass.py",
+    "isomorfismo_attacco_bb.py"
 
 ]
 
