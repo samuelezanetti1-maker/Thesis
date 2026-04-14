@@ -11,12 +11,12 @@ os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
 
 # Carichiamo il dataset degli attacchi testuali (es. Semantic Renaming o Prompt Injection)
 # Assicurati che questo CSV abbia le colonne: 'codice_originale' e 'codice_perturbato'
-file_attacchi = "CSV tesi/Fixed/risultati_attacco_advanced.csv" 
+file_attacchi = "CSV tesi/Fixed/risultati_attacco_adversarial_perturbation.csv" 
 df_attacchi = pd.read_csv(file_attacchi)
 
 # Filtriamo solo gli attacchi che hanno avuto SUCCESSO (Falsi Negativi)
 # Se l'attacco ha fallito, non ha piegato lo spazio latente, quindi non ci interessa misurarlo.
-df_successi = df_attacchi[df_attacchi['target_predetto_adv'] == 'Sicuro']
+df_successi = df_attacchi[df_attacchi['target_predetto_ap'] == 'Sicuro']
 
 risultati_isomorfismo = []
 
@@ -110,5 +110,5 @@ for model_name, config in models_config.items():
         continue
 
 df_finale = pd.DataFrame(risultati_isomorfismo)
-df_finale.to_csv("CSV tesi/convergenza_isomorfismo_advanced_adversarial.csv", index=False)
-print("\n[+] Dati sull'isomorfismo salvati in 'CSV tesi/convergenza_isomorfismo_advanced_adversarial.csv'")
+df_finale.to_csv("CSV tesi/convergenza_isomorfismo_perturbation.csv", index=False)
+print("\n[+] Dati sull'isomorfismo salvati in 'CSV tesi/convergenza_isomorfismo_perturbation.csv'")
