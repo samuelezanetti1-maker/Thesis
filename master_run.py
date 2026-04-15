@@ -21,7 +21,9 @@ script_to_launch = [
     # "snipe_steering.py",
     #"mass_diagnostic.py",
     #"plot_probing_mass.py",
-    "isomorfismo_attacco_bb.py"
+    "isomorfismo_attacco_bb_aa.py",
+    "isomorfismo_attacco_bb_ap.py",
+    "isomorfismo_attacco_bb_pj.py"
 
 ]
 

@@ -41,8 +41,19 @@ for model_name, config in models_config.items():
                 dtype=config.get("dtype", torch.float16)
             )
 
-        num_layers = len(model.model.layers)
-        layer_locus = int(num_layers * 0.59) # Il Locus Causale
+        layer_ottimali = {
+            "Qwen/Qwen2.5-7B-Instruct": 18, 
+            "Qwen/Qwen2.5-Coder-7B-Instruct": 18,
+            "meta-llama/Llama-3.1-8B-Instruct": 15,
+            "codellama/CodeLlama-7b-Instruct-hf": 13,
+            "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": 19,
+            "deepseek-ai/deepseek-coder-6.7b-instruct": 16,
+            
+        }
+
+        layer_locus = layer_ottimali.get(model_name, int(len(model.model.layers) * 0.59))
+        
+        print(f" -> Layer chirurgico selezionato per l'analisi: {layer_locus}")
 
         # Carichiamo il Vettore di Steering Matematico (La nostra freccia di riferimento)
         percorso_vettore = f"attivazioni_totali/steering_vector_{nome_modello_pulito}_layer_{layer_locus}.npy"
@@ -110,5 +121,5 @@ for model_name, config in models_config.items():
         continue
 
 df_finale = pd.DataFrame(risultati_isomorfismo)
-df_finale.to_csv("CSV tesi/convergenza_isomorfismo_perturbation.csv", index=False)
-print("\n[+] Dati sull'isomorfismo salvati in 'CSV tesi/convergenza_isomorfismo_perturbation.csv'")
+df_finale.to_csv("CSV tesi/best_convergenza_isomorfismo_perturbation.csv", index=False)
+print("\n[+] Dati sull'isomorfismo salvati in 'CSV tesi/best_convergenza_isomorfismo_perturbation.csv'")
