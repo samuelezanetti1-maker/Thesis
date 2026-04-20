@@ -25,7 +25,8 @@ script_to_launch = [
     #"isomorfismo_attacco_bb_ap.py",
     #"isomorfismo_attacco_bb_pj.py",
     #"L2_steering_graph.py",
-    "L2_calcolo_real_steering.py"
+    #"L2_calcolo_real_steering.py",
+    "black_box_L2.py"
 
 ]
 

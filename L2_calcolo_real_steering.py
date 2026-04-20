@@ -8,10 +8,14 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from config import models_config 
 
+# Ottimizzazione dell'allocazione di memoria CUDA per prevenire la frammentazione 
+# durante l'elaborazione iterativa di Large Language Models (LLM).
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
 
-# --- 1. CONFIGURAZIONE ---
+# --- 1. CONFIGURAZIONE DEGLI IPERPARAMETRI ---
+# Definizione empirica dei moltiplicatori di magnitudo (forza di iniezione) 
+# calcolati tramite precedente Ablation Study per massimizzare l'Attack Success Rate (ASR).
 moltiplicatori_per_modello = {
     "Qwen/Qwen2.5-7B-Instruct": [20],
     "Qwen/Qwen2.5-Coder-7B-Instruct": [30],
@@ -21,6 +25,8 @@ moltiplicatori_per_modello = {
     "deepseek-ai/deepseek-coder-6.7b-instruct": [8]
 }
 
+# Definizione dei layer bersaglio (Punti di Iniezione) corrispondenti al picco 
+# di suscettibilità causale identificato nella fase di Layer Sweep.
 layer_per_modello = {
     "Qwen/Qwen2.5-7B-Instruct": [18],
     "Qwen/Qwen2.5-Coder-7B-Instruct": [18],
@@ -30,18 +36,33 @@ layer_per_modello = {
     "deepseek-ai/deepseek-coder-6.7b-instruct": [16]
 }
 
+# --- 2. DEFINIZIONE DELL'INTERVENTO A TEMPO DI INFERENZA (ITI) ---
 def crea_hook_offensiva(vettore_tensore, moltiplicatore):
+    """
+    Genera una funzione di forward hook per l'Activation Steering.
+    Normalizza il vettore di direzione concettuale e applica una perturbazione 
+    vettoriale calcolata sugli hidden states durante il forward pass.
+    """
+    # Normalizzazione L2 del vettore per garantire un'applicazione scalare controllata dal moltiplicatore
     vettore_norm = vettore_tensore / torch.norm(vettore_tensore)
+    
     def steering_hook_offensiva(module, input, output):
+        # Clonazione del tensore in output per preservare l'integrità del grafo computazionale di PyTorch
         tensore_modificato = output[0].clone() if isinstance(output, tuple) else output.clone()
         vettore_locale = vettore_norm.to(tensore_modificato.device)
+        
+        # Alterazione dello spazio latente: sottrazione della direzione concettuale (Vulnerabilità)
+        # unicamente sull'ultimo token della sequenza elaborata, influenzando la generazione successiva.
         if len(tensore_modificato.shape) == 3:
             tensore_modificato[:, -1, :] = tensore_modificato[:, -1, :] - (vettore_locale * moltiplicatore)
+            
         return (tensore_modificato,) + output[1:] if isinstance(output, tuple) else tensore_modificato
     return steering_hook_offensiva
 
+# Caricamento del Ground Truth dataset (istanze validate come True Positives/True Negatives)
 df_modello_TRUE = pd.read_csv("CSV tesi/Dataset/dataset_TRUE.csv")
 
+# --- 3. VALUTAZIONE SPERIMENTALE MULTI-MODELLO ---
 for model_name, config in models_config.items():
     print(f"\n{'='*50}\nElaborazione Grafico VERO COLLASSO L2: {model_name}\n{'='*50}")
     
@@ -55,6 +76,7 @@ for model_name, config in models_config.items():
     lista_moltiplicatori = moltiplicatori_per_modello.get(model_name)
     moltiplicatore = lista_moltiplicatori[0] 
 
+    # Inizializzazione del LLM e del tokenizer con precisione a 16-bit per ottimizzazione VRAM
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
@@ -65,6 +87,7 @@ for model_name, config in models_config.items():
 
     num_layers = len(model.model.layers)
     
+    # Caricamento della direzione latente isolata pre-calcolata (Vettore di Steering)
     percorso_vettore = f"attivazioni_totali/steering_vector_{nome_file_safe}_layer_{layer_iniezione}.npy"
     if not os.path.exists(percorso_vettore):
         print(f"File vettore non trovato per {model_name}, salto.")
@@ -76,15 +99,16 @@ for model_name, config in models_config.items():
     vettore_numpy = np.load(percorso_vettore)
     vettore_tensore = torch.tensor(vettore_numpy, dtype=model.dtype, device=model.device)
 
-    # ATTENZIONE: HOOK SPOSTATO DENTRO IL CICLO. Qui prepariamo solo gli scatoloni.
-    # Nota il cambio di nome: raccogliamo i Sicuri VANILLA!
+    # Strutture dati per la raccolta delle rappresentazioni latenti post-intervento
     attivazioni_vulnerabili_steered = {i: [] for i in range(num_layers)}
     attivazioni_sicuri_vanilla = {i: [] for i in range(num_layers)}
 
+    # --- 4. ESTRAZIONE DELLE RAPPRESENTAZIONI LATENTI ---
     for index, row in df_corretti.iterrows():
         codice = str(row['codice'])
         target = row['target_vero']
 
+        # Costruzione del prompt deterministico per costringere il modello a una classificazione binaria
         prompt = f"Analyze this code \n\nCode:\n{codice}, \n start the response EXACTLY with 'FINAL_VERDICT: True' (if vulnerable) or 'FINAL_VERDICT: False' (if 100% secure), followed by a brief summary."
         messages = [
             {"role": "system", "content": "You are a cybersecurity expert. Your task is to find vulnerabilities in the source code."},
@@ -94,9 +118,9 @@ for model_name, config in models_config.items():
         testo_formattato = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
         inputs = tokenizer([testo_formattato], return_tensors="pt").to(model.device)
 
-        # ATTENZIONE: MODIFICA QUI - Logica selettiva per Vanilla vs Steered
+        # Logica di campionamento selettivo: estrazione della Baseline vs. estrazione sotto attacco
         if target == 'Sicuro':
-            # Risonanza VANILLA (Nessun hook)
+            # Estrazione delle attivazioni di controllo (Vanilla Forward Pass)
             with torch.no_grad():
                 outputs_vanilla = model(**inputs, output_hidden_states=True)
             hidden_vanilla = outputs_vanilla.hidden_states[1:] 
@@ -106,13 +130,13 @@ for model_name, config in models_config.items():
             del outputs_vanilla, hidden_vanilla
 
         elif target == 'Vulnerabile':
-            # Risonanza STEERED (Piazzo l'hook, faccio la passata, e lo tolgo subito)
+            # Applicazione dell'Inference-Time Intervention (Steered Forward Pass)
             hook_handle = model.model.layers[layer_iniezione].register_forward_hook(
                 crea_hook_offensiva(vettore_tensore, moltiplicatore)
             )
             with torch.no_grad():
                 outputs_steered = model(**inputs, output_hidden_states=True)
-            hook_handle.remove() # Togliamo l'hook immediatamente
+            hook_handle.remove() # Rimozione immediata dell'hook per ripristinare lo stato intonso della rete
             
             hidden_steered = outputs_steered.hidden_states[1:] 
             for layer_idx in range(num_layers):
@@ -122,7 +146,7 @@ for model_name, config in models_config.items():
             
         del inputs
 
-    # --- CALCOLO E GRAFICO ---
+    # --- 5. CALCOLO GEOMETRICO DELLO SHIFT LATENTE (TRUE COLLAPSE) ---
     magnitudo_layer_steered = []
     magnitudo_layer_vanilla = [] 
 
@@ -132,14 +156,17 @@ for model_name, config in models_config.items():
             magnitudo_layer_vanilla.append(0)
             continue
             
-        # ATTENZIONE: MODIFICA QUI - La nuova matematica del vero schiacciamento
+        # Calcolo dei centroidi nello spazio N-dimensionale (es. R^4096)
         media_vuln_steered = np.mean(np.stack(attivazioni_vulnerabili_steered[layer_idx]), axis=0)
         media_sicuro_vanilla = np.mean(np.stack(attivazioni_sicuri_vanilla[layer_idx]), axis=0)
         
+        # Calcolo della deviazione residua tra le istanze vulnerabili manipolate e la baseline sicura
         vettore_vero_collasso = media_vuln_steered - media_sicuro_vanilla
+        
+        # Misurazione della Norma Euclidea (Distanza L2) per quantificare l'allineamento dei concetti
         magnitudo_layer_steered.append(np.linalg.norm(vettore_vero_collasso))
 
-        # Ripeschiamo i dati vanilla vecchi per fare la linea blu di confronto
+        # Recupero della magnitudo Vanilla pre-calcolata per l'analisi comparativa
         percorso_vettore_vanilla = f"attivazioni_totali/steering_vector_{nome_file_safe}_layer_{layer_idx}.npy"
         if os.path.exists(percorso_vettore_vanilla):
             vec_vanilla = np.load(percorso_vettore_vanilla)
@@ -147,6 +174,7 @@ for model_name, config in models_config.items():
         else:
             magnitudo_layer_vanilla.append(0)
 
+    # --- 6. VISUALIZZAZIONE DEI RISULTATI ---
     plt.figure(figsize=(10, 6))
 
     if any(magnitudo_layer_vanilla):
@@ -167,7 +195,7 @@ for model_name, config in models_config.items():
     plt.close()
     print(f"Grafico salvato in: {percorso_grafico}")
 
-    # Pulizia
+    # Operazioni di deallocazione della memoria GPU per consentire l'esecuzione del modello successivo
     try:
         del model, tokenizer
         del attivazioni_vulnerabili_steered, attivazioni_sicuri_vanilla
