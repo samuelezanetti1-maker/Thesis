@@ -240,6 +240,24 @@ for model_name, config in models_config.items():
         plt.close()
         print(f" -> Salvato: {percorso_grafico}")
 
+    # ==========================================
+    # 6. ESPORTAZIONE DATI GREZZI IN CSV
+    # ==========================================
+    print("Esportazione valori L2 grezzi in CSV...")
+    os.makedirs("CSV tesi/Dati_Grafici_L2", exist_ok=True)
+    
+    df_export = pd.DataFrame({
+        'Layer': range(num_layers),
+        'Baseline_Vanilla': magnitudo_vanilla,
+        'Advanced_Adversarial': magnitudo_AA,
+        'Prompt_Injection': magnitudo_PI,
+        'Adversarial_Perturbation': magnitudo_AP
+    })
+    
+    csv_path = f"CSV tesi/Dati_Grafici_L2/{nome_file_safe}_BlackBox_L2.csv"
+    df_export.to_csv(csv_path, index=False)
+    print(f" -> Dati numerici salvati in: {csv_path}")
+
     # Pulizia VRAM profonda
     try:
         del model, tokenizer

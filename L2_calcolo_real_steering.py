@@ -195,6 +195,22 @@ for model_name, config in models_config.items():
     plt.close()
     print(f"Grafico salvato in: {percorso_grafico}")
 
+    # ==========================================
+    # 7. ESPORTAZIONE DATI GREZZI IN CSV
+    # ==========================================
+    print("Esportazione valori L2 grezzi in CSV...")
+    os.makedirs("CSV tesi/Dati_Grafici_L2", exist_ok=True)
+    
+    df_export = pd.DataFrame({
+        'Layer': range(num_layers),
+        'Baseline_Vanilla': magnitudo_layer_vanilla,
+        'Steered_Vero_Collasso': magnitudo_layer_steered
+    })
+    
+    csv_path = f"CSV tesi/Dati_Grafici_L2/{nome_file_safe}_Steering_L2.csv"
+    df_export.to_csv(csv_path, index=False)
+    print(f" -> Dati numerici salvati in: {csv_path}")
+
     # Operazioni di deallocazione della memoria GPU per consentire l'esecuzione del modello successivo
     try:
         del model, tokenizer
