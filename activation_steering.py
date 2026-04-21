@@ -32,7 +32,7 @@ def crea_hook_offensiva(vettore_tensore, moltiplicatore):
     vettore_norm = vettore_tensore / torch.norm(vettore_tensore)
 
     def steering_hook_offensiva(module, input, output):
-        # 1. Capiamo se l'output è una tupla o un tensore diretto (come abbiamo fatto in estrazione)
+        # 1. Capiamo se l'output è una tupla o un tensore diretto 
         if isinstance(output, tuple):
             tensore_modificato = output[0].clone()
         else:

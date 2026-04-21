@@ -165,7 +165,7 @@ for model_name, config in models_config.items():
                     "errori_percentuale": rateo_errori
                 })
 
-                # Pulizia severa post-moltiplicatore per non saturare la RAM
+
                 hook_handle.remove()
                 try: del inputs, generated_ids
                 except NameError: pass

@@ -23,17 +23,17 @@ for file_csv in file_attacchi:
     if os.path.exists(file_csv):
         df_attacco = pd.read_csv(file_csv)
         
-        # LA MAGIA: mappiamo l'id_snippet all'indice del dataset_TP e copiamo il codice
+        # id_snippet all'indice del dataset_TP e copiamo il codice
         df_attacco['codice_originale'] = df_attacco['id_snippet'].map(df_tp['codice'])
         
-        # Riordiniamo le colonne per estetica (mettiamo il codice originale vicino a quello perturbato)
+        # Riordiniamo le colonne 
         cols = df_attacco.columns.tolist()
         if 'codice_originale' in cols and 'codice_perturbato' in cols:
             cols.insert(cols.index('codice_perturbato'), cols.pop(cols.index('codice_originale')))
             df_attacco = df_attacco[cols]
 
         nome_file = os.path.basename(file_csv)
-        # Costruiamo il nuovo percorso nella cartella Fixed
+        
         file_output = f"CSV tesi/Fixed/{nome_file}"
         
         # Sovrascriviamo il file

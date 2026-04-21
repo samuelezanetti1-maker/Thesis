@@ -28,7 +28,6 @@ for model_name, config in models_config.items():
 
     # 1. Caricamento Modello e Tokenizer
     try:
-        # trust_remote_code=True è necessario per modelli particolari come Phi
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         model = AutoModelForCausalLM.from_pretrained(
             model_name,

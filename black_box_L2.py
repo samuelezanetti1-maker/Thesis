@@ -211,7 +211,7 @@ for model_name, config in models_config.items():
             magnitudo_vanilla.append(0)
 
     # --- 5. GENERAZIONE DEI 18 GRAFICI SEPARATI ---
-    # Creiamo una lista di configurazioni per iterare la creazione dei plot
+    # lista di configurazioni per iterare la creazione dei plot
     configurazioni_plot = [
         ("Advanced_Adversarial", magnitudo_AA, "red", "Overload: Advanced Adversarial"),
         ("Prompt_Injection", magnitudo_PI, "green", "Overload: Prompt Injection"),
@@ -222,7 +222,7 @@ for model_name, config in models_config.items():
     for nome_attacco, magnitudo_attacco, colore, label_attacco in configurazioni_plot:
         plt.figure(figsize=(10, 6))
 
-        # Disegna la Baseline (sempre presente per confronto)
+        # Disegna la Baseline 
         if any(magnitudo_vanilla):
             plt.plot(range(num_layers), magnitudo_vanilla, marker='o', linestyle='--', color='blue', label='Baseline (Vulnerabile Vanilla vs Sicuro)', alpha=0.6)
 

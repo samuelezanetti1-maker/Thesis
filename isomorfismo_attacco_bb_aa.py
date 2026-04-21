@@ -9,13 +9,10 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
 
-# Carichiamo il dataset degli attacchi testuali (es. Semantic Renaming o Prompt Injection)
-# Assicurati che questo CSV abbia le colonne: 'codice_originale' e 'codice_perturbato'
 file_attacchi = "CSV tesi/Fixed/risultati_attacco_advanced.csv" 
 df_attacchi = pd.read_csv(file_attacchi)
 
 # Filtriamo solo gli attacchi che hanno avuto SUCCESSO (Falsi Negativi)
-# Se l'attacco ha fallito, non ha piegato lo spazio latente, quindi non ci interessa misurarlo.
 df_successi = df_attacchi[df_attacchi['target_predetto_adv'] == 'Sicuro']
 
 risultati_isomorfismo = []
@@ -55,7 +52,7 @@ for model_name, config in models_config.items():
         
         print(f" -> Layer chirurgico selezionato per l'analisi: {layer_locus}")
 
-        # Carichiamo il Vettore di Steering Matematico (La nostra freccia di riferimento)
+        # Carico il Vettore di Steering Matematico
         percorso_vettore = f"attivazioni_totali/steering_vector_{nome_modello_pulito}_layer_{layer_locus}.npy"
         if not os.path.exists(percorso_vettore):
             continue
@@ -65,7 +62,7 @@ for model_name, config in models_config.items():
         cosine_similarities = []
 
         for index, row in df_mod.iterrows():
-            codice_pulito = str(row['codice_originale']) # Dipende da come hai chiamato la colonna nello script advanced
+            codice_pulito = str(row['codice_originale']) 
             codice_hackerato = str(row['codice_perturbato'])
 
             def get_hidden_state(codice):
@@ -111,7 +108,7 @@ for model_name, config in models_config.items():
         print(f" -> Allineamento sull'asse (Valore Assoluto): {media_assoluta:.4f}")
         
         # Nota: In spazi a 4096 dimensioni, due vettori casuali hanno una cosine similarity quasi a 0.00
-        # Qualsiasi valore oltre 0.05 o sotto -0.05 è un forte segnale statistico!
+        # Qualsiasi valore oltre 0.05 o sotto -0.05 è un forte segnale statistico
 
         del model, tokenizer
         torch.cuda.empty_cache()

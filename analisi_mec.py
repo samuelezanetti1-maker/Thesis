@@ -11,7 +11,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
 
-# Creiamo le cartelle per i risultati
+# cartelle per i risultati
 os.makedirs("attivazioni_totali", exist_ok=True)
 os.makedirs("grafici_campana", exist_ok=True)
 
@@ -66,8 +66,8 @@ for model_name, config in models_config.items():
                 outputs = model(**inputs, output_hidden_states=True)
 
             # outputs.hidden_states è una tupla che contiene i tensori di tutti i layer
-            # Nota: il layer 0 spesso è l'embedding iniziale, noi iteriamo sui layer reali
-            hidden_states = outputs.hidden_states[1:] # Saltiamo l'embedding iniziale
+            # Nota: il layer 0 spesso è l'embedding iniziale
+            hidden_states = outputs.hidden_states[1:] # Salto l'embedding iniziale
 
             for layer_idx in range(num_layers):
                 # Estraiamo l'attivazione dell'ultimo token per questo specifico layer
