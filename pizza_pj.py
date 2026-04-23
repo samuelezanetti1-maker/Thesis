@@ -24,6 +24,7 @@ def benevolent_comment_injection(codice):
 
     return codice_modificato
 
+df_modello_TP = pd.read_csv("CSV tesi/Dataset/dataset_TP.csv")
 risultati_attacco_adversarial = []
 
 for model_name, config in models_config.items():

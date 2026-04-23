@@ -28,8 +28,8 @@ script_to_launch = [
     #"L2_calcolo_real_steering.py",
     #"black_box_L2.py",
     "pizza_pj.py",
-    "isomorfismo_wrong_aa.py",
-    "ismorfismo_wrong_ap.py",
+    "isomorfismo_pizza_pj.py",
+    "isomorfismo_wrong.py"
 
 ]
 
