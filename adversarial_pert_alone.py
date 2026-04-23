@@ -17,6 +17,17 @@ from utils import evaluate_response
 # 2) Benevolent Comment injection: inserisco commenti finti a inizio funzione
 # 3) Dead Code Injection: inserisco variabile finta e codice morto
 
+
+print(f"\n--- DIAGNOSTICA GPU ---")
+print(f"CUDA Disponibile per PyTorch: {torch.cuda.is_available()}")
+if torch.cuda.is_available():
+    print(f"Nome GPU: {torch.cuda.get_device_name(0)}")
+    print(f"Memoria Allocata: {torch.cuda.memory_allocated(0)}")
+else:
+    print("ALLARME: PyTorch non vede la GPU! Fallback su CPU in corso...")
+    exit() # Blocca tutto
+print(f"-----------------------\n")
+
 def space_injection(codice):
     codice = str(codice)
     caratteri_da_spaziare = ['(', ')', '{', '}', '[', ']', '=', '+', '-', '*', '/', '<', '>', ':']
