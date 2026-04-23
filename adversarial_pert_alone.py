@@ -122,6 +122,7 @@ for model_name, config in models_config.items():
         risultati_attacco_adversarial.append({
             "id_snippet": index,
             "modello": model_name,
+            "codice_originale": codice_originale,
             "codice_perturbato": codice_perturbato,
             "target_vero": row['target_vero'],
             "target_predetto_ap": target_predetto_adv
@@ -142,4 +143,4 @@ for model_name, config in models_config.items():
 
 ### Salvataggio globale
 df_attacchi = pd.DataFrame(risultati_attacco_adversarial)
-df_attacchi.to_csv("CSV tesi/risultati_attacco_adversarial_perturbation.csv", index=False)
+df_attacchi.to_csv("CSV tesi/Fixed/risultati_attacco_adversarial_perturbation.csv", index=False)
