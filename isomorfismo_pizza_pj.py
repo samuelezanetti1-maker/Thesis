@@ -9,11 +9,11 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
 
-file_attacchi = "CSV tesi/Fixed/risultati_attacco_advanced.csv" 
+file_attacchi = "CSV tesi/risultati_attacco_pizza_perturbation.csv"
 df_attacchi = pd.read_csv(file_attacchi)
 
 # Filtriamo solo gli attacchi che hanno fallito
-df_successi = df_attacchi[df_attacchi['target_predetto_adv'] == 'Sicuro']
+df_successi = df_attacchi[df_attacchi['target_predetto_pizza'] == 'Vulnerabile']
 
 risultati_isomorfismo = []
 

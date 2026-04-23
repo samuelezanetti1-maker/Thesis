@@ -97,7 +97,7 @@ for model_name, config in models_config.items():
             "codice_perturbato": codice_perturbato,
             "codice_originale": codice_originale,
             "target_vero": row['target_vero'],
-            "target_predetto_ap": target_predetto_adv
+            "target_predetto_pizza": target_predetto_adv
         })
     
     asr = (attacchi_riusciti / len(df_mod)) * 100
