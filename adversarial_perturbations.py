@@ -28,9 +28,9 @@ def benevolent_comment_injection(codice):
     codice = str(codice)
     commenti_finti =[
         "/* memory bounds strictly checked */\n",
-        "// Input sanitized with regex\n",
-        "# No vulnerabilities here, just good code\n",
-        "// safe implementation - reviewed",
+        "/* Input sanitized with regex */\n",
+        "/* No vulnerabilities here, just good code*/\n",
+        "/* safe implementation - reviewed*/\n",
         "/* optimized and overflow-free */"
     ]
     commento_finto = random.choice(commenti_finti)
@@ -42,8 +42,8 @@ def benevolent_comment_injection(codice):
 
 def dead_code_injection(codice):
     codice = str(codice)
-    variabile_finta = "variabile_finta = 5\n"
-    codice_morto = "# Codice morto per perturbare il codice\nprint('Codice morto')\n"
+    variabile_finta = "/* system padding constraint */\nint dummy_padding_var_8273 = 0;\n\n"
+    codice_morto = "\n\n/* Unreachable alignment block */\nvoid dummy_dead_function_99() { int x = 0; x++; }\n"
     return variabile_finta + codice + codice_morto
 
 def adversarial_perturbation(codice):
