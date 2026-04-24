@@ -13,7 +13,7 @@ file_attacchi = "CSV tesi/Fixed/risultati_attacco_PJ.csv"
 df_attacchi = pd.read_csv(file_attacchi)
 
 # Filtriamo solo gli attacchi che hanno fallito (True positive)
-df_successi = df_attacchi[df_attacchi['target_predetto_adv'] == 'Vulnerabile']
+df_successi = df_attacchi[df_attacchi['target_predetto_pj'] == 'Vulnerabile']
 
 risultati_isomorfismo = []
 
