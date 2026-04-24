@@ -9,11 +9,11 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
 
-file_attacchi = "CSV tesi/Fixed/risultati_attacco_adversarial_perturbation.csv" 
+file_attacchi = "CSV tesi/Fixed/risultati_attacco_advanced.csv" 
 df_attacchi = pd.read_csv(file_attacchi)
 
-# Filtriamo solo gli attacchi che hanno avuto SUCCESSO (Falsi Negativi)
-df_successi = df_attacchi[df_attacchi['target_predetto_ap'] == 'Sicuro']
+# Filtriamo solo gli attacchi che hanno fallito (True positive)
+df_successi = df_attacchi[df_attacchi['target_predetto_adv'] == 'Vulnerabile']
 
 risultati_isomorfismo = []
 
@@ -25,7 +25,7 @@ for model_name, config in models_config.items():
 
     nome_modello_pulito = model_name.replace("/", "_")
     print("\n" + "="*70)
-    print(f" RICERCA TEORIA UNIFICATA SU: {model_name} ({len(df_mod)} attacchi riusciti)")
+    print(f" RICERCA TEORIA UNIFICATA SU: {model_name} ({len(df_mod)} attacchi falliti)")
     print("="*70)
 
     try:
@@ -42,9 +42,9 @@ for model_name, config in models_config.items():
          #   "Qwen/Qwen2.5-7B-Instruct": 18, 
           #  "Qwen/Qwen2.5-Coder-7B-Instruct": 18,
            # "meta-llama/Llama-3.1-8B-Instruct": 15,
-            #"codellama/CodeLlama-7b-Instruct-hf": 13,
-            #"deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": 19,
-            #"deepseek-ai/deepseek-coder-6.7b-instruct": 16,
+           # "codellama/CodeLlama-7b-Instruct-hf": 13,
+           # "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": 19,
+           # "deepseek-ai/deepseek-coder-6.7b-instruct": 16,
             
         #}
 
@@ -119,5 +119,5 @@ for model_name, config in models_config.items():
         continue
 
 df_finale = pd.DataFrame(risultati_isomorfismo)
-df_finale.to_csv("CSV tesi/best_convergenza_isomorfismo_perturbation.csv", index=False)
-print("\n[+] Dati sull'isomorfismo salvati in 'CSV tesi/best_convergenza_isomorfismo_perturbation.csv'")
+df_finale.to_csv("CSV tesi/failure_isomorfismo_advanced.csv", index=False)
+print("\n[+] Dati sull'isomorfismo salvati in 'CSV tesi/failure_isomorfismo_advanced.csv'")

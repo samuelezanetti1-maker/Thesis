@@ -9,7 +9,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
 
-file_attacchi = "CSV tesi/Fixed/risultati_attacco_advanced.csv" 
+file_attacchi = "CSV tesi/Fixed/risultati_attacco_PJ.csv" 
 df_attacchi = pd.read_csv(file_attacchi)
 
 # Filtriamo solo gli attacchi che hanno fallito (True positive)
@@ -25,7 +25,7 @@ for model_name, config in models_config.items():
 
     nome_modello_pulito = model_name.replace("/", "_")
     print("\n" + "="*70)
-    print(f" RICERCA TEORIA UNIFICATA SU: {model_name} ({len(df_mod)} attacchi riusciti)")
+    print(f" RICERCA TEORIA UNIFICATA SU: {model_name} ({len(df_mod)} attacchi falliti)")
     print("="*70)
 
     try:
@@ -49,7 +49,8 @@ for model_name, config in models_config.items():
         }
 
         layer_locus = layer_ottimali.get(model_name, int(len(model.model.layers) * 0.59))
-        
+        #layer_locus = int(len(model.model.layers) * 0.59)
+
         print(f" -> Layer chirurgico selezionato per l'analisi: {layer_locus}")
 
         # Carico il Vettore di Steering Matematico
@@ -118,5 +119,5 @@ for model_name, config in models_config.items():
         continue
 
 df_finale = pd.DataFrame(risultati_isomorfismo)
-df_finale.to_csv("CSV tesi/failure_convergenza_isomorfismo_advanced.csv", index=False)
-print("\n[+] Dati sull'isomorfismo salvati in 'CSV tesi/failure_convergenza_isomorfismo_advanced.csv'")
+df_finale.to_csv("CSV tesi/failure_isomorfismo_pj_weakest_layer.csv", index=False)
+print("\n[+] Dati sull'isomorfismo salvati in 'CSV tesi/failure_isomorfismo_pj_weakest_layer.csv'")

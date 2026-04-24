@@ -27,11 +27,18 @@ script_to_launch = [
     #"L2_steering_graph.py",
     #"L2_calcolo_real_steering.py",
     #"black_box_L2.py",
-    "adversarial_pert_alone.py",
-    "pizza_pj.py",
+    #"adversarial_pert_alone.py",
+    #"pizza_pj.py",
     "isomorfismo_attacco_bb_ap.py",
     "isomorfismo_pizza_pj.py",
-    #"isomorfismo_wrong.py"
+    "L2_pert.py",
+    "isomorfismo_wrong_pj.py",
+    "isomorfismo_wrong_PJ_weakest_layer.py",
+    "isomorfismo_wrong_aa.py",
+    "isomorfismo_wrong_aa_weakest_layer.py",
+    "isomorfismo_wrong_ap.py",
+    "isomorfismo_wrong_ap_weakest_layer.py"
+    "L2_all_fail.py"
 
 ]
 

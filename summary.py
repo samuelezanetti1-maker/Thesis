@@ -4,12 +4,13 @@ os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
 
 # Percorsi dei file 
 percorsi = {
-    "Adversarial Perturbations": "CSV tesi/risultati_attacco_adversarial_perturbation.csv",
+    "Adversarial Perturbations": "CSV tesi/Fixed/risultati_attacco_adversarial_perturbation.csv",
     "Prompt Injection": "CSV tesi/risultati_attacco_PJ.csv",
     "Activation Steering": "CSV tesi/risultati_attacco_steering.csv",
     "Advanced Adversarial": "CSV tesi/risultati_attacco_advanced.csv",
     "Logit Bias": "CSV tesi/risultati_attacco_logits.csv",
     "Snipe Steering": "CSV tesi/risultati_attacco_mirato_steering.csv",
+    "Pizza Perturbation": "CSV tesi/risultati_attacco_pizza_perturbation.csv"
 }
 
 colonne_predizione = {
@@ -18,7 +19,8 @@ colonne_predizione = {
     "Activation Steering": "predizione_post_steering",
     "Advanced Adversarial": "target_predetto_adv",
     "Logit Bias": "predizione_post_bias",
-    "Snipe Steering": "predizione_post_steering"
+    "Snipe Steering": "predizione_post_steering",
+    "Pizza Perturbation": "target_predetto_pizza"
 }
 
 dati_riepilogo = []

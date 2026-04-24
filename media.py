@@ -6,7 +6,7 @@ import numpy as np
 import torch.nn.functional as F
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-file_attacchi = "CSV tesi/best_convergenza_isomorfismo_advanced.csv" 
+file_attacchi = "CSV tesi/failure_convergenza_isomorfismo_advanced.csv" 
 df_attacchi = pd.read_csv(file_attacchi)
 
 risultati_media = []
