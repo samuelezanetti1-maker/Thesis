@@ -7,6 +7,16 @@ import torch
 gc.collect()
 torch.cuda.empty_cache()
 
+print(f"\n--- DIAGNOSTICA GPU ---")
+print(f"CUDA Disponibile per PyTorch: {torch.cuda.is_available()}")
+if torch.cuda.is_available():
+    print(f"Nome GPU: {torch.cuda.get_device_name(0)}")
+    print(f"Memoria Allocata: {torch.cuda.memory_allocated(0)}")
+else:
+    print("ALLARME: PyTorch non vede la GPU! Fallback su CPU in corso...")
+    exit() # Blocca tutto
+print(f"-----------------------\n")
+
 script_to_launch = [
    # "baseline.py",
     # "adversarial_perturbations.py",
