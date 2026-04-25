@@ -48,9 +48,9 @@ script_to_launch = [
     #"isomorfismo_wrong_ap.py",
     #"isomorfismo_wrong_ap_weakest_layer.py",
     #"L2_all_fail.py",
-    #"isomorfismo_aa_ap.py",
-    #"isomorfismo_ap_pj.py",
-    #"isomorfismo_aa_pj.py",
+    "isomorfismo_aa_ap.py",
+    "isomorfismo_ap_pj.py",
+    "isomorfismo_aa_pj.py",
     "logit_lens_semantic.py"
 
 ]
