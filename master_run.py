@@ -42,12 +42,11 @@ script_to_launch = [
     #"isomorfismo_attacco_bb_ap.py",  
     #"isomorfismo_pizza_pj.py", 
     #"L2_pert.py", 
-    "isomorfismo_wrong_pj.py",
-    "isomorfismo_wrong_PJ_weakest_layer.py",
+    #"isomorfismo_wrong_pj.py", #fatto
+    #"isomorfismo_wrong_PJ_weakest_layer.py", #fatto
     "isomorfismo_wrong_aa.py",
-    "isomorfismo_wrong_aa_weakest_layer.py",
     "isomorfismo_wrong_ap.py",
-    "isomorfismo_wrong_ap_weakest_layer.py"
+    "isomorfismo_wrong_ap_weakest_layer.py",
     "L2_all_fail.py"
 
 ]
