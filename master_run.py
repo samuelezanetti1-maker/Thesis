@@ -37,7 +37,7 @@ script_to_launch = [
     #"L2_steering_graph.py",
     #"L2_calcolo_real_steering.py",
     #"black_box_L2.py",
-    #"adversarial_pert_alone.py",
+    "adversarial_pert_alone.py",
     #"pizza_pj.py",
     #"isomorfismo_attacco_bb_ap.py",  
     #"isomorfismo_pizza_pj.py", 
@@ -48,9 +48,9 @@ script_to_launch = [
     #"isomorfismo_wrong_ap.py",
     #"isomorfismo_wrong_ap_weakest_layer.py",
     #"L2_all_fail.py",
-    "isomorfismo_aa_ap.py",
-    "isomorfismo_ap_pj.py",
-    "isomorfismo_aa_pj.py"
+    #"isomorfismo_aa_ap.py",
+    #"isomorfismo_ap_pj.py",
+    #"isomorfismo_aa_pj.py"
 
 ]
 
