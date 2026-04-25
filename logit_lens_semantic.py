@@ -97,6 +97,14 @@ def prompt_injection(codice):
 df_baseline = pd.read_csv("CSV tesi/Dataset/dataset_TRUE.csv")
 os.makedirs("txt_tesi/Logit_Lens", exist_ok=True)
 
+df_aa = pd.read_csv("CSV tesi/Fixed/risultati_attacco_advanced.csv")
+df_pi = pd.read_csv("CSV tesi/Fixed/risultati_attacco_PJ.csv")
+df_ap = pd.read_csv("CSV tesi/Fixed/risultati_attacco_adversarial_perturbation.csv")
+
+df_aa_succ = df_aa[df_aa['target_predetto_adv'] == 'Sicuro']
+df_pi_succ = df_pi[df_pi['target_predetto_pj'] == 'Sicuro']
+df_ap_succ = df_ap[df_ap['target_predetto_ap'] == 'Sicuro']
+
 # Limite campioni per non metterci una vita (30 bastano per estrarre la direzione semantica media)
 N_CAMPIONI = 30 
 
@@ -135,49 +143,52 @@ for model_name, config in models_config.items():
 
         # 1. Estraiamo gli shift medi per gli attacchi testuali
         print(" -> Calcolo delle direzioni vettoriali medie in corso...")
-        for _, row in df_mod.iterrows():
-            cod_pulito = str(row['codice'])
-            h_clean = get_hidden_state(cod_pulito)
-            
-            shift_aa_list.append(get_hidden_state(advanced_adversarial_attack(cod_pulito)) - h_clean)
-            shift_pj_list.append(get_hidden_state(prompt_injection(cod_pulito)) - h_clean)
-            shift_ap_list.append(get_hidden_state(adversarial_perturbation(cod_pulito)) - h_clean)
+        codici_aa = df_aa_succ[df_aa_succ['modello'] == model_name]['codice_originale'].head(N_CAMPIONI).tolist()
+        codici_pi = df_pi_succ[df_pi_succ['modello'] == model_name]['codice_originale'].head(N_CAMPIONI).tolist()
+        codici_ap = df_ap_succ[df_ap_succ['modello'] == model_name]['codice_originale'].head(N_CAMPIONI).tolist()
 
-        vettore_aa = torch.mean(torch.stack(shift_aa_list), dim=0)
-        vettore_pj = torch.mean(torch.stack(shift_pj_list), dim=0)
-        vettore_ap = torch.mean(torch.stack(shift_ap_list), dim=0)
+        print(" -> Calcolo delle direzioni vettoriali sui successi...")
+        
+        # AA
+        for cod in codici_aa:
+            shift_aa_list.append(get_hidden_state(advanced_adversarial_attack(cod)) - get_hidden_state(cod))
+        # PI
+        for cod in codici_pi:
+            shift_pj_list.append(get_hidden_state(prompt_injection(cod)) - get_hidden_state(cod))
+        # AP
+        for cod in codici_ap:
+            shift_ap_list.append(get_hidden_state(adversarial_perturbation(cod)) - get_hidden_state(cod))
 
-        # 2. Carichiamo il vettore di Steering Vanilla dal disco
+        vettore_aa = torch.mean(torch.stack(shift_aa_list), dim=0) if shift_aa_list else None
+        vettore_pj = torch.mean(torch.stack(shift_pj_list), dim=0) if shift_pj_list else None
+        vettore_ap = torch.mean(torch.stack(shift_ap_list), dim=0) if shift_ap_list else None
+
+        # Carichiamo il vettore di Steering Vanilla dal disco
         path_steering = f"attivazioni_totali/steering_vector_{nome_file_safe}_layer_{layer_locus}.npy"
-        if os.path.exists(path_steering):
-            vettore_steering = torch.tensor(np.load(path_steering), dtype=model.dtype, device=model.device)
-        else:
-            vettore_steering = None
+        vettore_steering = torch.tensor(np.load(path_steering), dtype=model.dtype, device=model.device) if os.path.exists(path_steering) else None
 
         # ==========================================
         # 3. LA MAGIA: PROIEZIONE SUL VOCABOLARIO (LOGIT LENS)
         # ==========================================
-        lm_head = model.get_output_embeddings() # Matrice di decodifica (Vocabolario)
+        lm_head = model.get_output_embeddings() 
+        final_layernorm = model.model.norm  # <--- ECCO LA TUA INTUIZIONE!
 
         def decodifica_direzione(vettore, titolo, file_log):
-            if vettore is None: return
+            if vettore is None: 
+                file_log.write(f"--- I 15 TOKEN CHE 'ABITANO' LA DIREZIONE: {titolo} ---\n  [Nessun successo registrato per questo attacco]\n\n")
+                return
             
-            # Normalizziamo il vettore per evitare pesi estremi
-            vettore = vettore / torch.norm(vettore)
-            
-            # Moltiplicazione del vettore per l'intera matrice del vocabolario
+            # Applichiamo la LayerNorm FINALE per allineare il vettore al vocabolario
             with torch.no_grad():
-                logits = lm_head(vettore)
+                vettore_norm = final_layernorm(vettore.to(model.dtype))
+                logits = lm_head(vettore_norm)
             
-            # Prendiamo i 15 token più allineati con questa direzione
             top_k_val, top_k_idx = torch.topk(logits, 15)
             
             file_log.write(f"--- I 15 TOKEN CHE 'ABITANO' LA DIREZIONE: {titolo} ---\n")
             for val, idx in zip(top_k_val, top_k_idx):
-                token_decodificato = tokenizer.decode([idx.item()])
-                # Puliamo i caratteri speciali comuni
-                token_pulito = token_decodificato.replace('\n', '\\n').strip()
-                file_log.write(f"  [{val.item():.2f}] -> '{token_pulito}'\n")
+                token_decodificato = tokenizer.decode([idx.item()]).replace('\n', '\\n').strip()
+                file_log.write(f"  [{val.item():.2f}] -> '{token_decodificato}'\n")
             file_log.write("\n")
 
         # Scrittura del Report
