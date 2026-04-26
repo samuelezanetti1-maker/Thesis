@@ -45,6 +45,14 @@ def safe_norm(v1, v2):
 
 df_modello_TRUE = pd.read_csv("CSV tesi/Dataset/dataset_TRUE.csv")
 df_steering_res = pd.read_csv("CSV tesi/risultati_attacco_medie_steering.csv")
+df_TP = pd.read_csv("CSV tesi/Dataset/dataset_TP.csv")
+
+# Creiamo il mapping: associamo l'indice del dataset_TP al testo del codice
+# Questo è fondamentale perché risultati_attacco_medie_steering.csv ha solo l'id_snippet
+mapping_dict = df_TP['codice'].to_dict() 
+
+# Aggiungiamo la colonna del codice al DataFrame dei risultati dello steering
+df_steering_res['codice_originale'] = df_steering_res['id_snippet'].map(mapping_dict)
 
 for model_name, config in models_config.items():
     print(f"\n{'='*50}\nElaborazione VERO COLLASSO L2: {model_name}\n{'='*50}")
@@ -94,7 +102,11 @@ for model_name, config in models_config.items():
             del outputs_vanilla
 
             # Controlla l'esito dello steering per questo snippet
-            riga_res = risultati_mod[risultati_mod['id_snippet'] == index]
+            riga_res = df_steering_res[
+            (df_steering_res['modello'] == model_name) & 
+            (df_steering_res['moltiplicatore'] == moltiplicatore) &
+            (df_steering_res['codice_originale'] == codice)
+    ]
             if len(riga_res) > 0:
                 esito = riga_res.iloc[0]['predizione_post_steering']
                 
