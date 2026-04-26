@@ -5,9 +5,9 @@ os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
 # Percorsi dei file 
 percorsi = {
     "Adversarial Perturbations": "CSV tesi/Fixed/risultati_attacco_adversarial_perturbation.csv",
-    "Prompt Injection": "CSV tesi/risultati_attacco_PJ.csv",
-    "Activation Steering": "CSV tesi/risultati_attacco_steering.csv",
-    "Advanced Adversarial": "CSV tesi/risultati_attacco_advanced.csv",
+    "Prompt Injection": "CSV tesi/Fixed/risultati_attacco_PJ.csv",
+    "Activation Steering": "CSV tesi/risultati_attacco_medie_steering.csv",
+    "Advanced Adversarial": "CSV tesi/Fixed/risultati_attacco_advanced.csv",
     "Logit Bias": "CSV tesi/risultati_attacco_logits.csv",
     "Snipe Steering": "CSV tesi/risultati_attacco_mirato_steering.csv",
     "Pizza Perturbation": "CSV tesi/risultati_attacco_pizza_perturbation.csv"

@@ -44,7 +44,7 @@ def safe_norm(v1, v2):
     return np.nan
 
 df_modello_TRUE = pd.read_csv("CSV tesi/Dataset/dataset_TRUE.csv")
-df_steering_res = pd.read_csv("CSV tesi/risultati_attacco_steering.csv")
+df_steering_res = pd.read_csv("CSV tesi/risultati_attacco_medie_steering.csv")
 
 for model_name, config in models_config.items():
     print(f"\n{'='*50}\nElaborazione VERO COLLASSO L2: {model_name}\n{'='*50}")
