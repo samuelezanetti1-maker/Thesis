@@ -177,10 +177,10 @@ for model_name, config in models_config.items():
         vettore_steering = torch.tensor(np.load(path_steering), dtype=model.dtype, device=model.device) if os.path.exists(path_steering) else None
 
         # ==========================================
-        # 3. LA MAGIA: PROIEZIONE SUL VOCABOLARIO (LOGIT LENS)
+        # 3. PROIEZIONE SUL VOCABOLARIO (LOGIT LENS)
         # ==========================================
         lm_head = model.get_output_embeddings() 
-        final_layernorm = model.model.norm  # <--- ECCO LA TUA INTUIZIONE!
+        final_layernorm = model.model.norm  
 
         def decodifica_direzione(vettore, titolo, file_log):
             if vettore is None: 
