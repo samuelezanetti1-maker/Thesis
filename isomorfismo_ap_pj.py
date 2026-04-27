@@ -52,18 +52,32 @@ def adversarial_perturbation(codice):
     codice = dead_code_injection(codice)
     return codice
 
-df_baseline = pd.read_csv("CSV tesi/Dataset/dataset_TRUE.csv")
+df_pj = pd.read_csv("CSV tesi/Fixed/risultati_attacco_PJ.csv")
+df_ap = pd.read_csv("CSV tesi/Fixed/risultati_attacco_adversarial_perturbation.csv")
 
 risultati_cross_isomorfismo = []
 
 for model_name, config in models_config.items():
     
-    df_mod = df_baseline[(df_baseline['modello'] == model_name) & (df_baseline['target_vero'] == 'Vulnerabile')]
-    if len(df_mod) == 0:
+    # 1. Filtriamo per il modello corrente
+    df_pj_mod = df_pj[df_pj['modello'] == model_name]
+    df_ap_mod = df_ap[df_ap['modello'] == model_name]
+
+    # 2. Uniamo i due CSV usando il 'codice_originale' come chiave
+    df_merged = pd.merge(df_pj_mod, df_ap_mod, on='codice_originale', suffixes=('_pj', '_ap'))
+
+    # 3. IL FILTRO MAGICO: Teniamo solo i codici dove ENTRAMBI hanno detto "Sicuro" (Falsi Negativi)
+    df_successi_congiunti = df_merged[
+        (df_merged['target_predetto_pj'] == 'Sicuro') & 
+        (df_merged['target_predetto_ap'] == 'Sicuro')
+    ]
+
+    if len(df_successi_congiunti) == 0:
+        print(f"\nNessun successo congiunto trovato per {model_name}. Salto.")
         continue
 
     print("\n" + "="*70)
-    print(f" RICERCA CROSS-CORRELATION (PJ vs AP) SU: {model_name} ({len(df_mod)} snippet)")
+    print(f" RICERCA CROSS-CORRELATION (PJ vs AP) SU: {model_name} ({len(df_successi_congiunti)} evasioni congiunte)")
     print("="*70)
 
     try:
@@ -76,16 +90,16 @@ for model_name, config in models_config.items():
             )
         
         layer_per_modello = {
-        "Qwen/Qwen2.5-7B-Instruct": 18,
-        "Qwen/Qwen2.5-Coder-7B-Instruct": 18,
-        "meta-llama/Llama-3.1-8B-Instruct": 15,
-        "codellama/CodeLlama-7b-Instruct-hf": 13,
-        "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": 19,
-        "deepseek-ai/deepseek-coder-6.7b-instruct": 16
+            "Qwen/Qwen2.5-7B-Instruct": 18,
+            "Qwen/Qwen2.5-Coder-7B-Instruct": 18,
+            "meta-llama/Llama-3.1-8B-Instruct": 15,
+            "codellama/CodeLlama-7b-Instruct-hf": 13,
+            "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": 19,
+            "deepseek-ai/deepseek-coder-6.7b-instruct": 16
         }
 
         layer_locus = layer_per_modello.get(model_name)
-        print(f" -> Layer selezionato per l'analisi: {layer_locus}")
+        print(f" -> Layer selezionato per l'analisi:{layer_locus}")
 
         cosine_similarities = []
 
@@ -98,15 +112,15 @@ for model_name, config in models_config.items():
             with torch.no_grad():
                 outputs = model(**inputs, output_hidden_states=True)
             
-            # Estrazione attivazione
             return outputs.hidden_states[layer_locus][0, -1, :]
 
-        for index, row in df_mod.iterrows():
-            codice_pulito = str(row['codice']) 
+        # 4. ITERIAMO SOLO SUI SUCCESSI CONGIUNTI
+        for index, row in df_successi_congiunti.iterrows():
+            codice_pulito = str(row['codice_originale']) 
             
-            # Generazione attacchi al volo
-            codice_ap = adversarial_perturbation(codice_pulito)
+            # Generazione attacchi al volo (come facevi tu, va benissimo)
             codice_pj = prompt_injection(codice_pulito)
+            codice_ap = adversarial_perturbation(codice_pulito)
 
             # 1. Fotografa il pensiero pulito
             h_clean = get_hidden_state(codice_pulito)

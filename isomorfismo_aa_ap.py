@@ -82,18 +82,32 @@ def adversarial_perturbation(codice):
     codice = dead_code_injection(codice)
     return codice
 
-df_baseline = pd.read_csv("CSV tesi/Dataset/dataset_TRUE.csv")
+df_adv = pd.read_csv("CSV tesi/Fixed/risultati_attacco_advanced.csv")
+df_ap = pd.read_csv("CSV tesi/Fixed/risultati_attacco_adversarial_perturbation.csv")
 
 risultati_cross_isomorfismo = []
 
 for model_name, config in models_config.items():
     
-    df_mod = df_baseline[(df_baseline['modello'] == model_name) & (df_baseline['target_vero'] == 'Vulnerabile')]
-    if len(df_mod) == 0:
+    # 1. Filtriamo per il modello corrente
+    df_adv_mod = df_adv[df_adv['modello'] == model_name]
+    df_ap_mod = df_ap[df_ap['modello'] == model_name]
+
+    # 2. Uniamo i due CSV usando il 'codice_originale' come chiave
+    df_merged = pd.merge(df_adv_mod, df_ap_mod, on='codice_originale', suffixes=('_adv', '_ap'))
+
+    # 3. IL FILTRO MAGICO: Teniamo solo i codici dove ENTRAMBI hanno detto "Sicuro" (Falsi Negativi)
+    df_successi_congiunti = df_merged[
+        (df_merged['target_predetto_adv'] == 'Sicuro') & 
+        (df_merged['target_predetto_ap'] == 'Sicuro')
+    ]
+
+    if len(df_successi_congiunti) == 0:
+        print(f"\nNessun successo congiunto trovato per {model_name}. Salto.")
         continue
 
     print("\n" + "="*70)
-    print(f" RICERCA CROSS-CORRELATION (AA vs AP) SU: {model_name} ({len(df_mod)} snippet)")
+    print(f" RICERCA CROSS-CORRELATION (AA vs AP) SU: {model_name} ({len(df_successi_congiunti)} evasioni congiunte)")
     print("="*70)
 
     try:
@@ -106,12 +120,12 @@ for model_name, config in models_config.items():
             )
         
         layer_per_modello = {
-        "Qwen/Qwen2.5-7B-Instruct": 18,
-        "Qwen/Qwen2.5-Coder-7B-Instruct": 18,
-        "meta-llama/Llama-3.1-8B-Instruct": 15,
-        "codellama/CodeLlama-7b-Instruct-hf": 13,
-        "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": 19,
-        "deepseek-ai/deepseek-coder-6.7b-instruct": 16
+            "Qwen/Qwen2.5-7B-Instruct": 18,
+            "Qwen/Qwen2.5-Coder-7B-Instruct": 18,
+            "meta-llama/Llama-3.1-8B-Instruct": 15,
+            "codellama/CodeLlama-7b-Instruct-hf": 13,
+            "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": 19,
+            "deepseek-ai/deepseek-coder-6.7b-instruct": 16
         }
 
         layer_locus = layer_per_modello.get(model_name)
@@ -128,13 +142,13 @@ for model_name, config in models_config.items():
             with torch.no_grad():
                 outputs = model(**inputs, output_hidden_states=True)
             
-            # Estrazione attivazione
             return outputs.hidden_states[layer_locus][0, -1, :]
 
-        for index, row in df_mod.iterrows():
-            codice_pulito = str(row['codice']) 
+        # 4. ITERIAMO SOLO SUI SUCCESSI CONGIUNTI
+        for index, row in df_successi_congiunti.iterrows():
+            codice_pulito = str(row['codice_originale']) 
             
-            # Generazione attacchi al volo
+            # Generazione attacchi al volo (come facevi tu, va benissimo)
             codice_aa = advanced_adversarial_attack(codice_pulito)
             codice_ap = adversarial_perturbation(codice_pulito)
 
