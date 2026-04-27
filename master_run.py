@@ -51,8 +51,8 @@ script_to_launch = [
     #"isomorfismo_aa_ap.py",
     #"isomorfismo_ap_pj.py",
     #"isomorfismo_aa_pj.py",
-    #"logit_lens_semantic.py",
-    "isomorfismo_steering.py"
+    "logit_lens_semantic.py",
+    #"isomorfismo_steering.py"
 
 ]
 

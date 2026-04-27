@@ -6,7 +6,7 @@ import numpy as np
 import torch.nn.functional as F
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-file_attacchi = "CSV tesi/best_convergenza_isomorfismo_pj.csv" 
+file_attacchi = "CSV tesi/Isomorfismo_Steering.csv" 
 df_attacchi = pd.read_csv(file_attacchi)
 
 risultati_media = []
@@ -22,16 +22,16 @@ for model_name, config in models_config.items():
     print(f" CALCOLO MEDIA ISOMORFISMO SU: {model_name} ({len(df_mod)} attacchi riusciti)")
     print("="*70)
 
-    media_isomorfismo_cosine = df_mod['cosine_similarity'].mean()
+    media_isomorfismo_cosine = df_mod['cos_sim_stesso_layer'].mean()
     risultati_media.append({
         "modello": model_name,
         "cosine_similarity_media": media_isomorfismo_cosine
     })
 
-    media_isomorfismo_abs = df_mod['valore_assoluto_allineamento'].mean()
+    media_isomorfismo_abs = df_mod['cos_sim_penultimo_layer'].mean()
     risultati_media.append({
         "modello": model_name,
-        "media_isomorfismo": media_isomorfismo_abs
+        "penultimo layer_media": media_isomorfismo_abs
     })
 
     print(f"modello:{model_name}: media isomorfismo: {media_isomorfismo_abs}\n media cosine similarity: {media_isomorfismo_cosine}")
