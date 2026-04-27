@@ -48,7 +48,7 @@ for model_name, config in models_config.items():
             
         }
 
-        layer_locus = layer_ottimali.get(model_name, int(len(model.model.layers) * 0.59))
+        layer_locus = layer_ottimali.get(model_name, int(len(model.model.layers) * 0.55))
         
         print(f" -> Layer chirurgico selezionato per l'analisi: {layer_locus}")
 
