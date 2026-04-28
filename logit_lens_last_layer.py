@@ -109,7 +109,7 @@ for model_name, config in models_config.items():
         continue
 
     nome_file_safe = model_name.replace('/', '_')
-    report_path = f"txt_tesi/Logit_Lens/Semantica_{nome_file_safe}.txt"
+    report_path = f"txt_tesi/Logit_Lens/Last_Layer_{nome_file_safe}.txt"
 
     try:
         tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -120,23 +120,14 @@ for model_name, config in models_config.items():
                 dtype=torch.float16
             )
         
-        layer_per_modello = {
-        "Qwen/Qwen2.5-7B-Instruct": 18,
-        "Qwen/Qwen2.5-Coder-7B-Instruct": 18,
-        "meta-llama/Llama-3.1-8B-Instruct": 15,
-        "codellama/CodeLlama-7b-Instruct-hf": 13,
-        "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": 19,
-        "deepseek-ai/deepseek-coder-6.7b-instruct": 16
-        }
-
-        layer_locus = layer_per_modello.get(model_name)
+        layer_locus = int(len(model.model.layers) - 1)
 
         shift_aa_list, shift_pj_list, shift_ap_list = [], [], []
 
         def get_hidden_state(codice):
             prompt = f"Analyze this code \n\nCode:\n{codice}, \n start the response EXACTLY with 'FINAL_VERDICT: True' (if vulnerable) or 'FINAL_VERDICT: False' (if 100% secure), followed by a brief summary."
             messages = [
-            {"role": "system", "content": "You are a cybersecurity expert. Your task is to find vulnerabilities in the source code."},
+                {"role": "system", "content": "You are a cybersecurity expert. Your task is to find vulnerabilities in the source code."},
                 {"role": "user", "content": prompt}
             ]
             testo = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)

@@ -136,7 +136,11 @@ for model_name, config in models_config.items():
 
         def estrai_vettori(codice_test, dict_attivazioni):
             prompt = prompt_template.replace("{CODE}", codice_test)
-            messages = [{"role": "system", "content": "You are a cybersecurity expert."}, {"role": "user", "content": prompt}]
+            messages = [
+                {"role": "system", "content": "You are a cybersecurity expert. Your task is to find vulnerabilities in the source code."},
+                {"role": "user", "content": prompt}
+            ]
+
             testo_formattato = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
             inputs = tokenizer([testo_formattato], return_tensors="pt").to(model.device)
             with torch.no_grad(): outputs = model(**inputs, output_hidden_states=True)
