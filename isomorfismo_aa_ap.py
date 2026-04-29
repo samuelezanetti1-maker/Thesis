@@ -151,7 +151,7 @@ for model_name, config in models_config.items():
         for index, row in df_successi_congiunti.iterrows():
             codice_pulito = str(row['codice_originale']) 
             
-            # Generazione attacchi al volo (come facevi tu, va benissimo)
+            # Generazione attacchi al volo
             codice_aa = advanced_adversarial_attack(codice_pulito)
             codice_ap = adversarial_perturbation(codice_pulito)
 
