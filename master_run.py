@@ -57,6 +57,7 @@ script_to_launch = [
     #"logit_lens_last_layer.py",
     #"isomorfismo_steering.py",
     "black_box_vuln_L2.py",
+    "vuln_steering_L2.py",
 
 ]
 
