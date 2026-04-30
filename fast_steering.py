@@ -20,6 +20,15 @@ moltiplicatori_per_modello = {
     "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": [10],
     "deepseek-ai/deepseek-coder-6.7b-instruct": [8]
 }
+
+layer_per_modello = {
+    "Qwen/Qwen2.5-7B-Instruct": [18],
+    "Qwen/Qwen2.5-Coder-7B-Instruct": [18],
+    "meta-llama/Llama-3.1-8B-Instruct": [15],
+    "codellama/CodeLlama-7b-Instruct-hf": [13],
+    "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": [19],
+    "deepseek-ai/deepseek-coder-6.7b-instruct": [16]
+}
   
 
 
@@ -78,7 +87,7 @@ for model_name, config in models_config.items():
                 dtype=config.get("dtype", torch.float16)
             )
 
-        layer_corretto = len(model.model.layers) // 2 
+        layer_corretto =  layer_per_modello.get(model_name, int(len(model.model.layers) * 0.55))
         print(f"Il modello ha {len(model.model.layers)} layer. Attacchiamo il centrale: {layer_corretto}")
 
         nome_file_safe = model_name.replace('/', '_')
@@ -201,8 +210,8 @@ for model_name, config in models_config.items():
 
 # --- 4. SALVATAGGI FINALI ---
 df_steering = pd.DataFrame(risultati_attacco_steering)
-df_steering.to_csv("CSV tesi/risultati_attacco_medie_steering.csv", index=False)
-print("\nSalvataggio CSV completato in 'CSV tesi/risultati_attacco_medie_steering.csv'")
+df_steering.to_csv("CSV tesi/risultati_attacco_steering.csv", index=False)
+print("\nSalvataggio CSV completato in 'CSV tesi/risultati_attacco_steering.csv'")
 
 percorso_txt_riassunto = "CSV tesi/riassunto_ASR_centrale.txt"
 with open(percorso_txt_riassunto, "w", encoding="utf-8") as f:
@@ -212,5 +221,5 @@ with open(percorso_txt_riassunto, "w", encoding="utf-8") as f:
         f.write(riga + "\n")
 
 df_aggregato_centrale = pd.DataFrame(risultati_aggregati_centrale)
-df_aggregato_centrale.to_csv("CSV tesi/percentuali_medie_aggregate.csv", index=False)
-print("CSV aggregato salvato in 'CSV tesi/percentuali_medie_aggregate.csv'")
+df_aggregato_centrale.to_csv("CSV tesi/percentuali_steering.csv", index=False)
+print("CSV aggregato salvato in 'CSV tesi/percentuali_steering.csv'")

@@ -44,7 +44,7 @@ def safe_norm(v1, v2):
     return np.nan
 
 df_modello_TRUE = pd.read_csv("CSV tesi/Dataset/dataset_TRUE.csv")
-df_steering_res = pd.read_csv("CSV tesi/risultati_attacco_medie_steering.csv")
+df_steering_res = pd.read_csv("CSV tesi/risultati_attacco_steering.csv")
 df_TP = pd.read_csv("CSV tesi/Dataset/dataset_TP.csv")
 
 # Creiamo il mapping: associamo l'indice del dataset_TP al testo del codice
