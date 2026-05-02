@@ -1,8 +1,8 @@
 import pandas as pd
 
 # 1. Definisci il nome del file di input e di output
-file_input = "CSV tesi/Fixed/risultati_attacco_adversarial_perturbation.csv"
-file_output = "CSV tesi/Split_Dataset_succ/ap_solo_successi.csv"
+file_input = "CSV tesi/risultati_attacco_steering.csv"
+file_output = "CSV tesi/Split_Dataset_succ/steering_solo_successi.csv"
 
 try:
     # 2. Carica il dataset
@@ -10,7 +10,7 @@ try:
     
     # 3. Filtra le righe
     # Uso .str.lower() per essere sicuro di prendere 'Sicuro', 'sicuro' o 'SICURO'
-    df_filtrato = df[df['target_predetto_ap'].astype(str).str.lower() == 'sicuro']
+    df_filtrato = df[df['predizione_post_steering'].astype(str).str.lower() == 'sicuro']
     
     # 4. Salva il nuovo dataset (index=False evita di creare una colonna con i numeri di riga)
     df_filtrato.to_csv(file_output, index=False)
@@ -24,4 +24,4 @@ try:
 except FileNotFoundError:
     print(f"Errore: Il file '{file_input}' non è stato trovato.")
 except KeyError:
-    print("Errore: La colonna 'target_predetto_ap' non esiste nel CSV. Controlla il nome esatto.")
+    print("Errore: La colonna 'predizione_post_steering' non esiste nel CSV. Controlla il nome esatto.")
