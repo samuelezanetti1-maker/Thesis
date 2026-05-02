@@ -1,7 +1,7 @@
 import pandas as pd
 
 # 1. Definisci il nome del file di input e di output
-file_input = "CSV tesi/risultati_attacco_steering.csv"
+file_input = "CSV tesi/Fixed/risultati_attacco_steering.csv"
 file_output = "CSV tesi/Split_Dataset_succ/steering_solo_successi.csv"
 
 try:

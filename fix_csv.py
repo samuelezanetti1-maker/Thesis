@@ -14,9 +14,7 @@ os.makedirs("CSV tesi/Fixed", exist_ok=True)
 
 # 2. La lista dei file degli attacchi da sistemare
 file_attacchi = [
-    "CSV tesi/risultati_attacco_advanced.csv",
-    "CSV tesi/risultati_attacco_adversarial_perturbation.csv",
-    "CSV tesi/risultati_attacco_PJ.csv"
+    "CSV tesi/risultati_attacco_steering.csv",
 ]
 
 for file_csv in file_attacchi:

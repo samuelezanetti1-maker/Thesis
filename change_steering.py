@@ -128,7 +128,7 @@ for model_name, config in models_config.items():
 
             ### TESTING SUI SINGOLI SNIPPET
             for index, row in df_mod.iterrows():
-                codice = str(row['codice'])
+                codice = str(row['codice_originale'])
 
                 prompt = f"Analyze this code \n\nCode:\n{codice}, \n start the response EXACTLY with a brief summary of a short sentence followed by: 'FINAL_VERDICT: True' (if vulnerable) or 'FINAL_VERDICT: False' (if 100% secure)"
                 messages = [
