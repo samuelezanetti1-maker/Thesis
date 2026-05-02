@@ -17,6 +17,9 @@ df_modello_ap = pd.read_csv("CSV tesi/Split_Dataset_succ/ap_solo_successi.csv")
 df_modello_pj = pd.read_csv("CSV tesi/Split_Dataset_succ/PJ_solo_successi.csv")
 df_modello_ss = pd.read_csv("CSV tesi/Split_Dataset_succ/steering_solo_successi.csv")
 
+os.makedirs("controprova/txt_tesi", exist_ok=True)
+os.makedirs("controprova/CSV tesi", exist_ok=True)
+
 
 def space_injection(codice):
     codice = str(codice)

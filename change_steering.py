@@ -30,7 +30,8 @@ layer_per_modello = {
     "deepseek-ai/deepseek-coder-6.7b-instruct": [16]
 }
   
-
+os.makedirs("controprova/txt_tesi", exist_ok=True)
+os.makedirs("controprova/CSV tesi", exist_ok=True)
 
 df_TP = pd.read_csv("CSV tesi/Split_Dataset_succ/steering_solo_successi.csv")
 risultati_attacco_steering = []
@@ -213,7 +214,7 @@ df_steering = pd.DataFrame(risultati_attacco_steering)
 df_steering.to_csv("controprova/CSV tesi/risultati_attacco_steering.csv", index=False)
 print("\nSalvataggio CSV completato in 'controprova/CSV tesi/risultati_attacco_steering.csv'")
 
-percorso_txt_riassunto = "controprova/txt_tesi/riassunto/riassunto_ASR.txt"
+percorso_txt_riassunto = "controprova/txt_tesi/riassunto_ASR.txt"
 with open(percorso_txt_riassunto, "w", encoding="utf-8") as f:
     f.write("=== RISULTATI ABLATION STUDY (ATTACCO LAYER CENTRALE) ===\n")
     f.write("="*60 + "\n\n")
