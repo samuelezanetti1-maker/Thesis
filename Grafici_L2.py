@@ -76,7 +76,7 @@ def compara_due_triangoli(lati_t1, lati_t2, nome_t1="Triangolo 1", nome_t2="Tria
 # INSERISCI QUI I DATI DEI TUOI ESPERIMENTI
 # ==========================================
 # Esempio: i tre lati sono le tre distanze L2 tra i centroidi
-lati_baseline = (11.266, 26.48, 21.61) 
-lati_attacco  = (11.266, 26.62, 22.77) 
+lati_baseline = (2.764, 8.23, 6.977) 
+lati_attacco  = (2.764, 8.19, 6.727) 
 
 compara_due_triangoli(lati_baseline, lati_attacco, nome_t1="Baseline (Sicuro/Vuln)", nome_t2="Sotto Attacco")
