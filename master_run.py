@@ -58,7 +58,8 @@ script_to_launch = [
     #"isomorfismo_steering.py",
     #"black_box_vuln_L2.py",
     #"vuln_steering_L2.py",
-    "evaluate_BB_change.py"
+    "evaluate_BB_change.py",
+    "change_steering.py"
 
 ]
 

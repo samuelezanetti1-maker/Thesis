@@ -19,13 +19,7 @@ def evaluate_response(response):
         elif verdetto == 'false':
             return "Sicuro"
             
-    # 3. Fallback di emergenza: se non scrive "final_verdict" ma dice chiaramente solo true o false
-    elif "true" in response and "false" not in response:
-         return "Vulnerabile"
-    elif "false" in response and "true" not in response:
-         return "Sicuro"
-         
-    return "Non Classificato"
+    return "Errore_Formato"
 
 # 2. Converte il target reale in testo
 def traduci_target_reale(target):
