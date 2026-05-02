@@ -87,7 +87,7 @@ for model_name, config in models_config.items():
                 dtype=config.get("dtype", torch.float16)
             )
 
-        layer_corretto =  layer_per_modello.get(model_name, int(len(model.model.layers) * 0.55))
+        layer_corretto =  layer_per_modello.get(model_name)[0]
         print(f"Il modello ha {len(model.model.layers)} layer. Attacchiamo il centrale: {layer_corretto}")
 
         nome_file_safe = model_name.replace('/', '_')
