@@ -6,7 +6,7 @@ os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
 percorsi = {
     "Adversarial Perturbations": "controprova/CSV tesi/risultati_attacco_adversarial_perturbation.csv",
     "Prompt Injection": "controprova/CSV tesi/risultati_attacco_PJ.csv",
-    #"Activation Steering": "controprova/CSV tesi/risultati_attacco_steering.csv",
+    "Activation Steering": "controprova/CSV tesi/risultati_attacco_steering.csv",
     "Advanced Adversarial": "controprova/CSV tesi/risultati_attacco_advanced.csv",
 }
 

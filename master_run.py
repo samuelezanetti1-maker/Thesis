@@ -50,16 +50,16 @@ script_to_launch = [
     #"isomorfismo_aa_ap.py",
     #"isomorfismo_ap_pj.py",
     #"isomorfismo_aa_pj.py",
-    #"isomorfismo_aa_last.py",
-    #"isomorfismo_ap_last.py",
-    #"isomorfismo_pi_last.py",
+    "isomorfismo_aa_last.py",
+    "isomorfismo_ap_last.py",
+    "isomorfismo_pi_last.py",
     #"logit_lens_semantic.py",
     #"logit_lens_last_layer.py",
     #"isomorfismo_steering.py",
     #"black_box_vuln_L2.py",
     #"vuln_steering_L2.py",
     #"evaluate_BB_change.py",
-    "change_steering.py"
+    #"change_steering.py"
 
 ]
 

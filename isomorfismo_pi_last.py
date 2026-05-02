@@ -38,7 +38,17 @@ for model_name, config in models_config.items():
                 dtype=config.get("dtype", torch.float16)
             )
 
-        layer_locus = int(len(model.model.layers) - 1)
+        layer_ottimali = {
+            "Qwen/Qwen2.5-7B-Instruct": 26, 
+            "Qwen/Qwen2.5-Coder-7B-Instruct": 26,
+            "meta-llama/Llama-3.1-8B-Instruct": 30,
+            "codellama/CodeLlama-7b-Instruct-hf": 30,
+            "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": 26,
+            "deepseek-ai/deepseek-coder-6.7b-instruct": 30,
+            
+        }
+
+        layer_locus = layer_ottimali.get(model_name)[0]
         
         print(f" -> Layer chirurgico selezionato per l'analisi: {layer_locus}")
 
