@@ -216,7 +216,23 @@ for model_name, config in models_config.items():
 
         print(" [+] Salvataggio dati layer completato.")
 
-        del model, tokenizer
+        # ==========================================
+        # PULIZIA AGGRESSIVA (ANTI OOM-KILLER)
+        # ==========================================
+        # 1. Eliminiamo il modello e il tokenizer
+        del model
+        del tokenizer
+        
+        # 2. Eliminiamo le liste pesanti che contengono i tensori
+        del shift_aa_list, shift_pj_list, shift_ap_list
+        del vettore_aa_all_layers, vettore_pj_all_layers, vettore_ap_all_layers
+        
+        # 3. Forziamo il Garbage Collector di Python a liberare la RAM (CPU)
+        import gc
+        gc.collect()
+        gc.collect() # Chiamarlo due volte assicura la pulizia dei riferimenti circolari
+        
+        # 4. Svuotiamo la cache della GPU
         torch.cuda.empty_cache()
 
     except Exception as e:
