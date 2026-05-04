@@ -109,7 +109,7 @@ for model_name, config in models_config.items():
         continue
 
     nome_file_safe = model_name.replace('/', '_')
-    report_path = f"txt_tesi/Logit_Lens/Semantica_{nome_file_safe}.txt"
+    report_path = f"txt_tesi/Logit_Lens/Semantica_{nome_file_safe}_WL.txt"
 
     try:
         tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -121,12 +121,12 @@ for model_name, config in models_config.items():
             )
         
         layer_per_modello = {
-        "Qwen/Qwen2.5-7B-Instruct": 19,
-        "Qwen/Qwen2.5-Coder-7B-Instruct": 19,
-        "meta-llama/Llama-3.1-8B-Instruct": 16,
-        "codellama/CodeLlama-7b-Instruct-hf": 14,
-        "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": 20,
-        "deepseek-ai/deepseek-coder-6.7b-instruct": 17
+        "Qwen/Qwen2.5-7B-Instruct": 18,
+        "Qwen/Qwen2.5-Coder-7B-Instruct": 18,
+        "meta-llama/Llama-3.1-8B-Instruct": 15,
+        "codellama/CodeLlama-7b-Instruct-hf": 13,
+        "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": 19,
+        "deepseek-ai/deepseek-coder-6.7b-instruct": 16
         }
 
         layer_locus = layer_per_modello.get(model_name)
