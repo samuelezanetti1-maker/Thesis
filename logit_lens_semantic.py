@@ -99,7 +99,7 @@ df_aa_succ = df_aa[df_aa['target_predetto_adv'] == 'Sicuro']
 df_pi_succ = df_pi[df_pi['target_predetto_pj'] == 'Sicuro']
 df_ap_succ = df_ap[df_ap['target_predetto_ap'] == 'Sicuro']
 
-N_CAMPIONI = 30 
+N_CAMPIONI = 200 
 
 for model_name, config in models_config.items():
     print(f"\n{'='*70}\n ESTREZIONE NEURO-SEMANTICA (CONTRASTIVE LENS): {model_name}\n{'='*70}")
@@ -183,16 +183,19 @@ for model_name, config in models_config.items():
                 return
             
             with torch.no_grad():
-                # Rimuoviamo la LayerNorm perché stiamo analizzando una direzione (Delta)
                 vettore_calc = vettore.to(model.dtype)
+                
+                # --- IL FIX FONDAMENTALE DELLA RMSNORM ---
+                # Moltiplichiamo il delta vettoriale per i pesi di scaling della LayerNorm finale
+                vettore_calc_scaled = vettore_calc * final_layernorm.weight
                 
                 # Estraiamo i vettori dal vocabolario
                 w_true = lm_head.weight[id_true]
                 w_false = lm_head.weight[id_false]
                 
-                # Prodotto scalare diretto (impatto lineare puro sui logit)
-                logit_true = torch.dot(vettore_calc, w_true).item()
-                logit_false = torch.dot(vettore_calc, w_false).item()
+                # Prodotto scalare diretto (usando il vettore SCALATO)
+                logit_true = torch.dot(vettore_calc_scaled, w_true).item()
+                logit_false = torch.dot(vettore_calc_scaled, w_false).item()
                 
                 # Delta (L'asse puro)
                 delta = logit_true - logit_false
@@ -209,7 +212,7 @@ for model_name, config in models_config.items():
                 file_log.write("  [Analisi] -> OVERSHOOTING: Spinge violentemente verso il concetto di Sicuro.\n\n")
             else:
                 file_log.write("  [Analisi] -> PLANE SHIFTING: Il delta è vicino allo zero. Il vettore ignora la dicotomia True/False muovendosi su un piano ortogonale.\n\n")
-                
+
         with open(report_path, "w", encoding="utf-8") as f:
             f.write(f"REPORT CONTRASTIVE LENS - {model_name} (Layer {layer_locus})\n")
             f.write(f"Token ID ' True': {id_true} | Token ID ' False': {id_false}\n")

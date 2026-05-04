@@ -165,6 +165,7 @@ for model_name, config in models_config.items():
         # 3. CONTRASTIVE LOGIT LENS (Iterazione per Layer)
         # ==========================================
         lm_head = model.get_output_embeddings() 
+        final_layernorm = model.model.norm
         id_true = tokenizer.encode(" True", add_special_tokens=False)[-1]
         id_false = tokenizer.encode(" False", add_special_tokens=False)[-1]
         w_true = lm_head.weight[id_true]
@@ -174,8 +175,14 @@ for model_name, config in models_config.items():
         def calcola_delta(vettore_layer):
             if vettore_layer is None: return np.nan
             v_calc = vettore_layer.to(model.dtype)
-            logit_true = torch.dot(v_calc, w_true).item()
-            logit_false = torch.dot(v_calc, w_false).item()
+            
+            # --- IL FIX FONDAMENTALE ---
+            # Moltiplichiamo il delta per i pesi di scaling della RMSNorm finale.
+            # Questo "ruota" il vettore nella prospettiva che la lm_head si aspetta!
+            v_calc_scaled = v_calc * final_layernorm.weight
+            
+            logit_true = torch.dot(v_calc_scaled, w_true).item()
+            logit_false = torch.dot(v_calc_scaled, w_false).item()
             return logit_true - logit_false
 
         # Troviamo quanti layer ci sono (solitamente num_hidden_layers + 1)
