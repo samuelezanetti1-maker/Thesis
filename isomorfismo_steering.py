@@ -11,7 +11,7 @@ os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
 
 # 1. CARICAMENTO DATI
 df_TP = pd.read_csv("CSV tesi/Dataset/dataset_TP.csv")
-df_steering_res = pd.read_csv("CSV tesi/risultati_attacco_steering.csv")
+df_steering_res = pd.read_csv("CSV tesi/Fixed/risultati_attacco_steering.csv")
 
 # Mapping
 mapping_dict = df_TP['codice'].to_dict()

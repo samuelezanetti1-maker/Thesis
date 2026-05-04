@@ -109,7 +109,7 @@ for model_name, config in models_config.items():
         continue
 
     nome_file_safe = model_name.replace('/', '_')
-    report_path = f"txt_tesi/Logit_Lens/Semantica_{nome_file_safe}_WL.txt"
+    report_path = f"txt_tesi/Logit_Lens/Semantica_{nome_file_safe}.txt"
 
     try:
         tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -212,7 +212,7 @@ for model_name, config in models_config.items():
                 file_log.write("  [Analisi] -> OVERSHOOTING: Spinge violentemente verso il concetto di Sicuro.\n\n")
             else:
                 file_log.write("  [Analisi] -> PLANE SHIFTING: Il delta è vicino allo zero. Il vettore ignora la dicotomia True/False muovendosi su un piano ortogonale.\n\n")
-
+                
         with open(report_path, "w", encoding="utf-8") as f:
             f.write(f"REPORT CONTRASTIVE LENS - {model_name} (Layer {layer_locus})\n")
             f.write(f"Token ID ' True': {id_true} | Token ID ' False': {id_false}\n")
