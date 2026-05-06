@@ -55,15 +55,19 @@ script_to_launch = [
     #"isomorfismo_pi_last.py",
     #"logit_lens_semantic.py",
     #"logit_lens_last_layer.py",
-    "isomorfismo_steering.py",
+    #"isomorfismo_steering.py",
     #"black_box_vuln_L2.py",
     #"vuln_steering_L2.py",
     #"evaluate_BB_change.py",
     #"change_steering.py",
     #"Logit_lens_sweep.py",
-    "ll_steering.py",
-    "ll_steering_last.py",
-    "ll_sweep_steering.py"
+    #"ll_steering.py",
+    #"ll_steering_last.py",
+    #"ll_sweep_steering.py",
+    "BB_isomorfismo_sweep_AA.py",
+    "BB_isomorfismo_sweep_AP.py",
+    "BB_isomorfismo_sweep_PJ.py",
+    "isomorfismo_sweep_steering.py"
 
 ]
 
