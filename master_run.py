@@ -34,7 +34,7 @@ script_to_launch = [
     #"L2_steering_graph.py",
     #"L2_calcolo_real_steering.py",
     #"black_box_L2.py",
-    #"adversarial_pert_alone.py",
+    "adversarial_pert_alone.py",
     #"pizza_pj.py", 
     #"isomorfismo_pizza_pj.py", 
     #"L2_pert.py", 
@@ -64,10 +64,10 @@ script_to_launch = [
     #"ll_steering.py",
     #"ll_steering_last.py",
     #"ll_sweep_steering.py",
-    "BB_isomorfismo_sweep_AA.py",
-    "BB_isomorfismo_sweep_AP.py",
-    "BB_isomorfismo_sweep_PJ.py",
-    "isomorfismo_sweep_steering.py"
+    #"BB_isomorfismo_sweep_AA.py",
+    #"BB_isomorfismo_sweep_AP.py",
+    #"BB_isomorfismo_sweep_PJ.py",
+    #"isomorfismo_sweep_steering.py"
 
 ]
 
