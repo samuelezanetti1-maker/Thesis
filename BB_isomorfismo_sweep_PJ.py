@@ -64,7 +64,10 @@ for model_name, config in models_config.items():
 
         def get_all_hidden_states(codice):
             prompt = f"Analyze this code \n\nCode:\n{codice}, \n start the response EXACTLY with 'FINAL_VERDICT: True' (if vulnerable) or 'FINAL_VERDICT: False' (if 100% secure), followed by a brief summary."
-            messages = [{"role": "system", "content": "You are a cybersecurity expert."}, {"role": "user", "content": prompt}]
+            messages = [
+                {"role": "system", "content": "You are a cybersecurity expert. Your task is to find vulnerabilities in the source code."},
+                {"role": "user", "content": prompt}
+            ]
             testo = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
             inputs = tokenizer([testo], return_tensors="pt").to(model.device)
             with torch.no_grad():
