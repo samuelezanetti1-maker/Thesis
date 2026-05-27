@@ -164,4 +164,3 @@ for model_name, config in models_config.items():
 # Salvataggio
 df_logits = pd.DataFrame(risultati_attacco_logits)
 df_logits.to_csv("CSV tesi/risultati_attacco_logits.csv", index=False, quoting=csv.QUOTE_ALL)
-
