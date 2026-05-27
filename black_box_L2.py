@@ -14,9 +14,8 @@ os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
 os.makedirs("grafici_L2", exist_ok=True)
 
-# ==========================================
-# 1. FUNZIONI DI PERTURBAZIONE (BLACK-BOX)
-# ==========================================
+
+#  FUNZIONI DI PERTURBAZIONE (BLACK-BOX)
 def semantic_renaming(codice):
     codice = str(codice)
     codice = re.sub(r'\bbuffer\b', 'temp_container', codice)
@@ -91,9 +90,7 @@ def safe_norm(v1, v2):
         return np.linalg.norm(v1 - v2)
     return np.nan
 
-# ==========================================
-# 2. CARICAMENTO DATASET E RISULTATI
-# ==========================================
+# CARICAMENTO DATASET E RISULTATI
 df_baseline = pd.read_csv("CSV tesi/Dataset/dataset_TRUE.csv")
 
 df_aa = pd.read_csv("CSV tesi/Fixed/risultati_attacco_advanced.csv")
@@ -108,7 +105,6 @@ for model_name, config in models_config.items():
 
     nome_file_safe = model_name.replace('/', '_')
 
-    # Prepariamo le liste di successi e fallimenti per QUESTO modello
     codici_aa_succ = df_aa[(df_aa['modello'] == model_name) & (df_aa['target_predetto_adv'] == 'Sicuro')]['codice_originale'].tolist()
     codici_aa_fail = df_aa[(df_aa['modello'] == model_name) & (df_aa['target_predetto_adv'] == 'Vulnerabile')]['codice_originale'].tolist()
     
@@ -128,7 +124,7 @@ for model_name, config in models_config.items():
     S_PI_list = {i: [] for i in range(num_layers)}; V_PI_list = {i: [] for i in range(num_layers)}
     S_AP_list = {i: [] for i in range(num_layers)}; V_AP_list = {i: [] for i in range(num_layers)}
 
-    # --- 3. ESTRAZIONE MASSIVA ---
+    # ESTRAZIONE MASSIVA
     for index, row in df_corretti.iterrows():
         codice_originale = str(row['codice'])
         target = row['target_vero']
@@ -167,8 +163,8 @@ for model_name, config in models_config.items():
             if codice_originale in codici_ap_succ: estrai_vettori(codice_ap, S_AP_list)
             elif codice_originale in codici_ap_fail: estrai_vettori(codice_ap, V_AP_list)
 
-    # --- 4. CALCOLO GEOMETRICO MULTIPLO ---
-    print("Calcolo delle deviazioni latenti e distanze incrociate...")
+    # CALCOLO GEOMETRICO
+    print("Calcolo delle deviazioni latenti e distanze incrociate")
     df_export = pd.DataFrame({'Layer': range(num_layers)})
 
     for layer_idx in range(num_layers):
@@ -202,7 +198,7 @@ for model_name, config in models_config.items():
     os.makedirs("CSV tesi/Dati_Grafici_L2", exist_ok=True)
     csv_path = f"CSV tesi/Dati_Grafici_L2/{nome_file_safe}_BlackBox_L2.csv"
     df_export.to_csv(csv_path, index=False)
-    print(f" -> Dati salvati in: {csv_path}")
+    print(f"Dati salvati in: {csv_path}")
 
     # Pulizia memoria
     try: del model, tokenizer

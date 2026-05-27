@@ -11,10 +11,6 @@ import numpy as np
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from utils import evaluate_response
 
-# =====================================================================
-# --- 1. CONFIGURAZIONE SWEEP MASSIVO ---
-# =====================================================================
-
 moltiplicatori_per_modello = {
     "Qwen/Qwen2.5-7B-Instruct": [20],
     "Qwen/Qwen2.5-Coder-7B-Instruct": [30],
@@ -31,9 +27,7 @@ os.makedirs("txt_tesi/Sweep", exist_ok=True)
 df_TP = pd.read_csv("CSV tesi/Dataset/dataset_TP.csv")
 file_master_aggregate = "CSV tesi/Sweep/MASTER_percentuali_sweep.csv"
 
-# =====================================================================
-
-# --- 2. HOOK OFFENSIVA ---
+# HOOK OFFENSIVA 
 def crea_hook_offensiva(vettore_tensore, moltiplicatore):
     vettore_norm = vettore_tensore / torch.norm(vettore_tensore)
     def steering_hook_offensiva(module, input, output):
@@ -54,7 +48,7 @@ def crea_hook_offensiva(vettore_tensore, moltiplicatore):
             return tensore_modificato
     return steering_hook_offensiva
 
-# --- 3. CICLO DI ATTACCO SWEEP ---
+#CICLO DI ATTACCO SWEEP 
 for model_name, config in models_config.items():
     
     df_mod = df_TP[df_TP['modello'] == model_name]
@@ -83,17 +77,16 @@ for model_name, config in models_config.items():
         num_layers = len(model.model.layers)
         print(f"Il modello ha {num_layers} layer totali da sweepare.")
 
-        # --- CICLO SU TUTTI I LAYER DEL MODELLO ---
+        #ciclo su tutti i layer
         for layer_idx in range(num_layers):
             
-            # --- IL CHECKPOINT ANTI-CRASH ---
-            # Controlliamo se abbiamo già fatto questo layer
+            # check
             file_risultati_layer = f"CSV tesi/Sweep/risultati_{nome_modello_pulito}_L{layer_idx}.csv"
             if os.path.exists(file_risultati_layer):
                 print(f"\n[SKIP] Layer {layer_idx} già completato in precedenza! Salto...")
                 continue
                 
-            print(f"\n---> BERSAGLIO ATTUALE: LAYER {layer_idx}/{num_layers-1} <---")
+            print(f"\nBERSAGLIO ATTUALE: LAYER {layer_idx}/{num_layers-1} <---")
             
             percorso_vettore = f"attivazioni_totali/steering_vector_{nome_modello_pulito}_layer_{layer_idx}.npy"
             if not os.path.exists(percorso_vettore):
@@ -108,7 +101,6 @@ for model_name, config in models_config.items():
             risultati_attacco_layer = []
             risultati_aggregati_layer = []
 
-            # --- CICLO SUI MOLTIPLICATORI ---
             for moltiplicatore in moltiplicatori_correnti:
                 with open(percorso_txt_log, "a", encoding="utf-8") as f_log:
                     f_log.write(f"\n>>> TEST CON MOLTIPLICATORE: {moltiplicatore} <<<\n\n")
@@ -157,7 +149,7 @@ for model_name, config in models_config.items():
                 rateo_errori = (errori_formattazione / len(df_mod)) * 100
                 
                 stringa_log = f"Mult: {moltiplicatore:2d} | ASR: {asr_steering:5.2f}% | Errori: {rateo_errori:5.2f}%"
-                print(f"   => {stringa_log}")
+                print(f"-----> {stringa_log}")
                 
                 risultati_aggregati_layer.append({
                     "modello": model_name, "layer": layer_idx,
@@ -172,19 +164,17 @@ for model_name, config in models_config.items():
                 torch.cuda.empty_cache()
                 
             
-            # 1. Salvataggio del dettaglio di questo specifico layer
+            # salvataggio
             pd.DataFrame(risultati_attacco_layer).to_csv(file_risultati_layer, index=False)
             
-            # 2. Appendiamo le percentuali aggregate al file MASTER
             df_agg = pd.DataFrame(risultati_aggregati_layer)
             if not os.path.exists(file_master_aggregate):
-                df_agg.to_csv(file_master_aggregate, index=False) # Crea il file con l'intestazione
+                df_agg.to_csv(file_master_aggregate, index=False)
             else:
-                df_agg.to_csv(file_master_aggregate, mode='a', header=False, index=False) # Appende in fondo
+                df_agg.to_csv(file_master_aggregate, mode='a', header=False, index=False) 
                 
-            print(f"   [+] Salvataggio completato per il Layer {layer_idx}. Al sicuro da timeout!")
+            print(f"Salvataggio completato per il Layer {layer_idx}")
 
-        # --- FINE SWEEP DEL MODELLO ---
         try: del model, tokenizer
         except NameError: pass
         gc.collect()

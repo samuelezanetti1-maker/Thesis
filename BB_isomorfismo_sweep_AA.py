@@ -37,10 +37,7 @@ for model_name, config in models_config.items():
         
         num_layers_totali = len(model.model.layers) + 1
 
-        # =====================================================================
-        # NOVITÀ: PRE-CARICAMENTO DI TUTTI I VETTORI DI STEERING NELLA GPU
-        # =====================================================================
-        print(" -> Pre-caricamento vettori di steering in VRAM...")
+        print("Pre-caricamento vettori di steering in VRAM")
         dizionario_vettori = {}
         vettori_trovati = 0
         
@@ -53,10 +50,10 @@ for model_name, config in models_config.items():
             else:
                 dizionario_vettori[layer_idx] = None
                 
-        print(f" -> Trovati {vettori_trovati}/{num_layers_totali} vettori per questo modello.")
+        print(f"Trovati {vettori_trovati}/{num_layers_totali} vettori per questo modello.")
         
         if vettori_trovati == 0:
-            print(" [!] Nessun vettore trovato. Salto modello.")
+            print("Nessun vettore trovato. Salto modello.")
             del model, tokenizer
             torch.cuda.empty_cache()
             continue

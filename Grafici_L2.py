@@ -7,9 +7,7 @@ import pandas as pd
 #### BLU SICURO
 #### ROSSO VULNERABILE
 
-# --- MAGIA DI SEABORN ---
-# Usa lo stile 'whitegrid' (sfondo bianco, griglia chiara)
-# Il context 'talk' ingrandisce proporzionalmente TUTTO: testi, linee, punti.
+
 sns.set_theme(style="whitegrid", context="talk")
 
 def calcola_coordinate_e_angoli(a, b, c):
@@ -45,24 +43,18 @@ def compara_due_triangoli(lati_t1, lati_t2, nome, nome_t1="Triangolo 1", nome_t2
     # Disegno Triangolo 1
     plt.plot(coords_1[0], coords_1[1], marker='o', color=colore_1, label=nome_t1)
     plt.fill(coords_1[0], coords_1[1], color=colore_1, alpha=0.2)
-    #aggiungi_etichette_lati(coords_1[0], coords_1[1], lati_t1, colore=colore_1, offset_y=-0.15)
 
     # Disegno Triangolo 2
     plt.plot(coords_2[0], coords_2[1], marker='s', color=colore_2, linestyle='--', label=nome_t2)
     plt.fill(coords_2[0], coords_2[1], color=colore_2, alpha=0.2)
-    #aggiungi_etichette_lati(coords_2[0], coords_2[1], lati_t2, colore=colore_2, offset_y=0.15)
 
     plt.axis('equal') 
     
-    # Seaborn scala già i font, dobbiamo solo inserire i testi
-    #plt.legend(loc="upper right")
-    
-    # Aggiungo un titolo con un po' di margine inferiore (pad)
+        
     plt.title(f"{nome}\n Distanze L2", fontweight='bold', pad=20)
     plt.xlabel("L2 Proiettata (Asse X)", labelpad=15)
     plt.ylabel("L2 Proiettata (Asse Y)", labelpad=15)
 
-    # Togliamo i bordi "duri" (spines) tipici di seaborn per un look ancora più pulito
     sns.despine(left=True, bottom=True)
     
     plt.tight_layout()
@@ -103,7 +95,6 @@ for model_name, config in models_config.items():
         lati_sicuro.append(valore)
         print(f"Estratto Sicuro -> {colonna}: {valore}")
 
-    # 2. Riempiamo la lista per il secondo triangolo
     lati_vulnerabile = []
     for colonna in colonne_vulnerabile:
         valore = df_filtrato[colonna].values[0]
@@ -117,9 +108,9 @@ for model_name, config in models_config.items():
         
     plt.savefig(
         percorso_salvataggio, 
-        dpi=300,               # 300 DPI è lo standard per l'alta risoluzione su carta
-        bbox_inches='tight',   # Evita che il titolo o le etichette degli assi vengano tagliati ai bordi
-        format='png'           # Puoi usare anche 'pdf' se scrivi la tesi in LaTeX per avere grafica vettoriale!
+        dpi=300,               
+        bbox_inches='tight',   
+        format='png'           
     )
     print(f"Grafico salvato con successo in: {percorso_salvataggio}")
         

@@ -41,7 +41,7 @@ for model_name, config in models_config.items():
         continue
 
     nome_modello_pulito = model_name.replace("/", "_")
-    percorso_txt = f"txt_tesi/Risposte Logit Bias/Log_Risposte_Logits_{nome_modello_pulito}.txt"
+    percorso_txt = f"logit_test/Log_Risposte_Logits_{nome_modello_pulito}_4.txt"
 
     with open(percorso_txt, "w", encoding="utf-8") as f_log:
         f_log.write(f"=== LOG RISPOSTE LOGIT BIAS: {model_name} ===\n")
@@ -78,8 +78,8 @@ for model_name, config in models_config.items():
     hacker_logits_processor = BiasLogitsProcessor(
         token_ids_boost=token_boost,
         token_ids_penalize=token_penalize,
-        boost_val=30.0,    # aumenta la probabilità di "False"
-        penalty_val=-30.0   # diminuisce la probabilità di "True"
+        boost_val=4.0,    # aumenta la probabilità di "False"
+        penalty_val=-4.0   # diminuisce la probabilità di "True"
     )
 
     logits_processor_list = LogitsProcessorList([hacker_logits_processor])
@@ -156,5 +156,5 @@ for model_name, config in models_config.items():
 
 # Salvataggio
 df_logits = pd.DataFrame(risultati_attacco_logits)
-df_logits.to_csv(f"CSV tesi/risultati_attacco_logits.csv", index=False)
+df_logits.to_csv(f"logit_test/risultati_attacco_logits_4.csv", index=False)
 

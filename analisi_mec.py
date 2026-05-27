@@ -62,11 +62,8 @@ for model_name, config in models_config.items():
             inputs = tokenizer([testo_formattato], return_tensors="pt").to(model.device)
 
             with torch.no_grad():
-                # LA MAGIA È QUI: output_hidden_states=True
                 outputs = model(**inputs, output_hidden_states=True)
 
-            # outputs.hidden_states è una tupla che contiene i tensori di tutti i layer
-            # Nota: il layer 0 spesso è l'embedding iniziale
             hidden_states = outputs.hidden_states[1:] # Salto l'embedding iniziale
 
             for layer_idx in range(num_layers):
@@ -79,7 +76,7 @@ for model_name, config in models_config.items():
                 elif target == 'Sicuro':
                     attivazioni_sicuri[layer_idx].append(vettore_ultimo_token)
 
-        # --- FASE 2: Calcolo e Salvataggio MASSIVO (.npy e .pkl) ---
+        # Calcolo e Salvataggio MASSIVO (.npy e .pkl) 
         print("\nCalcolo centroidi e salvataggio file .npy e .pkl per tutti i layer...")
         magnitudo_layer = []
         
@@ -90,15 +87,15 @@ for model_name, config in models_config.items():
                 magnitudo_layer.append(0) # Per non sfalsare il grafico
                 continue
                 
-            # 1. Centroidi e Vettore Steering
+            # Centroidi e Vettore Steering
             media_vuln = np.mean(np.stack(attivazioni_vulnerabili[layer_idx]), axis=0)
             media_sicuro = np.mean(np.stack(attivazioni_sicuri[layer_idx]), axis=0)
             vettore_steering = media_vuln - media_sicuro
             
-            # 2. Salvataggio Vettore Steering (.npy) per il Layer Sweep sul cluster
+            # Salvataggio Vettore Steering (.npy) !!!IMPORTANTE!!!
             np.save(f"attivazioni_totali/steering_vector_{nome_file_safe}_layer_{layer_idx}.npy", vettore_steering)
             
-            # 3. Creazione e Salvataggio del DataFrame (.pkl) per il Probing in locale
+            # Creazione e Salvataggio del DataFrame (.pkl)
             dati_pkl = []
             for vec in attivazioni_vulnerabili[layer_idx]:
                 dati_pkl.append({"target_vero": "Vulnerabile", "vettore_attivazione": vec})
