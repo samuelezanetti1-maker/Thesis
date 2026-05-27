@@ -78,8 +78,8 @@ for model_name, config in models_config.items():
     hacker_logits_processor = BiasLogitsProcessor(
         token_ids_boost=token_boost,
         token_ids_penalize=token_penalize,
-        boost_val=4.0,    # aumenta la probabilità di "False"
-        penalty_val=-4.0   # diminuisce la probabilità di "True"
+        boost_val=6.0,    # aumenta la probabilità di "False"
+        penalty_val=6.0   # diminuisce la probabilità di "True"
     )
 
     logits_processor_list = LogitsProcessorList([hacker_logits_processor])
