@@ -32,7 +32,7 @@ lb_TP = pd.read_csv("CSV tesi/Dataset/dataset_TP.csv")
 risultati_attacco_logits = []
 
 # Valori da testare
-valori_bias = [4, 6, 8, 10, 15]
+valori_bias = [7]
 
 for model_name, config in models_config.items():
     print(f"\n" + "="*50)
@@ -151,5 +151,5 @@ for model_name, config in models_config.items():
 
 # Salvataggio unico per tutti i modelli e tutti i bias
 df_logits = pd.DataFrame(risultati_attacco_logits)
-df_logits.to_csv("logit_test/risultati_attacco_logits_ablation.csv", index=False)
+df_logits.to_csv("logit_test/risultati_attacco_logits_ablation7.csv", index=False)
 print("\nScansione completata. Risultati salvati.")
