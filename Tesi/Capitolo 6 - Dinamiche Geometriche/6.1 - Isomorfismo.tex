@@ -1,0 +1,185 @@
+\section{Isomorfismo}
+Lo spazio latente di un LLM è un ambiente vettoriale ad alta dimensionalità, superiore a 4000 dimensioni, all'interno del quale le relazioni semantiche obbediscono a rigorose leggi geometriche. Uno degli obiettivi cardine di questo studio è verificare l'esistenza di un isomorfismo tra le perturbazioni indotte dagli attacchi testuali Black-Box e la direzione pura della vulnerabilità calcolata matematicamente White-Box.
+
+Il termine di paragone per questa indagine topologica è il Vettore di Steering. Come descritto nel Capitolo 5, questo vettore rappresenta l'asse semantico naturale del modello, calcolato come differenza tra i centroidi dei codici "sicuri" e "vulnerabili". 
+Allo stesso modo, è possibile quantificare lo spostamento geometrico causato da un attacco testuale. Estraendo l'attivazione dell'ultimo token al layer bersaglio, adottando il layer più sensibile precedentemente calcolato, si ottiene l'esatta elaborazione del codice. Sottraendo l'hidden state del codice pulito da quello del codice perturbato, si isola il vettore direzionale dell'attacco Black-Box:
+
+\begin{minted}[linenos, frame=lines, framesep=2mm, fontsize=\footnotesize, breaklines]{python}
+    
+def get_hidden_state(codice):
+    prompt = f"Analyze this code \n\nCode:\n{codice}, \n start the response EXACTLY with 'FINAL_VERDICT: True' (if vulnerable) or 'FINAL_VERDICT: False' (if 100% secure), followed by a brief summary."
+    messages = [
+        {"role": "system", "content": "You are a cybersecurity expert. Your task is to find vulnerabilities in the source code."},
+        {"role": "user", "content": prompt}
+   ]
+
+    testo_formattato = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+    inputs = tokenizer([testo_formattato], return_tensors="pt").to(model.device)
+            
+    with torch.no_grad():
+        outputs = model(**inputs, output_hidden_states=True)
+                
+    hidden_state = outputs.hidden_states[layer_locus][0, -1, :]
+    return hidden_state
+           
+h_clean = get_hidden_state(codice_pulito)
+h_adv = get_hidden_state(codice_hackerato)
+shift_text = h_adv - h_clean
+cos_sim = F.cosine_similarity(shift_text, vettore_steering_originale, dim=0).item()
+\end{minted}
+
+Dopo aver calcolato lo shift direzionale del vettore dell'attacco Black-Box, viene eseguita la cosine similarity su tutti i codici in cui l'attacco ha avuto è successo, ovvero quando il modello ha risposto "sicuro" quando in realtà lo snippet era sicuro. \\
+La \textit{Cosine Similarity}, o similarità del coseno, è una metrica matematica utilizzata per misurare quanto due vettori siano simili tra loro in uno spazio multidimensionale. Infatti, calcola il coseno dell'angolo compreso tra due vettori valutando quindi l'orientamento dei vettori, ignorando la loro lunghezza, o magnitudine.
+Il suo utilizzo viene impiegato soprattutto per l'analisi della generazione del linguaggio naturale (NLP) per confrontare il significato di due tesi: attraverso questo metodo si può capire se documenti o frasi trattano lo stesso argomento anche usando parole diverse.\\
+L'equazione è definita come:
+
+\begin{equation}
+    \text{Cosine Similarity} = cos(\theta) = \frac{A \cdot B}{||A|| ~~ ||B||}
+\end{equation}
+
+Il Numeratore $(A\cdot B)$: È il prodotto scalare tra i due vettori: se i vettori vanno nella stessa direzione, questo numero cresce; se vanno in direzioni opposte, diventa negativo.
+
+Il Denominatore ($||A|| \cdot ||B||$): È il prodotto delle magnitudini, ovvero la lunghezza dei due vettori. Dividendo il prodotto scalare per le lunghezze, l'equazione viene normalizzata, in modo tale che indipendentemente dalla lunghezza del vettore ciò verrà preso in esame sarà solo l'angolo tra i due vettori.
+L'uso della cosine similarity quindi permette di dire l'angolazione di un vettore rispetto ad un altro, indicando quanto questi siano simili: vettori semanticamente simili saranno paralleli, ottenendo una cosine similarity di $1$ o $-1$, a seconda della direzione in cui puntano, hidden layuers diversi, o meglio completamente incongruenti nel piano dell'azione, saranno perpendicolari ottenendo un valore pari a $0$.
+La cosine similarity finale è ottenuta attraverso la media delle cosine similarity ottenute dai singoli vettori.
+
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{l c c c}
+        \toprule
+        \textbf{Modelli} & \textbf{Cosine Similarity} & \textbf{Angolo} & \textbf{N. Successi}\\
+        \midrule
+        Qwen/Qwen2.5-7B-Instruct                 & 0.176  & 79.86$^\circ$ & 91 \\
+        Qwen/Qwen2.5-Coder-7B-Instruct           & 0.144  & 81.72$^\circ$ & 75 \\
+        meta-llama/Llama-3.1-8B-Instruct         & 0.318  & 71.46$^\circ$ & 1 \\
+        codellama/CodeLlama-7b-Instruct-hf       & 0.554  & 56.36$^\circ$ & 6 \\
+        deepseek-ai/DeepSeek-R1-Distill-Qwen-7B  & 0.060  & 86.56$^\circ$ & 46 \\
+        deepseek-ai/deepseek-coder-6.7b-instruct & 0.114  & 83.45$^\circ$ & 5 \\
+        \bottomrule
+    \end{tabular}
+    \vspace{0.2cm}
+    \caption{Esito isomorfismo attacco Advanced Adversarial}
+    \label{tab:esito_iso_AA}
+\end{table}
+
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{l c c c}
+        \toprule
+        \textbf{Modelli} & \textbf{Cosine Similarity} & \textbf{Angolo} & \textbf{N. Successi} \\
+        \midrule
+        Qwen/Qwen2.5-7B-Instruct                 & 0.089  & 89.89$^\circ$ & 69 \\
+        Qwen/Qwen2.5-Coder-7B-Instruct           & 0.068  & 86.10$^\circ$ & 63 \\
+        meta-llama/Llama-3.1-8B-Instruct         & -      & -             & 0 \\
+        codellama/CodeLlama-7b-Instruct-hf       & 0.365  & 68.59$^\circ$ & 26 \\
+        deepseek-ai/DeepSeek-R1-Distill-Qwen-7B  & 0.033  & 88.11$^\circ$ & 115\\
+        deepseek-ai/deepseek-coder-6.7b-instruct & 0.026  & 88.51$^\circ$ & 3 \\
+        \bottomrule
+    \end{tabular}
+    \vspace{0.2cm}
+    \caption{Esito isomorfismo attacco Advanced Pertubration}
+    \label{tab:esito_iso_AP}
+\end{table}
+
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{l c c c}
+        \toprule
+        \textbf{Modelli} & \textbf{Cosine Similarity} & \textbf{Angolo} & \textbf{N. Successi} \\
+        \midrule
+        Qwen/Qwen2.5-7B-Instruct                 & 0.076  & 85.64$^\circ$ & 88 \\
+        Qwen/Qwen2.5-Coder-7B-Instruct           & 0.067  & 86.16$^\circ$ & 51 \\
+        meta-llama/Llama-3.1-8B-Instruct         & -0.015 & 90.86$^\circ$ & 131\\
+        codellama/CodeLlama-7b-Instruct-hf       & 0.146  & 81.61$^\circ$ & 199\\
+        deepseek-ai/DeepSeek-R1-Distill-Qwen-7B  & 0.020  & 88.85$^\circ$ & 140\\
+        deepseek-ai/deepseek-coder-6.7b-instruct & -0.115 & 96.60$^\circ$ & 1 \\
+        \bottomrule
+    \end{tabular}
+    \vspace{0.2cm}
+    \caption{Esito isomorfismo attacco Prompt Injection}
+    \label{tab:esito_iso_PI}
+\end{table}
+
+I risultati rivelano una dinamica spaziale e fondamentale per la comprensione delle vulnerabilità dei Large Language Models. La Cosine Similarity media registrata è prossima allo zero, rispettivamente $0.231$, $0.128$ e $0.085$ per le tre classi di attacco rispettivamente Advanced Adversarial, Advanced Perturbation e Prompt Injection, indicando che il vettore di manipolazione testuale intercetta angoli vicini ai $90^\circ$ rispetto al vettore di steering.
+
+Ciò dimostra una quasi totale assenza di isomorfismo: gli attacchi Black-Box non ingannano il modello spingendolo lungo il naturale asse semantico che separa la "vulnerabilità" dalla "sicurezza". Al contrario, le perturbazioni come l'inserimento di codice morto o istruzioni di override spingono l'elaborazione latente in dimensioni completamente ortogonali. Il modello non viene propriamente confuso che il codice sia sicuro, ma viene deragliato in una regione dello spazio vettoriale di profonda confusione geometrica, dove i filtri di rilevamento delle minacce perdono la loro efficacia direzionale, portando la rete a collassare sul verdetto di baseline False/Sicuro.
+
+\subsection{Similarità Black-Box}
+Al fine di ottenere una panoramica più completa sulla similarità tra attacchi, viene eseguita l'analisi della cosine similarity tra i vettori degli attacchi Black-Box per verificare se esiste un parallelismo tra le modalità di attacco delle perturbazioni.
+L'obiettivo è quindi verificare se è possibile posizionare gli attacchi su uno spettro delle direzioni di attacco.
+Perché questo sia possibile viene effettuata l'indagine di isomorfismo sugli attacchi che hanno avuto successo per entrambi gli attacchi. 
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{l c c c}
+        \toprule
+        \textbf{Modelli} & \textbf{Cosine Similarity} & \textbf{Angolo} & \textbf{n° Snippet} \\
+        \midrule
+        Qwen/Qwen2.5-7B-Instruct                 & 0.186  & 79.28$^\circ$ & 85 \\
+        Qwen/Qwen2.5-Coder-7B-Instruct           & 0.278  & 73.86$^\circ$ & 48 \\
+        meta-llama/Llama-3.1-8B-Instruct         & -0.0140 & 90.80$^\circ$ & 1\\
+        codellama/CodeLlama-7b-Instruct-hf       & 0.516  & 58.94$^\circ$ & 6\\
+        deepseek-ai/DeepSeek-R1-Distill-Qwen-7B  & 0.293  & 72.96$^\circ$ & 22\\
+        deepseek-ai/deepseek-coder-6.7b-instruct & null & null & null \\
+        \bottomrule
+    \end{tabular}
+    \vspace{0.2cm}
+    \caption{Isomorfismo Advanced Adversarial e Prompt Injection}
+    \label{tab:esito_iso_AA_PI}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{l c c c}
+        \toprule
+        \textbf{Modelli} & \textbf{Cosine Similarity} & \textbf{Angolo} & \textbf{n° Snippet} \\
+        \midrule
+        Qwen/Qwen2.5-7B-Instruct                 & 0.49  & 60.66$^\circ$ & 68 \\
+        Qwen/Qwen2.5-Coder-7B-Instruct           & 0.59  & 53.84$^\circ$ & 60 \\
+        meta-llama/Llama-3.1-8B-Instruct         & null & null & null\\
+        codellama/CodeLlama-7b-Instruct-hf       & 0.745  & 41.84$^\circ$ & 2\\
+        deepseek-ai/DeepSeek-R1-Distill-Qwen-7B  & 0.619  & 51.76$^\circ$ & 26\\
+        deepseek-ai/deepseek-coder-6.7b-instruct & 0.616 & 51.98$^\circ$ & 3 \\
+        \bottomrule
+    \end{tabular}
+    \vspace{0.2cm}
+    \caption{Isomorfismo Advanced Adversarial e Adversarial Perturbation}
+    \label{tab:esito_iso_AA_AP}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{l c c c}
+        \toprule
+        \textbf{Modelli} & \textbf{Cosine Similarity} & \textbf{Angolo} & \textbf{n° Snippet} \\
+        \midrule
+        Qwen/Qwen2.5-7B-Instruct                 & 0.174  & 79.98$^\circ$ & 63 \\
+        Qwen/Qwen2.5-Coder-7B-Instruct           & 0.446  & 63.51$^\circ$ & 40 \\
+        meta-llama/Llama-3.1-8B-Instruct         & null & null & null\\
+        codellama/CodeLlama-7b-Instruct-hf       & 0.52  & 58.67$^\circ$ & 26\\
+        deepseek-ai/DeepSeek-R1-Distill-Qwen-7B  & 0.375  & 67.98$^\circ$ & 64\\
+        deepseek-ai/deepseek-coder-6.7b-instruct & null & null & null \\
+        \bottomrule
+    \end{tabular}
+    \vspace{0.2cm}
+    \caption{Isomorfismo Adversarial Perturbation e Prompt Injection}
+    \label{tab:esito_iso_AP_PI}
+\end{table}
+
+I risultati mostrano risultati diversi rispetto a quanto ottenuto con l'isomorfismo rispetto al vettore di steering:
+
+\begin{itemize}[noitemsep]
+    \item Advanced Adversarial e Prompt Injection: 0.25
+    \item Advanced Adversarial e Adversarial Perturbation: 0.61
+    \item Adversarial Perturbation e Prompt Injection: 0.38
+\end{itemize}
+
+Le perturbazioni di Advanced Adversarial e Adversarial Pertubration dimostrano avere un valore di cosine similarity molto alto di $0.61$, dimostrando un alta somiglianza tra le metodologie dei due attacchi, considerando l'alta dimensionalità in cui vengono posizionati i vettori.
+Prompt Injection e Adversarial Pertubration hanno un valore di circa 0.37, mentre Advanced Adversarial e Prompt Injection di 0.25. Questi valori indicano una discreta somiglianza non del tutto trascurabile di questi attacchi: nonostante l'angolazione non sia parallela sono numeri maggiori rispetto allo steering.
+Le motivazioni di questi valori risiedono nelle metodologie degli attacchi stessi: gli attacchi advanced adversarial e Adversarial Perturbation lavorano entrambi sul codice offuscando variabili, aggiungendo codice morto o alterando la sintassi, rimanendo all'interno della logica di programmazione.
+Prompt Injection è invece diverso: non offusca il codice ma da un comando diretto lavorando sull'ubbidienza e non sulla sintassi, ponendosi quindi distante dagli altri due.
+Si può quindi ipotizzare l'esistenza di uno spettro su cui si collocano gli attacchi white-box e black-box considerando agli estremi le perturbazioni con la media più bassa ovvero Prompt Injection e Activation Steering.
+All'interno di questi estremi è possibile collocare vicino a Prompt Injection gli attacchi di Adversarial Perturbation e in seguito Advanced Adversarial.

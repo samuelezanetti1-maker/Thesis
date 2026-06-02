@@ -1,0 +1,42 @@
+\section{Mechanistic Interpretability e Representation Engineering}
+Come illustrato nella Sezione 2.1.4, i Large Language Models elaborano l'informazione trasformando i token in vettori e arricchendoli semanticamente lungo il Residual Stream. Tuttavia, l'alta dimensionalità di queste rappresentazioni ha storicamente reso le reti neurali delle black-box opache e di difficile interpretazione. Sebbene le tecniche tradizionali di Explainable AI (XAI) forniscano approssimazioni statistiche o mappe di salienza post-hoc, esse si limitano a descrivere il fenomeno esternamente, senza rivelarne i reali meccanismi causali interni.
+
+Per superare questo limite strutturale, si è affermata recentemente la disciplina della Mechanistic Interpretability, un sottocampo dell'Explainable AI che ha lo scopo di comprendere il funzionamento interno di una rete neurale analizzando i precisi meccanismi computazionali che la governano.
+
+\subsection{Obiettivi della Mechanistic Interpretability}
+I sistemi di intelligenza artificiale hanno subito rapidi miglioramenti negli ultimi anni. Lo sviluppo di modelli sempre più sofisticati rende la nostra comprensione del loro funzionamento cruciale per garantire risultati sicuri, allineati e affidabili.
+Inizialmente, non esistevano tecniche avanzate per l'introspezione: l'approccio predominante trattava i modelli come black-box, limitandosi a osservare il rapporto input-output e ignorandone l'architettura interna.
+
+Parallelamente a quanto avvenuto con lo sviluppo delle neuroscienze (che hanno permesso una comprensione più profonda dei processi cognitivi umani), il campo dell'interpretabilità si è mosso verso un approccio più granulare. Questa transizione da un'analisi superficiale a un focus sulla meccanica interna caratterizza l'attuale ricerca. L'obiettivo della Mechanistic Interpretability è fare reverse engineering della computazione di una rete neurale, ottenendo una consapevolezza precisa dei comportamenti del modello.
+
+Esistono due approcci principali a questa meccanica:
+\begin{itemize}
+    \item \textbf{Bottom-up:} studia i componenti fondamentali dei modelli attraverso l'analisi granulare di feature, neuroni, layer e connessioni (i cosiddetti circuiti). A differenza delle classiche valutazioni statistiche, mira a scoprire le precise relazioni causali e le operazioni matematiche che trasformano gli input in output.
+
+    \item \textbf{Top-down:} parte dai processi decisionali del modello analizzando le rappresentazioni apprese alla ricerca di concetti e schemi di alto livello (es. la rappresentazione della verità o di un'intenzione). Questo approccio non si limita all'osservazione, ma apre la strada alla manipolazione diretta di tali concetti.
+\end{itemize}
+
+Le feature sono le unità fondamentali delle rappresentazioni delle reti neurali che non possono essere scomposte in fattori indipendenti più semplici \cite{bereska2024mechanisticinterpretabilityaisafety}. Il mondo reale è composto da entità raggruppabili in categorie basate su proprietà condivise. Le reti neurali catturano e codificano queste astrazioni attraverso le feature apprese, che fungono da elementi base delle loro rappresentazioni interne con l'obiettivo di modellare i concetti latenti nei dati.
+
+\subsection{Representation Engineering (RepE)}
+L'approccio top-down ha dato origine a un ramo di ricerca specifico noto come Representation Engineering (RepE). A differenza della Mechanistic Interpretability tradizionale, che spesso si concentra sui singoli neuroni o circuiti, la RepE tratta le rappresentazioni latenti (i vettori di attivazione) come l'unità primaria di analisi e controllo.
+
+Attraverso tecniche di RepE, è possibile non solo "leggere" (read-out) quando un modello sta elaborando concetti astratti come onestà, moralità o sicurezza, ma anche "scrivere" o alterare (control) queste rappresentazioni durante l'inferenza. Regolando l'attivazione di specifici vettori semantici, è possibile guidare causalmente il comportamento del modello, migliorandone la sicurezza e l'allineamento senza la necessità di riaddestrarlo.
+
+\subsection{L'Ipotesi della Rappresentazione Lineare e la Superposizione}
+Nell'architettura delle reti neurali, i neuroni costituiscono l'unità computazionale di base. In una rappresentazione \(h \in \mathbb{R}^n\), le \(n\) direzioni della base canonica corrispondono alle componenti del vettore di attivazione. L'ipotesi della rappresentazione lineare suggerisce che molti concetti siano codificati come direzioni nello spazio latente, anche se non necessariamente in modo separato o ortogonale.
+
+Affinché una direzione sia semanticamente interpretabile, idealmente dovrebbe corrispondere a una singola feature, formando una base privilegiata. Quando un neurone risponde in modo coerente a un singolo concetto semantico, viene definito monosemantico. Tuttavia, specialmente nei modelli Transformer, i neuroni sono spesso polisemantici e possono attivarsi in risposta a concetti diversi e non sempre correlati. Questo rende difficile interpretare i singoli neuroni come primitive rappresentazionali.
+
+Per spiegare questa osservazione, la teoria più accreditata è l'ipotesi della superposizione \cite{elhage2022toymodelssuperposition}. Essa sostiene che, poiché il numero di feature rilevanti può superare la dimensionalità disponibile, il modello comprime più concetti nello stesso spazio di attivazione. In alta dimensionalità esistono molte direzioni quasi ortogonali, permettendo alla rete di rappresentare numerose feature attraverso combinazioni lineari parzialmente sovrapposte.
+
+La superposizione introduce inevitabilmente interferenza tra feature, ma consente anche di codificare una quantità di informazione superiore rispetto al numero di neuroni disponibili. Le funzioni di attivazione non lineari, insieme alla sparsità di molte feature, permettono alla rete di gestire tale interferenza e di recuperare strutture utili per la computazione. In questo contesto, la superposition è diventata un tema centrale della Mechanistic Interpretability.
+
+\subsection{Analisi della Traiettoria e Interventi Causali}
+Mentre tecniche come gli Sparse Autoencoders cercano di risolvere il problema della superposizione estraendo feature monosemantiche, l'analisi operativa delle vulnerabilità richiede strumenti in grado di mappare e alterare la traiettoria decisionale del modello in tempo reale. In questo contesto, la Representation Engineering si avvale di due tecniche diagnostiche e di intervento fondamentali, che costituiscono il nucleo metodologico di questo elaborato: la Logit Lens e l'Activation Steering.
+
+Tradizionalmente, per ottenere l'output di un LLM è necessario attendere che l'Hidden State attraversi tutti i layer della rete, per poi proiettarlo sullo spazio del vocabolario tramite la matrice di unembedding. La \textbf{Logit Lens} \cite{bereska2024mechanisticinterpretabilityaisafety} scavalca questa rigidità architetturale applicando prematuramente la matrice di unembedding agli Hidden States intermedi. Questo processo consente di osservare cosa pensa il modello durante il forward pass, osservando come la distribuzione di probabilità dei token si evolva dinamicamente layer dopo layer. Nel contesto della vulnerability detection, la Logit Lens permette di tracciare la traiettoria computazionale dei token decisionali, come "Sicuro" o "Vulnerabile", rivelando in quale esatto punto della rete il modello converga verso la decisione finale.
+
+Tuttavia, il solo utilizzo della Logit Lens non garantisce un nesso di causalità. Per dimostrare che una specifica direzione vettoriale sia effettivamente responsabile del comportamento del modello, è necessario ricorrere a interventi causali diretti come l'\textbf{Activation Steering} \cite{zou2025representationengineeringtopdownapproach}. Questa tecnica consiste nel modificare attivamente gli Hidden States interni durante la fase di inferenza, iniettando un vettore contrastivo calcolato preventivamente. 
+
+L'interazione dinamica tra l'analisi della traiettoria e la manipolazione attiva dello spazio latente fornisce un framework analitico robusto per valutare la resilienza dei Large Language Models.

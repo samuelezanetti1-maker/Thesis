@@ -1,0 +1,53 @@
+\section{Sicurezza del Software e LLM}
+Oggi, i Large Language Models (LLM) stanno emergendo come strumenti per la generazione e l'analisi del codice, con applicazioni che spaziano dalla semplice scrittura del codice alla vulnerability detection. \\
+Tuttavia, l'adozione di LLM in contesti di sicurezza del software solleva questioni critiche riguardo alla loro affidabilità e robustezza. 
+
+\subsection{La Sicurezza del Software}
+Le vulnerabilità del software rappresentano una sfida significativa poiché possono portare a  potenziali rischi per la società, come furti di dati, interruzioni di servizio e danni alla reputazione. La sicurezza del software si occupa di identificare, mitigare e prevenire tali vulnerabilità attraverso una combinazione di pratiche di sviluppo sicuro, strumenti di analisi del codice e tecniche di testing.\\
+Esistono diversi tool per la vulnerability detection i più comuni sono:
+\begin{itemize}
+    \item \textbf{Static Application Security Testing (SAST):} è una tecnica che analizza il codice sorgente o il bytecode di un'applicazione senza eseguirla, questo lo rende adatto per gli stage iniziali dello sviluppo. L'analisi statica può rilevare vulnerabilità come vulnerabilità di iniezione, buffer overflow e problemi di gestione della memoria. Tuttavia, può generare un alto numero di falsi positivi, richiedendo una revisione manuale per confermare le vulnerabilità effettive.
+    Esempi di SAST sono Flawfinder, SonarQube o Checkmarx.
+    \item \textbf{Dynamic Application Security Testing (DAST):} è una tecnica che analizza un'applicazione in esecuzione, simulando attacchi reali per identificare vulnerabilità. DAST è efficace nel rilevare problemi di sicurezza che emergono solo durante l'esecuzione, come vulnerabilità di autenticazione, autorizzazione e gestione delle sessioni. Tuttavia, può essere limitato nella capacità di identificare vulnerabilità che richiedono un'analisi approfondita del codice.
+    Esempi di DAST sono OWASP ZAP, Burp Suite o Checkmarx DAST.
+    \item \textbf{Interactive Application Security Testing (IAST):} è una tecnica che combina elementi di SAST e DAST, così da fornire un'analisi real-time delle vulnerabilità durante l'esecuzione dell'applicazione. IAST utilizza agenti nell'ambiente dell'applicazione, come un web server o una virtual machine, per monitorare le operazioni interne.
+    Esempi di IAST sono Contrast Security, Seeker o Checkmarx IAST.
+\end{itemize}
+Esistono anche altri approcci come la Software Composition Analysis (SCA), Runtime Application Self-Protection(RASP), Application Security-as-a-Service, Application Detection and Response (ADR) e Application Security Posture Management (ASPM).
+
+Nel panorama tradizionale, strumenti come il SAST (\textit{Static Application Security Testing}) operano principalmente tramite \textit{pattern-matching} ed euristiche basate su regole predefinite. Sebbene efficaci per violazioni sintattiche banali, questi strumenti soffrono di un limite strutturale: la mancanza di comprensione semantica. Non riescono a tracciare dipendenze logiche complesse tra diverse funzioni o file, portando a un elevato tasso di falsi positivi che generano alert fatigue nello sviluppatore e, cosa ancor più critica, di falsi negativi che rappresentano un rischio significatativo poiché una vulnerabilità non rilevata può essere sfruttata da un attaccante.
+
+Con l'avvento degli LLM questi sono stati utilizzati anche per la sicurezza del software presentando risultati promettenti, andando oltre un'analisi statica o dinamica tradizionale, analizzando il contesto e le dipendenze del codice stesso.\cite{zhou2024comparisonstaticapplicationsecurity}
+
+\subsection{Dai Modelli Generici a quelli Coder}
+
+Nel corso degli ultimi anni, i Large Language Models (LLM) si sono evoluti raggiungendo un'altissima efficienza nel processamento del linguaggio naturale, permettendo a queste architetture di essere sfruttate in molteplici contesti applicativi. Nascono così i modelli specializzati, come ad esempio i "Coder". Operare sul codice sorgente richiede la combinazione tra il linguaggio naturale, la sintassi specifica del dominio e la comprensione di terminologie tecniche rigorose. Come dimostrato dalla recente letteratura, addestrare un modello su dataset dominio-specifici garantisce prestazioni e capacità di ragionamento significativamente superiori nelle applicazioni che richiedono una profonda comprensione logico-strutturale.\cite{rozière2024codellamaopenfoundation}\\
+
+La transizione da un LLM \textit{general-purpose} a un modello specializzato nel codice  non è un semplice processo di fine-tuning testuale, ma richiede alterazioni metodologiche profonde. Modelli come Code Llama dimostrano la necessità di un Continual Pre-Training partendo dai pesi di modelli fondazionali, riaddestrati su enormi quantità di codice sorgente.
+
+In questo processo, vengono introdotte tecniche specifiche come il \textit{Fill-In-the-Middle} (FIM), che insegna al modello a comprendere il contesto bidirezionale del codice (prefisso e suffisso) e non solo la predizione lineare tipica del linguaggio naturale. Inoltre, l'analisi del software moderno richiede la comprensione di dipendenze a livello di repository: a differenza dei modelli generici che processano i file come entità isolate, i modelli coder avanzati  utilizzano ordinamenti topologici per catturare il flusso delle dipendenze tra file diversi. Questa specializzazione permette ai modelli di mappare lo spazio latente del codice in modo più accurato, sebbene questa maggiore precisione non si traduca necessariamente in una robustezza assoluta di fronte a perturbazioni avversariali.
+
+Il dataset su cui viene addestrato un modello è un fattore cruciale per le sue prestazioni, soprattutto in contesti specializzati come la sicurezza del software: gli LLM non vengono sottoposti solo a codice sorgente, ma anche a documentazione tecnica, report di vulnerabilità, discussioni con domande e risposte in linguaggio naturale.
+Questo approccio consente al modello di acquisire una comprensione più profonda del contesto e delle sfumature del codice.
+
+\subsection{L'Uso degli LLM per la Vulnerabilty Detection}
+
+Come anticipato, il rapido avanzamneto dei sistemi software ha portato ad un incremento della loro complessità e delle superficie di attacco, ponendo un accento sempre maggiore sui rischi relativi alla sicurezza. In questo scenario il rilevamento delle vulnerabilità diventa imperativo, necessitando quindi metodi robusti e automatici.
+Gli LLM hanno dimostrato di essere strumenti promettenti per la vulnerability detection, grazie alla loro capacità di generalizzare e di reasoning.\cite{gao2023fargonevulnerabilitydetection}
+
+L'efficacia degli LLM in questo dominio dipende fortemente da come il codice viene rappresentato e fornito al modello. Sebbene il codice sorgente grezzo sia l'input più semplice, le metodologie più avanzate prevedono l'utilizzo di rappresentazioni più complesse. Fornire al modello costrutti come gli Abstract Syntax Trees (AST) o i Program Dependence Graphs (PDG) permette all'LLM di non limitarsi a un'analisi sintattica lineare, ma di comprendere il flusso di controllo e i percorsi dei dati, fondamentali per individuare falle di sicurezza complesse.\cite{guo2021graphcodebertpretrainingcoderepresentations}
+
+Per quanto riguarda le strategie di interazione e apprendimento, la letteratura attuale si divide principalmente in tre metodologie\cite{gao2023fargonevulnerabilitydetection}:
+\begin{itemize}
+    \item \textbf{Zero-Shot e Few-Shot Learning:} L'LLM viene interrogato direttamente sul codice sorgente. Tramite il few-shot prompting, vengono forniti alcuni esempi di codice vulnerabile assieme alla sua correzione, guidando il modello verso l'identificazione di pattern simili senza alterarne i pesi.
+    \item \textbf{Fine-Tuning:} Modelli pre-addestrati specificamente sulla programmazione (come CodeLlama o CodeBERT) vengono sottoposti a fine-tuning su dataset annotati di vulnerabilità. Questo approccio adatta il modello al task di classificazione binaria, codice sicuro vs vulnerabile, o all'identificazione della riga problematica.
+    \item \textbf{Approcci Ibridi e RAG:}Per mitigare il problema delle allucinazioni, gli LLM vengono affiancati da architetture RAG (Retrieval-Augmented Generation) che forniscono al modello un contesto esterno aggiornato, attingendo a database di vulnerabilità note, come CVE o CWE, oppure vengono impiegati per filtrare i falsi positivi generati dagli strumenti SAST tradizionali.
+\end{itemize}
+
+Un grande ostacolo nell'adozione dei Large Language Moodels per la vulnerabilty detection è la mancanza di dati accurati e di alta qualità. Ricerche precedenti hanno dimostrato che dataset per la ricerca di vulnerabilità presentano una scarsa qualità, portando la percentuale di successo a livelli molto bassi.
+Integrare i modelli di deep learning nell'esplorazione delle vulnerabilità comporta fornire al modello codice sorgente per la classificazione.\\
+
+Le performance dei modelli non sembra essere influenzato dalla grandezza di quest'ultimo, tanto da non esistere una correlazione tra la dimensione del modello e le sue prestazioni \cite{steenhoek2025errmachinevulnerabilitydetection}, suggerendo che la qualità dei dati di addestramento e l'igengnerizzazione dei prompt giochino un ruolo nettamente superiore alla mera potenza computazionale del modello.\\
+
+
+

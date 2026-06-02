@@ -1,0 +1,78 @@
+\section{Tassonomia degli Attacchi}
+Con lo sviluppo dei deep learning e dei Large Language Models sono emersi anche i primi attacchi questi ultimi, con l'obiettivo di corrompere la loro affidabilità e sicurezza. 
+
+A seconda delle metodologie di attacco, possiamo distinguere gli attacchi in due macro-categorie: \textbf{Black Box} e \textbf{White Box}.\\
+Al fine di comprendere meglio le dinamiche di questo studio vengono ora introdotti gli attacchi a cui sono stati sottoposti i modelli.
+
+\subsection{Attacchi Black-Box}
+Gli attacchi Black-Box attaccano un modello senza avere accesso alla sua architettura, ai suoi pesi o al suo processo di addestramento. L'unico modo per questi attacchi per ottenere informazioni sul modello è attraverso l'utilizzo di query osservando le risposte del modello ad un determinato input.
+E' possibile suddividere gli attacchi Black-Box in grandi categorie: attacchi con stima del gradiente (gradient estimation),con sostituzione di rete (substitute networks), attacchi logici semantici (Zero-Knowledge).
+I primi poichè l'attaccante non ha il gradiente reale del modello, cerca di stimarlo attraverso l'invio di migliaia di richieste con input leggermente modificati tra loro osservando come cambiano i punteggi o le probabilità di output. Aggregandoli è possibile ottenere una stima della direzione in cui muoversi per ingannare il modello. E' un approccio che richiede un numero elevato di query e in un contesto reale potrebbe essere facilmente rilevato e bloccato.\\
+Gli attacchi con sostituzione di rete invece cercano di interrogare continuamente il mdoello bersaglio per costruire un modello locale su cui ha il controllo totale.
+L'idea alla base sfrutta il concetto di transferability, secondo cui un attacco che funziona su un modello sostituto ha una buona probabilità di funzionare anche sul modello bersaglio, anche se i due modelli hanno architetture o pesi diversi.\cite{zhou2020adversarialeigenattackblackbox}\\
+Gli attacchi Zero Knowledge invece si verificano quando l'attaccante non possiede alcuna informazione tecnica sul sistema bersaglio, lunica interazione possibile è quella di fornire un input testuale e osservare l'output grezzo. Tramite modifiche iterative e l'uso di algoritmi evolutivi è possibile valutare se la risposta testuale si avvicini o si allontani dall'obiettivo malevolo.
+
+\subsubsection{Prompt Injection}
+Con il termine \textit{Prompt Injection} ci si riferisce a una tecnica di attacco in cui un avversario manipola l'input per alterare il comportamento di un Large Language Model (LLM) in modo non previsto. A differenza di altri attacchi che richiedono di calcolare i pesi della rete o di addestrare un modello locale sostitutivo, la Prompt Injection è un approccio \textit{zero-knowledge} che prescinde completamente dall'architettura matematica del modello bersaglio. L'attacco consiste, infatti, nella scrittura di testo in linguaggio naturale mirato a ingannare le regole logiche del sistema, tentando di sovrascrivere le istruzioni di sistema o di manipolare il contesto in cui il modello opera.
+Il motivo per cui questo attacco risulta così efficace risiede nel meccanismo stesso con cui i modelli Transformer processano il testo: la mancanza di una rigorosa separazione tra il piano di controllo, le istruzioni o System Prompt, e il piano dei dati, l'input dell'utente. Entrambi vengono concatenati in un'unica sequenza continua di token e processati simultaneamente. Non esistendo un canale isolato per le direttive di sistema, l'input dell'utente può sovrascrivere le istruzioni originali, forzando l'LLM ad analizzare il prompt in zone diverse da quelle previste, causando violazioni delle linee guida, la generazione di contenuti dannosi o l'accesso non autorizzato a funzioni di sistema.
+È possibile distinguere due varianti principali di questa vulnerabilità \cite{prompt_injection}:
+\begin{itemize}
+\item \textbf{Direct Prompt Injection:} Si verifica quando un attaccante fornisce direttamente un input malevolo al modello interagendo con esso. Un esempio classico è un attaccante che inietta un prompt in un chatbot di supporto aziendale, istruendolo esplicitamente a ignorare le linee guida di sicurezza e a rivelare informazioni riservate.
+\item \textbf{Indirect Prompt Injection:} Avviene quando l'istruzione malevola non viene inserita direttamente dall'attaccante nell'interfaccia di chat, ma è nascosta all'interno di una fonte dati esterna che il modello andrà a elaborare. Ad esempio, un attaccante potrebbe inserire un prompt malevolo (anche scritto con testo invisibile) in una pagina web o in un documento. Quando un utente ignaro chiede all'LLM di riassumere quel documento, il modello "legge" l'istruzione nascosta dell'attaccante e la esegue, causando potenzialmente una risposta dannosa senza che vi sia stata alcuna interazione diretta tra l'avversario e il sistema.
+\end{itemize}
+
+\subsubsection{Adversial Perturbation}
+Gli attacchi di Adversarial Perturbation (AP) traggono le loro origini dal dominio della Computer Vision, dove l'aggiunta di rumore calcolato matematicamente, e spesso impercettibile all'occhio umano, ai pixel di un'immagine è in grado di sovvertire drasticamente la classificazione di una rete neurale. 
+
+In ambito testuale, e specificamente nell'analisi del codice sorgente tramite LLM, questo concetto viene tradotto nell'applicazione di \textit{Semantics-Preserving Transformations} (trasformazioni che preservano la semantica). Tali perturbazioni consistono nell'inserimento di modifiche minime e mirate all'input testuale con l'obiettivo di ingannare il modello, pur mantenendo rigorosamente inalterata la logica di esecuzione e la validità sintattica del programma originale \cite{yefet2020adversarialexamplesmodelscode}.
+
+Mentre nel linguaggio naturale un attacco può limitarsi all'aggiunta di spazi invisibili o errori di battitura, sul codice sorgente l'AP assume forme strutturate per non invalidare la compilazione. Le tecniche principali includono:
+\begin{itemize}
+    \item \textbf{Dead Code Insertion:} L'iniezione di istruzioni ininfluenti (come dichiarazioni di variabili mai utilizzate o cicli vuoti) o di commenti fuorvianti.
+    \item \textbf{Whitespace Manipulation:} L'alterazione dell'indentazione o degli spazi bianchi, che pur essendo ignorati dal compilatore, modificano la sequenza di token processata dall'\textit{attention mechanism} del modello.
+\end{itemize}
+
+L'efficacia di questi attacchi superficiali risiede nello sfruttamento dello \textit{shortcut learning} dei LLM: distorcendo il pattern visivo del codice senza intaccarne l'AST (Abstract Syntax Tree, ovvero la rappresentazione della struttura gerarchica e grammaticale del codice sorgente), l'attacco distoglie l'attenzione del modello dai token realmente vulnerabili, inducendolo in errore e causando un falso negativo o positivo.
+
+\subsubsection{Advanced Adversarial}
+Mentre l'Adversarial Perturbation si limita a manipolazioni lessicali di superficie, l'etichetta di Advanced Adversarial (AA) descrive una classe di attacchi nettamente più sofisticata, mirata ad alterare la struttura sintattica e il flusso di controllo del codice sorgente. 
+
+In questa categoria, le trasformazioni non si limitano a iniettare rumore testuale, ma applicano tecniche avanzate di refactoring e offuscamento. L'obiettivo è trasformare radicalmente l'AST (Abstract Syntax Tree) e il Control-Flow Graph (CFG) dello snippet, un grafo diretto che mappa tutti i possibili percorsi che il programma potrebbe compiere, costringendo il modello ad analizzare una logica architetturale inedita rispetto ai pattern appresi durante il pre-training.
+
+Attacchi tipici di questa categoria, particolarmente critici per linguaggi a basso livello come il C, includono:
+\begin{itemize}
+    \item \textbf{Control-Flow Alteration:} La riscrittura della logica di controllo senza alterare il risultato finale. Esempi includono la trasformazione di cicli \texttt{for} nei rispettivi equivalenti \texttt{while}, o l'inversione annidata di costrutti \texttt{if/else}.
+    \item \textbf{Opaque Predicates (Predicati Opachi):} L'inserimento strategico di condizioni logiche complesse che, sebbene matematicamente ridondanti o sempre vere/false, costringono il modello a calcolare diramazioni di codice  apparentemente rilevanti, frammentandone la capacità di attenzione globale sul contesto di sicurezza.
+    \item \textbf{Equivalent Construct Substitution:} La sostituzione di operazioni o variabili standard con costrutti semanticamente equivalenti ma strutturalmente diversi. Ad esempio la sostituzione del termine buffer.
+\end{itemize}
+
+L'efficacia degli attacchi Advanced Adversarial risiede nella loro capacità di disinnescare il riconoscimento dei pattern (pattern matching) del LLM. Il modello, pur comprendendo il linguaggio, non riconosce la sturttura sintattica comunemente utilizzata della vulnerabilità. 
+
+\subsection{Attacchi White-Box}
+Gli attacchi White-Box rappresentano una classe di minacce avversariali in cui l'attaccante possiede una conoscenza totale e trasparente del modello bersaglio. Questo livello di accesso comprende l'architettura interna, i pesi dei parametri, i gradienti e, talvolta, i dati di addestramento. A differenza degli approcci Black-Box, che procedono in modo euristico tramite interazioni \textit{query-based}, la conoscenza White-Box permette di manipolare il modello in modo deterministico e matematicamente ottimizzato, risultando intrinsecamente più potente e insidioso.
+
+Da un punto di vista teorico, 'possiamo suddividere le interazioni White-Box in tre macro-categorie a seconda dell'obiettivo dell'attacco:
+\begin{itemize}
+    \item \textbf{Ottimizzazione basata sul gradiente (Gradient-based Optimization):} L'attaccante sfrutta la retropropagazione (\textit{backpropagation}) per calcolare il gradiente della funzione di perdita rispetto all'input testuale. Tecniche classiche come il GCG (Greedy Coordinate Gradient) utilizzano queste derivate per capire esattamente quali token del prompt alterare per massimizzare l'errore di classificazione del modello. \cite{zou2023universaltransferableadversarialattacks}
+    
+    \item \textbf{Manipolazione dei parametri (Weight Poisoning):} L'attaccante interviene in modo permanente sui pesi strutturali della rete. Questo approccio si verifica tipicamente in scenari di compromissione della supply chain o durante il fine-tuning, dove vengono iniettate delle backdoor neurali: il modello si comporta normalmente finché non rileva un trigger specifico nell'input, momento in cui attiva un comportamento malevolo. \cite{kurita2020weightpoisoningattackspretrained}
+    
+    \item \textbf{Ingegneria delle rappresentazioni (Latent Space Manipulation):} Invece di alterare i token in ingresso o modificare i pesi in modo permanente, l'attaccante interviene dinamicamente durante il forward pass, ovvero l'inferenza. Avendo accesso al residual stream, è possibile intercettare, leggere e sovrascrivere i vettori di attivazione (hidden states) o alterare le distribuzioni di probabilità finali, forzando la rete a seguire percorsi computazionali deviati.
+\end{itemize}
+
+Nel contesto dei Large Language Models e della \textit{Mechanistic Interpretability}, oggetto di questa tesi, l'interesse si concentra esclusivamente sull'ultima categoria. Spostando l'attenzione dall'input testuale, esplorato negli attacchi Black-Box, allo spazio latente del modello, questo elaborato indaga due specifiche tecniche White-Box in grado di manipolare l'elaborazione del codice:
+
+\subsubsection{Logit Bias}
+Questa categoria di attacco opera all'estremo opposto dell'architettura, intervenendo al termine del \textit{forward pass} prima dell'applicazione della funzione Softmax. L'attaccante altera artificialmente le probabilità di output sommando o sottraendo un valore scalare ai logit associati a token specifici, ad esempio, forzando la predizione verso "TRUE" o "FALSE". 
+LLM assegna un punteggio di probabilità, il logit, a ogni possibile parola successiva nel suo vocabolario. Manipolando il logit bias, o alterando parametri di deceodifica come la temepratura si falsano questi putneggi.
+L'obiettivo è quello di forzare il modello a produrre, o non, parole specifiche.
+Può essere utilizzato per aggirare filtri di sicurezza o per indurre il modello a generare risposte che altrimenti sarebbero state considerate inaccettabili.\cite{dathathri2020plugplaylanguagemodels}
+
+\subsubsection{Activation Steering}
+Questa tecnica non altera i pesi del modello né il prompt di input, ma interviene chirurgicamente sulle attivazioni interne durante la fase di inferenza. Sfruttando la natura vettoriale del residual stream, l'attaccante calcola un \textit{vettore di steering} che codifica una specifica direzione semantica come il concetto di "sicuro" o "vulnerabile" e lo addiziona agli hidden states di determinati layer. 
+Questo attacco presenta due parametri modulabili:
+\begin{itemize}
+    \item \textbf{Il livello di iniezione:} la scelta  del layer di inieizione ha un ruolo cruciale, sia per l'efficiacia dell'attacco che per la sua furtività. Iniettare troppo presto potrebbe essere facilmente assorbito e corretto naturlamente, mentre un'iniezione troppo tardiva potrebbe non avere l'effetto desiderato.
+    \item \textbf{L'intensità:} il moltiplicatore determina quanto il vettore di steering influenzerà le attivazioni. Un valore troppo alto potrebbe distorcere eccessivamente la traiettoria computazionale, rendendo l'attacco evidente, mentre un valore troppo basso potrebbe non essere sufficiente a deviare il modello.
+\end{itemize} 
+L'Activation Steering devia la traiettoria computazionale del modello, dimostrandosi uno strumento fondamentale sia per l'attacco che per l'indagine meccanicistica. \cite{vu2025angularsteeringbehaviorcontrol}

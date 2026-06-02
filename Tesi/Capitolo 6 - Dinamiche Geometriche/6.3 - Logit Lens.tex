@@ -1,0 +1,58 @@
+\section{Logit Lens}
+Al fine di comprendere in che modo le perturbazioni indotte dagli attacchi Black-Box alterino la traiettoria decisionale del modello, è stata implementata la tecnica della \textbf{Logit Lens}. Questa metodologia consente di proiettare prematuramente gli stati latenti intermedi sul vocabolario, svelando le propensioni probabilistiche latenti del modello strato dopo strato.
+
+In un'architettura Transformer standard, le rappresentazioni latenti assumono un valore testuale unicamente al termine dell'intero forward pass, quando l'ultimo strato applica la matrice di unembedding per mappare le coordinate geometriche sul vocabolario, generando la distribuzione di probabilità, ovvero i logit per il token successivo.
+La tecnica della Logit Lens anticipa questo processo: applicando la matrice di unembedding agli hidden states intermedi di ogni singolo layer, è possibile proiettare sul vocabolario lo stato decisionale in corso della rete. Questo processo permette di visualizzare l'evoluzione della convinzione logica del modello ben prima dell'emissione del verdetto finale, tracciando l'evoluzione stratificata  della risposta del modello prima dell'emissione del verdetto finale.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\subsection{Analisi Contrastiva}
+Per misurare in modo inequivocabile la propensione della rete, i dati sono stati raccolti utilizzando un approccio di \textbf{Logit Lens Contrastiva}. Invece di osservare l'intero vocabolario, l'attenzione si è concentrata esclusivamente sulla differenza (\textit{Delta}) tra il logit associato al concetto di vulnerabilità (es. \texttt{True}) e il logit associato al concetto di sicurezza (es. \texttt{False}). 
+
+Matematicamente, la metrica per ogni layer $l$ è definita come:
+\begin{equation}
+    \Delta_l = \text{Logit}_l(\text{Vulnerabile}) - \text{Logit}_l(\text{Sicuro})
+\end{equation}
+
+Se $\Delta_l > 0$, la rete in quel preciso momento dell'elaborazione propende per dichiarare il codice vulnerabile; se $\Delta_l < 0$, propende per ritenerlo sicuro. Un valore prossimo allo zero indica incertezza o un'elaborazione ancora legata a logiche sintattiche primordiali, prive di una connotazione concettuale.
+
+\subsection{Architettura di Estrazione e Calcolo Contrastivo}
+Per calcolare il parametro $\Delta_l$ sull'intera profondità dei modelli, è stata sviluppata un'\textit{pipeline} di estrazione strutturata in due fasi computazionali, concepita per isolare l'impatto degli attacchi \textit{White-Box} e \textit{Black-Box}.
+
+La prima fase (\textit{Baseline} e \textit{Steering}) è stata condotta iterando il calcolo su tutti gli \textit{snippet} validati per ciascun modello. È stata definita una funzione di \textit{decodifica logit} che, sfruttando il metodo \texttt{model.lm\_head}, proietta l'attivazione latente dell'ultimo token direttamente sul tensore del vocabolario. 
+Durante il \textit{forward pass}, per ogni strato $l$, la funzione ha isolato le probabilità puntuali assegnate ai \textit{token} \texttt{True} e \texttt{False}, calcolandone la differenza aritmetica.
+Per tracciare la traiettoria di un attacco \textit{White-Box}, la medesima infrastruttura è stata equipaggiata con un \textit{Forward Hook} dinamico. Durante l'inferenza di un codice originariamente sicuro, il vettore di \textit{Steering} è stato iniettato al \textit{layer} bersaglio (Golden Layer), calcolando il conseguente \textit{Delta Contrastivo} per documentare l'insorgere progressivo della vulnerabilità indotta. 
+
+La seconda fase dell'estrazione si è concentrata sugli attacchi testuali \textit{Black-Box} (\textit{Advanced Adversarial}, \textit{Prompt Injection} e \textit{Adversarial Perturbation}). Mantenendo inalterato il motore di calcolo, ai modelli è stato sottoposto il codice semanticamente o strutturalmente perturbato. I risultati \textit{logit} estratti strato dopo strato sono stati memorizzati, aggregati e mediati su tutto il \textit{dataset} per restituire un quadro statistico robusto del comportamento di \textit{unembedding}. L'aggregazione finale di queste due fasi ha permesso la costruzione di un \textit{dataset} omnicomprensivo (\texttt{Risultati\_Contrastive\_All\_Layers}), fondamentale per la successiva visualizzazione grafica.
+
+\subsection{Evoluzione Stratificata degli Attacchi}
+Tracciando graficamente l'andamento del parametro $\Delta$ su tutti i \textit{layer}, è stato possibile confrontare la traiettoria naturale della vulnerabilità (estratta tramite lo \textit{Steering}) con le deviazioni imposte dagli attacchi \textit{Black-Box}. 
+
+La Figura \ref{fig:logit_lens_qwen} mostra in modo eloquente queste traiettorie per il modello \texttt{Qwen2.5-7B-Instruct}.
+
+
+
+Prendendo in esame proprio l'architettura \texttt{Qwen2.5-7B-Instruct}, i dati rivelano una marcata divisione in tre fasi computazionali distinte:
+\begin{enumerate}
+    \item \textbf{Fase di Assorbimento (Layer 0-15):} In tutti gli scenari, il delta contrastivo oscilla debolmente attorno allo zero. In questa fase profonda, il modello è impegnato unicamente nel \textit{parsing} della sintassi e nella risoluzione dei riferimenti del codice, senza aver ancora astratto alcun giudizio di sicurezza.
+    \item \textbf{Fase di Cristallizzazione (Layer 15-22):} A partire dai layer intermedi, le traiettorie iniziano a divergere significativamente. Nello scenario di \textit{Steering} (vettore di baseline puro), il modello inizia a riconoscere l'anomalia e spinge il $\Delta$ in territorio positivo, orientandosi stabilmente verso un giudizio di vulnerabilità. Al contrario, sotto l'influenza di attacchi strutturali come \textit{Adversarial Perturbation} e \textit{Advanced Adversarial}, l'insorgenza della consapevolezza viene soppressa: il modello viene trascinato gradualmente in territorio negativo, persuaso dall'offuscamento di trovarsi di fronte a un codice benigno.
+    \item \textbf{Fase di Sovrascrittura (Layer finali):} I layer finali confermano e amplificano esponenzialmente la polarizzazione decisionale presa nella fase precedente, sigillando il verdetto da restituire all'utente.
+\end{enumerate}
+
+\subsubsection{L'Anomalia della Prompt Injection}
+L'applicazione della Logit Lens ha permesso di isolare un fenomeno di eccezionale rilevanza teorica riguardante la \textit{Prompt Injection}. Osservando i dati di \texttt{Qwen2.5-7B} (Figura \ref{fig:logit_lens_qwen}), si nota che attorno al layer 21 il modello registra un improvviso e vertiginoso picco positivo del $\Delta$, indicando una chiarissima e netta identificazione della vulnerabilità del codice sottostante. 
+
+Tuttavia, anziché mantenere questa convinzione, nei tre strati successivi il $\Delta$ collassa catastroficamente in territorio negativo, raggiungendo i valori minimi assoluti dell'intero esperimento. 
+
+Questo comportamento certifica visivamente il fenomeno dello \textbf{Shallow Reasoning}: il modello non è affatto "cieco" di fronte alla vulnerabilità, tanto da classificarla correttamente negli \textit{hidden states} avanzati. È unicamente il peso imperativo dell'istruzione malevola (\textit{override} comportamentale) che si attiva a ridosso dei layer di \textit{unembedding}, sovrascrivendo forzatamente un ragionamento diagnostico che si era sviluppato correttamente. La Logit Lens dimostra quindi che la vulnerabilità agli attacchi testuali in modelli debolmente allineati non risiede in un deficit di comprensione del codice, bensì in una fragilità delle priorità di attenzione nell'ultimo miglio computazionale.
