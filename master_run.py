@@ -23,7 +23,7 @@ script_to_launch = [
     #"activation_steering.py",
     #"fast_steering.py",
     # "advanced_adversarial.py",
-    #"logit_bias_as.py"
+    "logit_bias_as.py"
     # "logit_bias.py",
     # "summary.py",
     # "analisi_mec.py",
@@ -69,7 +69,7 @@ script_to_launch = [
     #"BB_isomorfismo_sweep_AP.py",
     #"BB_isomorfismo_sweep_PJ.py",
     #"isomorfismo_sweep_steering.py",
-    "logit_bias_change.py"
+    #"logit_bias_change.py"
 
 ]
 
