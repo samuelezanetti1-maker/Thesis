@@ -1,7 +1,5 @@
 import os
 import pandas as pd
-from adversarial_perturbations import prompt_injection
-from adversarial_perturbations import prompt_injection
 import torch
 import gc
 import numpy as np
