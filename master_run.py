@@ -77,7 +77,7 @@ for script in script_to_launch:
     print(f"\n Launching {script}...")
     time.sleep(2)  # Add a small delay between script executions
 
-    result = subprocess.run(["python", script])
+    result = subprocess.run(["python", script], text=True)
 
     if result.returncode != 0:
         print(f"Error: {script} exited with code {result.returncode}")

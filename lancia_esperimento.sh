@@ -31,6 +31,6 @@ export HF_TOKEN="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"
 
 pwd; hostname; date
 
-python3 master_run.py
+python3 -u master_run.py
 
 date
