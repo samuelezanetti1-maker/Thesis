@@ -18,6 +18,7 @@ else:
 print(f"-----------------------\n")
 
 script_to_launch = [
+    "Logit_lens_sweep.py",
     "Logit_lens_vuln_sweep.py",
 
 ]

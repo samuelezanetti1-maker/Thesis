@@ -50,6 +50,7 @@ for model_name, config in models_config.items():
             )
 
         shift_aa_list, shift_pj_list, shift_ap_list = [], [], []
+        h_clean_aa_list, h_clean_pi_list, h_clean_ap_list = [], [], []
 
         def get_all_hidden_states(codice):
             prompt = f"Analyze this code \n\nCode:\n{codice}, \n start the response EXACTLY with 'FINAL_VERDICT: True' (if vulnerable) or 'FINAL_VERDICT: False' (if 100% secure), followed by a brief summary."
@@ -73,6 +74,7 @@ for model_name, config in models_config.items():
             h_clean = get_all_hidden_states(cod_orig)
             h_adv = get_all_hidden_states(cod_hackerato)
             shift_aa_list.append(h_adv - h_clean)
+            h_clean_aa_list.append(h_clean)
 
         # --- Prompt Injection ---
         for cod_orig in codici_pi:
@@ -81,6 +83,7 @@ for model_name, config in models_config.items():
             h_clean = get_all_hidden_states(cod_orig)
             h_pi = get_all_hidden_states(cod_hackerato)
             shift_pj_list.append(h_pi - h_clean)
+            h_clean_pi_list.append(h_clean)
 
         # --- Adversarial Perturbation ---
         for cod_orig in codici_ap:
@@ -89,10 +92,15 @@ for model_name, config in models_config.items():
             h_clean = get_all_hidden_states(cod_orig)
             h_ap = get_all_hidden_states(cod_hackerato)
             shift_ap_list.append(h_ap - h_clean)
+            h_clean_ap_list.append(h_clean)
 
         vettore_aa_all_layers = torch.mean(torch.stack(shift_aa_list), dim=0) if shift_aa_list else None
         vettore_pj_all_layers = torch.mean(torch.stack(shift_pj_list), dim=0) if shift_pj_list else None
         vettore_ap_all_layers = torch.mean(torch.stack(shift_ap_list), dim=0) if shift_ap_list else None
+        
+        v_base_aa_all = torch.mean(torch.stack(h_clean_aa_list), dim=0) if h_clean_aa_list else None
+        v_base_pi_all = torch.mean(torch.stack(h_clean_pi_list), dim=0) if h_clean_pi_list else None
+        v_base_ap_all = torch.mean(torch.stack(h_clean_ap_list), dim=0) if h_clean_ap_list else None
 
         # CONTRASTIVE LOGIT LENS 
         lm_head = model.get_output_embeddings() 
@@ -135,13 +143,19 @@ for model_name, config in models_config.items():
             delta_pj = calcola_delta(v_pj_layer)
             delta_ap = calcola_delta(v_ap_layer)
 
+            base_aa = calcola_delta(v_base_aa_all[layer_idx] if v_base_aa_all is not None else None)
+            base_pi = calcola_delta(v_base_pi_all[layer_idx] if v_base_pi_all is not None else None)
+            base_ap = calcola_delta(v_base_ap_all[layer_idx] if v_base_ap_all is not None else None)
             risultati_totali.append({
                 "MODELLO": model_name,
                 "LAYER": layer_idx,
                 "Delta_Steering": delta_steer,
                 "Delta_AA": delta_aa,
                 "Delta_PI": delta_pj,
-                "Delta_AP": delta_ap
+                "Delta_AP": delta_ap,
+                "Base_AA": base_aa,
+                "Base_PI": base_pi,
+                "Base_AP": base_ap
             })
 
         print("Salvataggio dati layer completato.")
@@ -167,4 +181,4 @@ df_risultati = pd.DataFrame(risultati_totali)
 df_risultati.to_csv(percorso_csv_finale, index=False)
 
 print(f"\n{'='*70}\n ELABORAZIONE FINITA!")
-print(f" Tutti i risultati sono stati salvati in 4 colonne in: {percorso_csv_finale}\n{'='*70}")
+print(f" Tutti i risultati sono stati salvati in 5 colonne in: {percorso_csv_finale}\n{'='*70}")
