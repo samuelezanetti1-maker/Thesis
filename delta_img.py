@@ -6,83 +6,120 @@ import os
 sns.set_theme(style="whitegrid", context="talk")
 os.makedirs("Grafici_Logit_Lens", exist_ok=True)
 
-# 1. Carica i due CSV
+# 1. Carica i due CSV con le nuove colonne "Base_"
 df_succ = pd.read_csv("CSV tesi/Logit_Lens/Risultati_Contrastive_All_Layers.csv")
 df_fail = pd.read_csv("CSV tesi/Logit_Lens/Risultati_Contrastive_All_Layers_fallimenti.csv")
 
-# Mappatura delle colonne degli attacchi ai loro nomi formali per i titoli
+# Dizionario per accoppiare le colonne Delta con le rispettive Basi
 attacchi = {
-    "Delta_AA": "Advanced Adversarial",
-    "Delta_PI": "Prompt Injection",
-    "Delta_AP": "Adversarial Perturbation"
+    "Advanced Adversarial": {"delta": "Delta_AA", "base": "Base_AA"},
+    "Prompt Injection": {"delta": "Delta_PI", "base": "Base_PI"},
+    "Adversarial Perturbation": {"delta": "Delta_AP", "base": "Base_AP"}
 }
 
-# Ottieni la lista di tutti i modelli unici presenti nel CSV
 modelli = df_succ['MODELLO'].unique()
 
-print("Avvio generazione massiva dei grafici...\n" + "="*50)
+print("Avvio generazione grafici assoluti...\n" + "="*50)
 
-# Ciclo sui Modelli
 for modello in modelli:
     print(f"\nElaborazione modello: {modello}")
     nome_file_safe = modello.replace('/', '_')
     
-    # Filtra i dati e mettili in ordine per layer
     dati_succ_mod = df_succ[df_succ['MODELLO'] == modello].sort_values('LAYER')
     dati_fail_mod = df_fail[df_fail['MODELLO'] == modello].sort_values('LAYER')
     
-    # Controllo di sicurezza: se il modello non ha dati in uno dei due CSV, saltalo
     if dati_succ_mod.empty or dati_fail_mod.empty:
-        print(f"  [!] Dati mancanti per {modello}. Salto al prossimo.")
+        print(f"  [!] Dati mancanti per {modello}. Salto.")
         continue
         
     layers = dati_succ_mod['LAYER'].values
     
-    # Ciclo sui 3 Delta (Attacchi)
-    for colonna_target, nome_attacco in attacchi.items():
-        print(f"  -> Generazione tracciato: {nome_attacco} ({colonna_target})")
+    for nome_attacco, colonne in attacchi.items():
+        col_delta = colonne["delta"]
+        col_base = colonne["base"]
         
-        # Estrai i valori Y per questo specifico attacco
-        y_succ = dati_succ_mod[colonna_target].values
-        y_fail = dati_fail_mod[colonna_target].values
+        print(f"  -> Generazione: {nome_attacco}")
+        
+        # Estrazione Dati: SUCCESSI (Inganno)
+        base_succ = dati_succ_mod[col_base].values
+        delta_succ = dati_succ_mod[col_delta].values
+        finale_succ = base_succ + delta_succ  # L'Equazione Fondamentale!
+
+        # Estrazione Dati: FALLIMENTI (Resilienza)
+        base_fail = dati_fail_mod[col_base].values
+        delta_fail = dati_fail_mod[col_delta].values
+        finale_fail = base_fail + delta_fail  # L'Equazione Fondamentale!
 
         # =========================================================
-        # Creazione del Grafico
+        # Creazione del Grafico (SIDE-BY-SIDE / DUE PANNELLI)
         # =========================================================
-        plt.figure(figsize=(12, 7))
+        # Creiamo una figura larga con due sottomenu (ax1, ax2). sharey=True è fondamentale!
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 7), sharey=True)
 
-        # La "Soglia del Dubbio" (Zero netto)
-        plt.axhline(0, color='black', linestyle='--', linewidth=1.5, alpha=0.7, label='Soglia Neutrale (0.0)')
+        # Colori Originali
+        c_ingannato = "purple"       
+        c_ingannato_base = "#BCA9D1"  
+        c_resiliente = "darkorange"      
+        c_resiliente_base = "#F5CBA7" 
 
-        # Traiettoria Attacco Fallito (Resilienza)
-        plt.plot(layers, y_fail, color='orange', linewidth=3, marker='o', 
-                 markersize=6, label='Attacco Fallito')
+        # Titolo Globale per tutta l'immagine
+        fig.suptitle(f"{nome_attacco}\n{modello}", 
+                     fontweight='bold', fontsize=16, y=0.98)
 
-        # Traiettoria Attacco Riuscito (Inganno)
-        plt.plot(layers, y_succ, color='purple', linewidth=3, marker='s', 
-                 markersize=6, label='Attacco Riuscito')
+        # ---------------------------------------------------------
+        # PANNELLO 1 (SINISTRA): ATTACCO FALLITO (ARANCIONE)
+        # ---------------------------------------------------------
+        ax1.axhline(0, color='#2c3e50', linestyle='-', linewidth=1.5, alpha=0.8, zorder=1)
+        
+        ax1.plot(layers, base_fail, color=c_resiliente_base, linestyle=':', linewidth=2, 
+                 label='Baseline')
+        ax1.plot(layers, finale_fail, color=c_resiliente, linewidth=2.5, 
+                 marker='o', markersize=6, markeredgecolor='white', markeredgewidth=1.2, zorder=5,
+                 label='Esito: True')
+        ax1.fill_between(layers, base_fail, finale_fail, color=c_resiliente, alpha=0.08, linewidth=0)
 
-        # Coloriamo la differenza (Il "Gap di Resilienza")
-        plt.fill_between(layers, y_succ, y_fail, color='gray', alpha=0.2, 
-                         label='Gap di Forza Semantica')
+        # Estetica Pannello Sinistro
+        ax1.set_title("Attacco Fallito", fontweight='bold', color=c_resiliente, pad=15)
+        ax1.set_xlabel("Profondità della Rete (Layer)", labelpad=15, fontweight='bold')
+        ax1.set_ylabel("Valore Assoluto Logit (True - False)", labelpad=15, fontweight='bold')
+        ax1.grid(color='gray', linestyle='--', linewidth=0.5, alpha=0.3)
+        ax1.set_facecolor('#fafafa')
+        ax1.set_xlim(0, max(layers))
+        ax1.set_xticks(range(0, max(layers)+1, 2))
+        ax1.legend(loc='best', framealpha=0.9)
 
-        # Estetica Accademica
-        plt.title(f"Tracciato Cognitivo Logit Lens: {nome_attacco}\n{modello}", 
-                  fontweight='bold', pad=20)
-        plt.xlabel("Profondità della Rete (Layer)", labelpad=15)
-        plt.ylabel(r"$\Delta$ Logit (True - False)", labelpad=15)
+        # ---------------------------------------------------------
+        # PANNELLO 2 (DESTRA): ATTACCO RIUSCITO (VIOLA)
+        # ---------------------------------------------------------
+        ax2.axhline(0, color='#2c3e50', linestyle='-', linewidth=1.5, alpha=0.8, zorder=1)
+        
+        ax2.plot(layers, base_succ, color=c_ingannato_base, linestyle=':', linewidth=2, 
+                 label='Baseline')
+        ax2.plot(layers, finale_succ, color=c_ingannato, linewidth=2.5, 
+                 marker='D', markersize=5, markeredgecolor='white', markeredgewidth=1.2, zorder=6,
+                 label='Esito: False')
+        ax2.fill_between(layers, base_succ, finale_succ, color=c_ingannato, alpha=0.08, linewidth=0)
 
-        # Limiti e Ticks
-        plt.xlim(0, max(layers))
-        plt.xticks(range(0, max(layers)+1, 2))
+        # Estetica Pannello Destro
+        ax2.set_title("Attacco Riuscito", fontweight='bold', color=c_ingannato, pad=15)
+        ax2.set_xlabel("Profondità della Rete (Layer)", labelpad=15, fontweight='bold')
+        # L'asse Y è condiviso, quindi non c'è bisogno di rimettere la label a destra
+        ax2.grid(color='gray', linestyle='--', linewidth=0.5, alpha=0.3)
+        ax2.set_facecolor('#fafafa')
+        ax2.set_xlim(0, max(layers))
+        ax2.set_xticks(range(0, max(layers)+1, 2))
+        ax2.legend(loc='best', framealpha=0.9)
 
-        # Legenda e salvataggio
-        plt.legend(loc='lower left', framealpha=0.9)
-        plt.tight_layout()
+        # =========================================================
+        # Salvataggio
+        # =========================================================
+        sns.despine(ax=ax1, bottom=True, left=True)
+        sns.despine(ax=ax2, bottom=True, left=True)
+        plt.tight_layout(rect=[0, 0, 1, 0.93])
 
-        # Salvataggio dinamico basato su modello e attacco
-        percorso_salvataggio = f"Grafici_Logit_Lens/Tracciato_{colonna_target}_{nome_file_safe}.png"
+
+        percorso_salvataggio = f"Grafici_Logit_Lens/Assoluto_{col_delta}_{nome_file_safe}.png"
         plt.savefig(percorso_salvataggio, dpi=300)
         plt.close()
 
-print("\n" + "="*50 + "\nGenerazione completata! Tutti i grafici sono in /Grafici_Logit_Lens")
+print("\n" + "="*50 + "\nGenerazione completata! Controlla la cartella /Grafici_Logit_Lens")
