@@ -18,7 +18,7 @@ else:
 print(f"-----------------------\n")
 
 script_to_launch = [
-   # "baseline.py",
+    #"baseline.py",
     # "adversarial_perturbations.py",
     #"activation_steering.py",
     #"fast_steering.py",
