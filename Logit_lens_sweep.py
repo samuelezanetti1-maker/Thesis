@@ -60,6 +60,8 @@ for model_name, config in models_config.items():
                 {"role": "user", "content": prompt}
             ]
             testo = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+            # Devo fare un fast forward su Final verdict
+            testo = testo + "FINAL_VERDICT:"
             inputs = tokenizer([testo], return_tensors="pt").to(model.device)
             with torch.no_grad():
                 out = model(**inputs, output_hidden_states=True)
