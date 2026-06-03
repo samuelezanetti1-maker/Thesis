@@ -18,58 +18,9 @@ else:
 print(f"-----------------------\n")
 
 script_to_launch = [
-    #"baseline.py",
-    # "adversarial_perturbations.py",
-    #"activation_steering.py",
-    #"fast_steering.py",
-    # "advanced_adversarial.py",
-    #"logit_bias_as.py"
-    # "logit_bias.py",
-    # "summary.py",
-    # "analisi_mec.py",
-    # "layer_sweep.py",
-    #"probing_steering.py",
-    # "snipe_steering.py",
-    #"mass_diagnostic.py",
-    #"plot_probing_mass.py",
-    #"L2_steering_graph.py",
-    #"L2_calcolo_real_steering.py",
     "black_box_L2.py",
-    #"adversarial_pert_alone.py",
-    #"pizza_pj.py", 
-    #"isomorfismo_pizza_pj.py", 
-    #"L2_pert.py", 
-    #"isomorfismo_wrong_pj.py", #fatto
-    #"isomorfismo_wrong_PJ_weakest_layer.py", #fatto
-    #"isomorfismo_wrong_aa.py",
-    #"isomorfismo_wrong_ap.py",
-    #"isomorfismo_wrong_ap_weakest_layer.py",
-    #"L2_all_fail.py",
-    #"isomorfismo_attacco_bb_aa.py",
-    #"isomorfismo_attacco_bb_ap.py",
-    #"isomorfismo_attacco_bb_pj.py",
-    #"isomorfismo_aa_ap.py",
-    #"isomorfismo_ap_pj.py",
-    #"isomorfismo_aa_pj.py",
-    #"isomorfismo_aa_last.py",
-    #"isomorfismo_ap_last.py",
-    #"isomorfismo_pi_last.py",
-    #"logit_lens_semantic.py",
-    #"logit_lens_last_layer.py",
-    #"isomorfismo_steering.py",
     "black_box_vuln_L2.py",
-    #"vuln_steering_L2.py",
-    #"evaluate_BB_change.py",
-    #"change_steering.py",
-    "Logit_lens_sweep.py",
-    #"ll_steering.py",
-    #"ll_steering_last.py",
-    #"ll_sweep_steering.py",
-    #"BB_isomorfismo_sweep_AA.py",
-    #"BB_isomorfismo_sweep_AP.py",
-    #"BB_isomorfismo_sweep_PJ.py",
-    #"isomorfismo_sweep_steering.py",
-    #"logit_bias_change.py"
+    "Logit_lens_sweep.py"
 
 ]
 
