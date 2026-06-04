@@ -11,7 +11,6 @@ from config import models_config
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
 
-# 2. CARICAMENTO E SETUP
 df_baseline = pd.read_csv("CSV tesi/Dataset/dataset_TRUE.csv")
 os.makedirs("CSV tesi/Logit_Lens", exist_ok=True) 
 
@@ -69,7 +68,6 @@ for model_name, config in models_config.items():
         print("Calcolo delle direzioni vettoriali su tutti i layer")
         # --- Advanced Adversarial ---
         for cod_orig in codici_aa:
-            # Estraiamo il codice perturbato ESATTO dal DataFrame
             cod_hackerato = df_aa[(df_aa['modello'] == model_name) & (df_aa['codice_originale'] == cod_orig)]['codice_perturbato'].values[0]
             
             h_clean = get_all_hidden_states(cod_orig)
@@ -115,7 +113,6 @@ for model_name, config in models_config.items():
             if vettore_layer is None: return np.nan
             v_calc = vettore_layer.to(model.dtype)
             
-            # Moltiplichiamo il delta per i pesi di scaling della RMSNorm finale.
             v_calc_scaled = v_calc * final_layernorm.weight
             
             logit_true = torch.dot(v_calc_scaled, w_true).item()
@@ -133,7 +130,6 @@ for model_name, config in models_config.items():
             if os.path.exists(path_steering):
                 vettore_steering_layer = torch.tensor(np.load(path_steering), dtype=model.dtype, device=model.device)
 
-            # estrazione dei vettori specifici per questo layer 
             v_aa_layer = vettore_aa_all_layers[layer_idx] if vettore_aa_all_layers is not None else None
             v_pj_layer = vettore_pj_all_layers[layer_idx] if vettore_pj_all_layers is not None else None
             v_ap_layer = vettore_ap_all_layers[layer_idx] if vettore_ap_all_layers is not None else None
