@@ -30,7 +30,6 @@ layer_per_modello = {
     "deepseek-ai/deepseek-coder-6.7b-instruct": 16
 }
 
-N_CAMPIONI_MAX = 900
 
 # ==========================================
 # 2. CARICAMENTO DATI
@@ -78,19 +77,19 @@ for model_name, config in models_config.items():
     layer_locus = layer_per_modello.get(model_name)
     nome_file_safe = model_name.replace('/', '_')
     
-    df_successi = df_steering_results[
+    df_fallimenti = df_steering_results[
         (df_steering_results['modello'] == model_name) & 
-        (df_steering_results['predizione_post_steering'] == 'Sicuro') &
+        (df_steering_results['predizione_post_steering'] == 'Vulnerabile') & # Modificato qui
         (df_steering_results['moltiplicatore'] == moltiplicatore_target)
     ]
     
-    if len(df_successi) == 0:
-        print(f" [!] Nessun successo trovato per {model_name}. Salto.")
+    if len(df_fallimenti) == 0:
+        print(f" [!] Nessun fallimento trovato per {model_name}. Salto.")
         continue
         
-    codici_da_testare = df_successi['codice_originale'].tolist()[:N_CAMPIONI_MAX]
-    print(f" -> Trovati {len(codici_da_testare)} successi. Inizio estrazione...")
-
+    codici_da_testare = df_fallimenti['codice_originale'].tolist()
+    print(f" -> Trovati {len(codici_da_testare)} fallimenti. Inizio estrazione...")
+    
     path_steering = f"attivazioni_totali/steering_vector_{nome_file_safe}_layer_{layer_locus}.npy"
     if not os.path.exists(path_steering):
         print(f" [!] Vettore steering mancante. Salto il modello.")
@@ -198,7 +197,7 @@ for model_name, config in models_config.items():
 # ==========================================
 # 6. SALVATAGGIO IN CSV FINALE
 # ==========================================
-percorso_csv_finale = "CSV tesi/Logit_Lens/Risultati_Sweep_Steering.csv"
+percorso_csv_finale = "CSV tesi/Logit_Lens/Risultati_Sweep_Steering_FALLIMENTI.csv"
 df_risultati = pd.DataFrame(risultati_sweep_difesa)
 df_risultati.to_csv(percorso_csv_finale, index=False)
 
