@@ -10,11 +10,13 @@ os.makedirs("Grafici_Logit_Lens", exist_ok=True)
 df_succ = pd.read_csv("CSV tesi/Logit_Lens/Risultati_Contrastive_All_Layers.csv")
 df_fail = pd.read_csv("CSV tesi/Logit_Lens/Risultati_Contrastive_All_Layers_fallimenti.csv")
 
+
 # Dizionario per accoppiare le colonne Delta con le rispettive Basi
 attacchi = {
     "Advanced Adversarial": {"delta": "Delta_AA", "base": "Base_AA"},
     "Prompt Injection": {"delta": "Delta_PI", "base": "Base_PI"},
-    "Adversarial Perturbation": {"delta": "Delta_AP", "base": "Base_AP"}
+    "Adversarial Perturbation": {"delta": "Delta_AP", "base": "Base_AP"},
+    "Steering": {"delta": "DELTA_DIFESA", "base": "Delta_Steering"}
 }
 
 modelli = df_succ['MODELLO'].unique()
@@ -27,10 +29,12 @@ for modello in modelli:
     
     dati_succ_mod = df_succ[df_succ['MODELLO'] == modello].sort_values('LAYER')
     dati_fail_mod = df_fail[df_fail['MODELLO'] == modello].sort_values('LAYER')
+
     
     if dati_succ_mod.empty or dati_fail_mod.empty:
         print(f"  [!] Dati mancanti per {modello}. Salto.")
         continue
+
         
     layers = dati_succ_mod['LAYER'].values
     

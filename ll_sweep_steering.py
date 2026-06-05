@@ -108,6 +108,7 @@ for model_name, config in models_config.items():
         vettore_tensore = torch.tensor(vettore_numpy, dtype=model.dtype, device=model.device)
 
         shift_steer_list = []
+        base_states_list = []
 
         # -- FUNZIONE 1: Estrai tutti i layer BASE (Senza Difesa) --
         def get_all_hidden_states(codice):
@@ -149,9 +150,11 @@ for model_name, config in models_config.items():
             
             # Calcoliamo lo shift di tutti i layer in un colpo solo
             shift_steer_list.append(stati_steered - stati_base)
+            base_states_list.append(stati_base)
 
         # Media vettoriale: [Num_Layers, Hidden_Dim]
         vettore_difesa_all_layers = torch.mean(torch.stack(shift_steer_list), dim=0)
+        vettore_base_all_layers = torch.mean(torch.stack(base_states_list), dim=0) # <--- MEDIA DELLA BASELINE
 
         # ==========================================
         # 5. LOGIT LENS SU TUTTI I LAYER
@@ -175,6 +178,13 @@ for model_name, config in models_config.items():
             logit_true = torch.dot(v_calc_scaled, w_true).item()
             logit_false = torch.dot(v_calc_scaled, w_false).item()
             delta = logit_true - logit_false
+
+
+            v_base = vettore_base_all_layers[layer_idx].to(model.dtype)
+            v_base_scaled = v_base * final_layernorm.weight
+            base_logit_true = torch.dot(v_base_scaled, w_true).item()
+            base_logit_false = torch.dot(v_base_scaled, w_false).item()
+            delta_base = base_logit_true - base_logit_false
             
             risultati_sweep_difesa.append({
                 "MODELLO": model_name,
@@ -182,7 +192,8 @@ for model_name, config in models_config.items():
                 "Locus_Iniezione": layer_locus, # Utile per i grafici
                 "Spinta_Vulnerabile_(True)": logit_true,
                 "Spinta_Sicuro_(False)": logit_false,
-                "DELTA_DIFESA": delta
+                "DELTA_DIFESA": delta,
+                "BASE": delta_base
             })
 
         print(" [+] Salvataggio dati completato.")
