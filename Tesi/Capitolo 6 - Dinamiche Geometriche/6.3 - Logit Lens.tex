@@ -1,37 +1,32 @@
 \section{Logit Lens}
-Al fine di comprendere in che modo le perturbazioni indotte dagli attacchi Black-Box alterino la traiettoria decisionale del modello, è stata implementata la tecnica della \textbf{Logit Lens}. Questa metodologia consente di proiettare prematuramente gli stati latenti intermedi sul vocabolario, svelando le propensioni probabilistiche latenti del modello strato dopo strato.
+Al fine di comprendere in che modo le perturbazioni generate dagli attacchi Black-Box alterino la traiettoria decisionale del modello, viene adottata la tecnica della Logit Lens. Questa metodologia consente di proiettare anticipatamente gli stati latenti intermedi sul vocabolario, ottenendo ciò che il modello restituirebbe in ogni fase dell'elaborazione, prima ancora di emettere un verdetto finale.
 
-In un'architettura Transformer standard, le rappresentazioni latenti assumono un valore testuale unicamente al termine dell'intero forward pass, quando l'ultimo strato applica la matrice di unembedding per mappare le coordinate geometriche sul vocabolario, generando la distribuzione di probabilità, ovvero i logit per il token successivo.
-La tecnica della Logit Lens anticipa questo processo: applicando la matrice di unembedding agli hidden states intermedi di ogni singolo layer, è possibile proiettare sul vocabolario lo stato decisionale in corso della rete. Questo processo permette di visualizzare l'evoluzione della convinzione logica del modello ben prima dell'emissione del verdetto finale, tracciando l'evoluzione stratificata  della risposta del modello prima dell'emissione del verdetto finale.
+in un'architettura Transformer standard le rappresentazioni nello spazio latente assumono un significato testuale solo al termine dell'intero processo di elaborazione, il forward pass, quando l'ultimo layer applica la matrice di unembedding per mappare le coordinate geomtriche sul vocabolario, generando la distribuzione di probabilità, ovvero i logit, per il token successivo. La tecnica della Logit Lens ha il compito di anticipare questo processo: applicando la matrice di unembedding agli hidden states intermedi di ogni singolo layer, è possibile ottenere una proiezione sul vocabolario dello stato decisionale in corso dell'intera rete. Questo processo permette di analizzare l'evoluzione della convizione logica del modello.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-\subsection{Analisi Contrastiva}
-Per misurare in modo inequivocabile la propensione della rete, i dati sono stati raccolti utilizzando un approccio di \textbf{Logit Lens Contrastiva}. Invece di osservare l'intero vocabolario, l'attenzione si è concentrata esclusivamente sulla differenza (\textit{Delta}) tra il logit associato al concetto di vulnerabilità (es. \texttt{True}) e il logit associato al concetto di sicurezza (es. \texttt{False}). 
+Per misurare in modo inequivocabile la propensione della rete, sono stati raccolti i dati utilizzando un approccio di Logit Lens Contrastiva.: invece di osservare l'intero vocabolario, l'attenzione si è concentrata esclusivamente sulla differenza, il $Delta$, tra il logit associato al concetto di vulnerabilità (TRUE) e il logit associato al concetto di sicurezza (FALSE). 
 
 Matematicamente, la metrica per ogni layer $l$ è definita come:
 \begin{equation}
     \Delta_l = \text{Logit}_l(\text{Vulnerabile}) - \text{Logit}_l(\text{Sicuro})
 \end{equation}
 
-Se $\Delta_l > 0$, la rete in quel preciso momento dell'elaborazione propende per dichiarare il codice vulnerabile; se $\Delta_l < 0$, propende per ritenerlo sicuro. Un valore prossimo allo zero indica incertezza o un'elaborazione ancora legata a logiche sintattiche primordiali, prive di una connotazione concettuale.
+Se il $\Delta_l > 0$, la rete in quel preciso momento dell'elaborazione propende per dichiarare il codice come vulnerabile; se il $\Delta_l < 0$, propende invece per definirlo sicuro. Un valore prossimo allo zero indica incertezza o un'elaborazione ancora legata a logiche sintattiche piuttosto che semantiche.
+
+
+Per comprendere appieno la dinamica dell'attacco, la metrica $\Delta_l$ è stata scomposta per ottenere la Traiettoria Cognitiva Assoluta. Invece di misurare unicamente la forza dell'attacco, vengono estratte in parallelo la Convinzione di base, ovvero il Logit contrastivo sul codice originale privo di alterazioni, e la magnitudo di shift introdotto dalla perturbazione.
+Ad ogni layer $l$ è quindi possibile definire l'esito computazionale come:
+\begin{equation}
+    \text{Esito Finale}_l = \text{Convinzione Base}_l + \text{Forza Attacco}_l
+\end{equation}
+Questa scomposizione permette di quantificare il Gap di Forza Semantica, ovvero la forza dell'attacco, dimostrando come il cedimento della rete dipenda non solo dalla capacità di impatto della perturbazione, ma anche dalla robustezza della Baseline originale del modello.
 
 \subsection{Architettura di Estrazione e Calcolo Contrastivo}
-Per calcolare il parametro $\Delta_l$ sull'intera profondità dei modelli, è stata sviluppata un'\textit{pipeline} di estrazione strutturata in due fasi computazionali, concepita per isolare l'impatto degli attacchi \textit{White-Box} e \textit{Black-Box}.
+Per calcolare i paramentri logit sull'intera profondità dei modelli, la pipeline adottata viene strutturata in modo da superare l'ostacolo del primo Token.
+Estrarre l'hidden state subito all'ultimo token del prompt naturale, infatti, comporta un bias: in quel preciso istante, la rete è ancora impegnata a generare token di formattazione strutturale della stringa "FINAL", e non ha ancora iniziato a valutare la le possibilità tra vulnerabilità e sicurezza.
 
-La prima fase (\textit{Baseline} e \textit{Steering}) è stata condotta iterando il calcolo su tutti gli \textit{snippet} validati per ciascun modello. È stata definita una funzione di \textit{decodifica logit} che, sfruttando il metodo \texttt{model.lm\_head}, proietta l'attivazione latente dell'ultimo token direttamente sul tensore del vocabolario. 
-Durante il \textit{forward pass}, per ogni strato $l$, la funzione ha isolato le probabilità puntuali assegnate ai \textit{token} \texttt{True} e \texttt{False}, calcolandone la differenza aritmetica.
+Per ovviare a questio bias viene implementata una tecnica di Prompt Fast-Forwarding: al termine del prompt viene forzata l'iniezione della stringa "FINAL\_VERDICT:". Questo avanzamento forzato del contesto permette di allineare geometricamente l'estrazione degli hidden states al momento esatto della risposta, costringendo il modello a valutare sul vocabolario unicamente la dicotomia tra i token TRUE e FALSE, restituendo così valori relativi allo scopo dello studio.
+
+Durante il forward pass, per ogni strato $l$, la funzione ha isolato le probabilità puntuali assegnate ai \textit{token} \texttt{True} e \texttt{False}, calcolandone la differenza aritmetica.
 Per tracciare la traiettoria di un attacco \textit{White-Box}, la medesima infrastruttura è stata equipaggiata con un \textit{Forward Hook} dinamico. Durante l'inferenza di un codice originariamente sicuro, il vettore di \textit{Steering} è stato iniettato al \textit{layer} bersaglio (Golden Layer), calcolando il conseguente \textit{Delta Contrastivo} per documentare l'insorgere progressivo della vulnerabilità indotta. 
 
 La seconda fase dell'estrazione si è concentrata sugli attacchi testuali \textit{Black-Box} (\textit{Advanced Adversarial}, \textit{Prompt Injection} e \textit{Adversarial Perturbation}). Mantenendo inalterato il motore di calcolo, ai modelli è stato sottoposto il codice semanticamente o strutturalmente perturbato. I risultati \textit{logit} estratti strato dopo strato sono stati memorizzati, aggregati e mediati su tutto il \textit{dataset} per restituire un quadro statistico robusto del comportamento di \textit{unembedding}. L'aggregazione finale di queste due fasi ha permesso la costruzione di un \textit{dataset} omnicomprensivo (\texttt{Risultati\_Contrastive\_All\_Layers}), fondamentale per la successiva visualizzazione grafica.
@@ -56,3 +51,5 @@ L'applicazione della Logit Lens ha permesso di isolare un fenomeno di eccezional
 Tuttavia, anziché mantenere questa convinzione, nei tre strati successivi il $\Delta$ collassa catastroficamente in territorio negativo, raggiungendo i valori minimi assoluti dell'intero esperimento. 
 
 Questo comportamento certifica visivamente il fenomeno dello \textbf{Shallow Reasoning}: il modello non è affatto "cieco" di fronte alla vulnerabilità, tanto da classificarla correttamente negli \textit{hidden states} avanzati. È unicamente il peso imperativo dell'istruzione malevola (\textit{override} comportamentale) che si attiva a ridosso dei layer di \textit{unembedding}, sovrascrivendo forzatamente un ragionamento diagnostico che si era sviluppato correttamente. La Logit Lens dimostra quindi che la vulnerabilità agli attacchi testuali in modelli debolmente allineati non risiede in un deficit di comprensione del codice, bensì in una fragilità delle priorità di attenzione nell'ultimo miglio computazionale.
+
+\subsubsection{Disaccoppiamento Spazio-Semantico nei Modelli Reasoning}L'applicazione della Logit Lens ai modelli di ultima generazione basati su \textit{Chain-of-Thought} (CoT), come \texttt{DeepSeek-R1-Distill-Qwen-7B}, ha portato alla luce un limite strutturale di questa metrica, svelando al contempo l'anatomia dell'inganno in queste architetture.A differenza dei modelli \textit{Instruct} standard, in cui l'estrazione logit post-prompt rivela una biforcazione immediata tra codici sicuri e vulnerabili, l'allineamento tramite \textit{Fast-Forwarding} su DeepSeek R1 ha prodotto traiettorie di \textit{Baseline} e di \textit{Attacco} perfettamente sovrapposte e collassate in territorio negativo per tutti i campioni. Questo fenomeno dimostra visivamente che, all'istante zero (prima della generazione del blocco \texttt{}), lo stato interno del modello è agnostico rispetto alla decisione finale: i modelli di ragionamento non possiedono le \textit{feature} decisionali nell'ultimo strato di \textit{unembedding} prima di aver elaborato i token intermedi.Incrociando questo dato semantico "cieco" con le evidenti deformazioni geometriche registrate in precedenza tramite la metrica spaziale $L_2$, emerge la prova del \textbf{disaccoppiamento spazio-semantico}. Nei modelli CoT, gli attacchi testuali non forzano il fallimento corrompendo l'immediata estrazione probabilistica, bensì causano uno spostamento spaziale letale all'inizio del processo. Questo deragliamento iniziale costringerà il modello a incamminarsi in un processo generativo di ragionamento viziato, auto-convincendosi della sicurezza del codice in modo differito, token dopo token.

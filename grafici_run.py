@@ -1,10 +1,11 @@
 import subprocess
 
 script_to_launch = [
-    "3d_aa.py",
-    "3d_steering.py",
-    "3d_ap.py",
-    "3d_pi.py",
+    #"3d_aa.py",
+    #"3d_steering.py",
+    #"3d_ap.py",
+    #"3d_pi.py",
+    "delta_img.py",
 
 ]
 
