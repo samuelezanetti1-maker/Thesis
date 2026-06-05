@@ -18,7 +18,7 @@ else:
 print(f"-----------------------\n")
 
 script_to_launch = [
-    "BB_all_iso.py",
+    "ll_sweep_steering.py",
 
 ]
 
