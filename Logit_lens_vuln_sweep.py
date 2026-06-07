@@ -54,15 +54,46 @@ for model_name, config in models_config.items():
         def get_all_hidden_states(codice):
             prompt = f"Analyze this code \n\nCode:\n{codice}, \n start the response EXACTLY with 'FINAL_VERDICT: True' (if vulnerable) or 'FINAL_VERDICT: False' (if 100% secure), followed by a brief summary."
             messages = [
-                {"role": "system", "content": "You are a cybersecurity expert. Your task is to find vulnerabilities in the source code."},
-                {"role": "user", "content": prompt}
+            {"role": "system", "content": "You are a cybersecurity expert. Your task is to find vulnerabilities in the source code."},
+            {"role": "user", "content": prompt}
             ]
-            testo = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-            testo = testo + "FINAL_VERDICT:"
-            inputs = tokenizer([testo], return_tensors="pt").to(model.device)
+            testo_base = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+            
+            # --- LOGICA 2-STEP PER MODELLI REASONING ---
+            if "DeepSeek-R1" in model_name:
+                inputs_gen = tokenizer([testo_base], return_tensors="pt").to(model.device)
+                
+                # Lasciamo che il modello ragioni liberamente sul codice
+                with torch.no_grad():
+                    output_ids = model.generate(
+                        **inputs_gen,
+                        max_new_tokens=600,
+                        pad_token_id=tokenizer.eos_token_id,
+                        do_sample=False
+                    )
+                
+                # Estraiamo i token del ragionamento
+                token_generati = output_ids[0][inputs_gen.input_ids.shape[1]:]
+                testo_generato = tokenizer.decode(token_generati, skip_special_tokens=False)
+                
+                # Tronchiamo esattamente alla fine del pensiero
+                if "</think>" in testo_generato:
+                    pensiero_puro = testo_generato.split("</think>")[0] + "</think>\n"
+                else:
+                    pensiero_puro = testo_generato
+                
+                # Assembliamo il prompt maturo con il verdetto finale forzato
+                testo_finale = testo_base + pensiero_puro + "FINAL_VERDICT:"
+            else:
+                # Per tutti gli altri modelli: Fast-Forwarding istantaneo
+                testo_finale = testo_base + "FINAL_VERDICT:"
+            # -------------------------------------------
+
+            inputs = tokenizer([testo_finale], return_tensors="pt").to(model.device)
             with torch.no_grad():
                 out = model(**inputs, output_hidden_states=True)
             
+            # Estraiamo gli hidden states dell'ultimo token
             return torch.stack([layer_state[0, -1, :] for layer_state in out.hidden_states])
 
         print("Calcolo delle direzioni vettoriali su tutti i layer")
