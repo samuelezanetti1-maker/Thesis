@@ -1,3 +1,115 @@
 \section{L2: Norma Euclidea}
-Se la cosine similarity permette di misurare l'orientamento di due vettori nello spazio latente, calcolando l'angolo tra essi, la norma $L_2$ quantifica invece la distanza euclidea tra due punti, restituendo un valore scalare che rappresenta la magnitudo, ovvero l'estensione, dello spostamento.
-L'obiettivo è quindi quello di misurare di quanto, in termini di distanza fisica nello spazio latente, un attacco testuale Black-Box allontani la rappresentazione interna del codice vulnerabile dal centroide del cluster di vulnerabilità, spingendola verso il cluster della sicurezza.
+Se la cosine similarity permette di misurare l'orientamento di due vettori nello spazio latente, calcolando l'angolo tra essi, la norma $L_2$ quantifica invece la distanza euclidea tra due punti, restituendo un valore scalare che rappresenta la magnitudine, ovvero l'estensione, dello spostamento.
+L'obiettivo è quindi quello di misurare di quanto, in termini di distanza fisica nello spazio latente, un attacco testuale Black-Box allontani la rappresentazione interna del codice vulnerabile dal centroide del cluster di vulnerabilità, spingendola verso il cluster della sicurezza o se le perturbazioni applicate dagli attacchi Black-Box spostino la rappresentazione del modello su nuovi piani dello spazio latente.
+
+Sfruttando la metodologia di estrazione degli hidden states sull'ultimo token del forward pass, è stato effettuato un layer sweep delle attivazioni vettoriali in centroidi: per ogni layer dei modelli sono stati calcolati i vettori medi rappresentativi:
+\begin{itemize}[noitemsep]
+    \item Stati Baseline: i due centroidi relativi al concetto di Sicurezza e Vulnerabilità ottenuti dalla baseline
+    \item Stati sotto Attacco: per ogni attacco vengono calcolati i due centroidi relativi al possibile esito dell'attacco, uno di successo, quando il modello è stato ingannato, e uno di fallimento.
+\end{itemize}
+
+Questi punti possono essere utilizzati per formulare quattro metriche fondamentali per descrivere la meccanica degli attacchi Black-Box: non solo come alterazione di probabilità, ma come vero e proprio spostamento fisico delle coordinate nello spazio latente.
+
+Per due vettori generici $x$ e $y$ la distanza euclidea è definita dalla formula della norma $L_2$ applicata a $d$ dimensioni:
+
+\begin{equation}
+    ||x-y||_2 = \sqrt{ \sum_{i=1}^d (x_i - y_i)^2}
+\end{equation}
+
+Applicando la stessa formula ai centroidi estratti precedentemente, $S_{base}, V_{base}, S_{attacco}$ e $V_{attacco}$, si ottengono metriche vettoriali utili per descrivere la dinamica degli attacchi:\\
+
+\textbf{Baseline}\\
+Rappresenta la distanza semantica naturale del modello, indica lo spazio che intercorre naturalmente tra il concetto di sicurezza e il concetto di vulnerabilità in assenza di perturbazioni.
+Funge da metro di paragone assoluto per poter mappare gli attacchi.
+
+\begin{equation}
+    BASELINE_{L_2} = ||S_{base} - V_{base}||_2
+\end{equation}
+
+\textbf{Forza dell'Attacco}\\
+ Quantifica lo spostamento assoluto dell'attacco necessario per cambiare la rappresentazione del codice dalla sua posizione originale verso quello sicuro.\\
+
+ \begin{equation}
+    FORZA_{L_2} = ||S_{attacco} - V_{base}||_2
+ \end{equation}
+
+ \textbf{Overshooting Latente}\\
+ Misura la precisione dell'attacco di nascondersi al modello, calcolando la distanza della rappresentazione dell'attacco avvenuto con successo dal cluster di sicurezza.
+ Idealmente più questi sono vicini più il modello restituirà una risposta errata influenzata dalla perturbazione.
+
+ \begin{equation}
+    OVERSHOOTING_{L_2} = ||S_{attacco} - S_{base}||_2
+ \end{equation}
+
+ \textbf{Confine Decisionale}\\
+Valuta la distanza spaziale netta tra le attivazione dei campioni in cui la rete ha ceduto all'inganno e quelle in cui ha resistito.
+Ricopre un ruolo importante per poter mappare correttamente i punti in più di due dimensioni.
+
+\begin{equation}
+    CONFINE_{L_2} = ||S_{attacco} - V_{attacco}||_2
+\end{equation}
+
+\subsection{Rappresentazione nello Spazio Latente}
+Sfruttando le metriche precedentemente descritte è possibile mappare a tre dimensioni i centroidi calcolati così da visualizzare lo shift geometrico della topologia interna del modello causato dagli attacchi.
+Vengono riportate le rappresentazioni con il rateo di successo più alto per gli attacchi
+
+\begin{figure}[H]
+    \centering
+    
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{immagini/L2/PI_Topologia3D_Qwen_Qwen2.5-7B-Instruct_18.png} 
+        \caption{Qwen Instruct}
+        \label{fig:pi qwen-7b-instruct-L2}
+    \end{subfigure}
+    \hfill 
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{immagini/L2/PI_Topologia3D_codellama_CodeLlama-7b-Instruct-hf_13.png}
+        \caption{CodeLlama}
+        \label{fig:pi codellama-7b-instruct-L2}
+    \end{subfigure}
+    
+    \vspace{0.2cm}
+    \caption{Prompt Injection}
+    \label{fig:griglia_L2}
+\end{figure}
+
+Vengono riportati per l'attacco di Prompt Injection i risultati ottenuti per i modelli Qwen Instruct e CodeLlama\ref{fig:griglia_L2}: si può osservare come l'attacco riuscito abbia traslato i punti nello spazio latente, cambiando l'asse.
+Viene riportato anche l'attacco con $100\%$ di ASR su Codellama \ref{fig:pi codellama-7b-instruct-L2} 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.60\textwidth]{immagini/L2/AP_Topologia3D_Qwen_Qwen2.5-Coder-7B-Instruct_18.png}
+    \caption{Adversarial Perturbation - Qwen Coder}
+    \label{fig:L2 ap qwen coder}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.60\textwidth]{immagini/L2/AA_Topologia3D_Qwen_Qwen2.5-7B-Instruct_18.png}
+    \caption{Advanced Adversarial - Qwen Instruct}
+    \label{fig:L2 ap qwen instruct}
+\end{figure}
+
+Gli attacchi Black-Box presentano uno shift spaziale nello spazio vettoriale, molto simile, evidenziando come l'attacco sposti la convinzione del modello su un piano completamente diverso rispetto a quello della baseline originale.
+L'attacco White-Box di Activation Steering segue invece un pattern diverso: rispecchiando perfettamente la logica dell'attacco, il pensiero del modello viene spinto verso il centroide sicuro della baseline, posizionandosi sullo stesso piano della baseline nello spazio latente.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.60\textwidth]{immagini/L2/Steering_Topologia3D_deepseek-ai_deepseek-coder-6.7b-instruct_17.png}
+    \caption{Activation Steering - Deepseek Coder}
+    \label{fig:L2 Deepseek coder}
+\end{figure}
+
+E' importante sottolineare che le rappresentazioni presentate sono su uno spazio tridimensionale, mentre l'architettura Transformer lavora su più di 4000 dimensioni. E' facile quindi ignorare il concetto che all'interno della rappresentazione 3D un semplice spostamento rispetto ad un asse implica lo spostamento del vettore su molteplici piani non visualizzabili per limitazioni concettuali e fisiche.
+Tutti gli attacchi presentano lo spostamento dei punti legati ai concetti di "sicurezza" e "vulnerabilità" nello spazio latente rispetto alla rappresentazione della baseline originale, confermando il fenomeno di trajectory shift, dove il rumore introdotto dall'attacco sposta il vettore in zone grigie dello spazio latente in cui il task di vulnerability detection non è più affrontato allo stesso modo.
+
+L'analisi dei layer successivi rivela che le distanze euclidee tendono a divergere progressivamente, consolidando il trajectory shift iniziale, come evidenziato nell'evoluzione dinamica riportata in Figura \ref{fig:evoluzione layer}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.60\textwidth]{immagini/L2/Evoluzione nei layer.png}
+    \caption{Advanced Adversarial - Qwen Instruct}
+    \label{fig:evoluzione layer}
+\end{figure}

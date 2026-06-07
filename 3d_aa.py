@@ -108,9 +108,8 @@ def plot_tetraedro_3d_ancorato(distanze, model_name, percorso_salvataggio):
     # =========================================================
     ax.set_title(f"Topologia Spaziale - Advanced Adversarial \n{model_name}", fontweight='bold', pad=20)
     
-    ax.set_xlabel("", labelpad=15, fontweight='bold')
-    ax.set_ylabel("", labelpad=15)
-    ax.set_zlabel("", labelpad=15)
+    ax.set_xlabel("Overshooting Latente", labelpad=7, fontweight='bold', color='black')
+    ax.set_ylabel("Forza dell'Attacco", labelpad=7, fontweight='bold', color='black')
     
     ax.xaxis.pane.fill = False
     ax.yaxis.pane.fill = False
@@ -119,7 +118,7 @@ def plot_tetraedro_3d_ancorato(distanze, model_name, percorso_salvataggio):
     # RUOTO LA TELECAMERA PER UNA PROSPETTIVA MIGLIORE (Elevazione 20, Angolo 40)
     ax.view_init(elev=20, azim=40)
     
-    plt.legend(loc='upper left', bbox_to_anchor=(1.05, 1))
+    #plt.legend(loc='upper left', bbox_to_anchor=(1.05, 1))
     plt.tight_layout()
     
     plt.savefig(percorso_salvataggio, dpi=300, bbox_inches='tight', format='png')
@@ -132,12 +131,12 @@ def plot_tetraedro_3d_ancorato(distanze, model_name, percorso_salvataggio):
 df = pd.read_csv("Distanze_L2_values.csv")
 
 layer_per_modello = {
-    "Qwen/Qwen2.5-7B-Instruct": 26,
-    "Qwen/Qwen2.5-Coder-7B-Instruct": 26,
-    "meta-llama/Llama-3.1-8B-Instruct": 30,
-    "codellama/CodeLlama-7b-Instruct-hf": 30,
-    "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": 26,
-    "deepseek-ai/deepseek-coder-6.7b-instruct": 30
+    "Qwen/Qwen2.5-7B-Instruct": 18,
+    "Qwen/Qwen2.5-Coder-7B-Instruct": 18,
+    "meta-llama/Llama-3.1-8B-Instruct": 15,
+    "codellama/CodeLlama-7b-Instruct-hf": 13,
+    "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": 19,
+    "deepseek-ai/deepseek-coder-6.7b-instruct": 16
 }
 
 for model_name, config in models_config.items():
@@ -159,7 +158,7 @@ for model_name, config in models_config.items():
     ]
 
     nome_file_safe = model_name.replace('/', '_')
-    percorso = f"L2_COMPLETI/3D/last_layer/AA_Topologia3D_{nome_file_safe}_{layer_locus}.png"
+    percorso = f"L2_COMPLETI/3D/AA_Topologia3D_{nome_file_safe}_{layer_locus}.png"
     
     plot_tetraedro_3d_ancorato(distanze_array, model_name, percorso)
     print(f" -> Grafico salvato in: {percorso}")

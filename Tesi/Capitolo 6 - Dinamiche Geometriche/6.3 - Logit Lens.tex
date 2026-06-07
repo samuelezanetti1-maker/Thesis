@@ -25,7 +25,6 @@ Sfruttando il parametro output\_hidden\_states=True di PyTorch, come visto prece
 Per ciascun layer, tale vettore viene normalizzato tramite la RMSNorm finale e moltiplicato per le matrici di unembedding associate ai token target "True" e "False".
 La metrica fondamentale, il Delta Contrastivo, viene calcolata per ogni strato come la differenza tra il Logit della vulnerabilità e il Logit della sicurezza:
 
-
 \begin{minted}[linenos, frame=lines, framesep=2mm, fontsize=\footnotesize]{python}
 def calcola_delta(vettore_layer):
     if vettore_layer is None: return np.nan
@@ -108,3 +107,38 @@ Un caso studio interessante è rappresentato dal modello Reasoning DeepSeek R1 (
 
 Questo fenomeno visualizza la natura del processo decisionale indotto dal Chain-of-Thought (CoT). Forzando il modello a emettere immediatamente il \texttt{FINAL\_VERDICT} tramite Fast-Forwarding senza permettergli di generare i token intermedi di ragionamento, si estrae uno stato latente ancora non del tutto sviluppato. Al livello dell'ultimo token del prompt, i layer finali del modello non hanno ancora maturato una convinzione semantica decisa. 
 La motivazione per cui è stata mantenuta la stessa metodologia anche per un modello di reasoning come deepseek è di natura metodologica: l'obiettivo è quello di misurare il valore dell'impatto della perturbazione sull'esatto e identico token per tutti i modelli.
+
+\begin{minted}[linenos, frame=lines, framesep=2mm, fontsize=\footnotesize]{python}
+if "DeepSeek-R1" in model_name:
+    inputs_gen = tokenizer([testo_base], return_tensors="pt").to(model.device)
+                
+    with torch.no_grad():
+        output_ids = model.generate(
+            **inputs_gen,
+            max_new_tokens=600,
+            pad_token_id=tokenizer.eos_token_id,
+            do_sample=False
+            )
+                
+    # Estrazione dei token del ragionamento
+    token_generati = output_ids[0][inputs_gen.input_ids.shape[1]:]
+    testo_generato = tokenizer.decode(token_generati, skip_special_tokens=False)
+
+    if "</think>" in testo_generato:
+        pensiero_puro = testo_generato.split("</think>")[0] + "</think>\n"
+    else:
+        pensiero_puro = testo_generato
+    testo_finale = testo_base + pensiero_puro + "FINAL_VERDICT:"
+\end{minted}
+
+
+Viene lasciata generare la chain of thought invece di costringere subito il modello a rispondere si permette una generazione libera, dopodiché il codice cattura il testo appena generato e viene reciso esattamente nel punto in cui viene restituito il tag "</think>".
+Concatenando il ragionamento appena estratto al prompt originale viene effettuato il forward pass per poter effettuare l'estrazione facendo rileggere alla rete il blocco completo per estrarre le sue attivazioni interne.
+Ottenendo i seguenti risultati:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.80\textwidth]{immagini/Logit Lens/Assoluto_Delta_AP_deepseek-ai_DeepSeek-R1-Distill-Qwen-7B_corretto.png}
+    \caption{Adversarial Pertubration - Deepseek v.2}
+    \label{fig:ll AP deepseek corretto}
+\end{figure}
