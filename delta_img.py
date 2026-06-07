@@ -16,7 +16,7 @@ attacchi = {
     "Advanced Adversarial": {"delta": "Delta_AA", "base": "Base_AA"},
     "Prompt Injection": {"delta": "Delta_PI", "base": "Base_PI"},
     "Adversarial Perturbation": {"delta": "Delta_AP", "base": "Base_AP"},
-    "Steering": {"delta": "DELTA_DIFESA", "base": "Delta_Steering"}
+    "Steering": {"delta": "Delta_Steer", "base": "Base_Steer"},
 }
 
 modelli = df_succ['MODELLO'].unique()

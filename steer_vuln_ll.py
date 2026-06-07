@@ -79,7 +79,7 @@ for model_name, config in models_config.items():
     
     df_fallimenti = df_steering_results[
         (df_steering_results['modello'] == model_name) & 
-        (df_steering_results['predizione_post_steering'] == 'Sicuro') & # Modificato qui
+        (df_steering_results['predizione_post_steering'] == 'Vulnerabile') & # Modificato qui
         (df_steering_results['moltiplicatore'] == moltiplicatore_target)
     ]
     
@@ -262,7 +262,7 @@ for model_name, config in models_config.items():
 # ==========================================
 # 6. SALVATAGGIO IN CSV FINALE
 # ==========================================
-percorso_csv_finale = "CSV tesi/Logit_Lens/Risultati_Sweep_Steering.csv"
+percorso_csv_finale = "CSV tesi/Logit_Lens/Risultati_Sweep_Steering_FALLIMENTI.csv"
 df_risultati = pd.DataFrame(risultati_sweep_difesa)
 df_risultati.to_csv(percorso_csv_finale, index=False)
 

@@ -19,6 +19,7 @@ print(f"-----------------------\n")
 
 script_to_launch = [
     "ll_sweep_steering.py",
+    "steer_vuln_ll.py"
 
 ]
 
