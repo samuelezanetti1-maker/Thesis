@@ -1,7 +1,7 @@
 \section{Dataset}
 Per condurre lo studio era necessario operare su un dataset che presentasse le caratteristiche tecniche adatte per l'analisi delle capacità di ogni modello nel riconoscere codice sicuro e vulnerabile.
-Per perseguire questo obiettivo è stato utilizzato il dataset \textit{"CodeXGLUE\_cc\_defect\_detection"}, il gold standard progettato specificatamente per la rilevazione di difetti per software AI-driven.
-Sono stati selezionati snippet di codice sotto i 500 caratteri per evitare possibili scenari avversi allo studio come l'uso completo della memoria che avrebbe portato ad un errore di Out of Memory (OOM), garantire il successo degli attacchi e ridurre la possibilità di dispersione di questi ultimi così da assicurare l'analisi comportamentale del modello.
+Per perseguire questo obiettivo è stato utilizzato il dataset \textit{"CodeXGLUE\_cc\_defect\_detection"}\cite{dataset}, il gold standard progettato specificatamente per la rilevazione di difetti per software AI-driven.
+Sono stati selezionati snippet di codice sotto i 500 caratteri per evitare possibili scenari avversi allo studio, come l'uso completo della memoria che avrebbe portato ad un errore di Out of Memory (OOM), garantire il successo degli attacchi e ridurre la possibilità di dispersione di questi ultimi così da assicurare l'analisi comportamentale del modello.
 Il dataset ottenuto è quindi composto da 851 snippet di codice sorgente scritti in linguaggio C. L'adozione del linguaggio C è particolarmente utile per questo studio: essendo un linguaggio a basso livello con gestione manuale della memoria, le vulnerabilità possono essere presenti nella sintassi stessa, fornendo quindi ai modelli diversi pattern logici da analizzare.
 
 \begin{table}[htbp]
@@ -61,7 +61,7 @@ void aio_notify(AioContext *ctx)
 \end{table}
 
 Ogni frammento di codice è univocamente identificato con il proprio id ed una label binaria utilizzata per identificare gli snippet vulnerabili, identificati con true, e sicuri, con false.
-Nello specifico il set di valutazione sottoposto all'inferenza dei modelli presenta una distribuzione composta da 514 funzioni sicure, il 60.4\% del dataset totale, e 337 funzioni vulnerabili, il 39.6\% degli snippet da riconoscere, adattandosi ad uno scenario più realistico dove il codice sicuro è più comune di quello vulnerabile.
+Nello specifico il set di valutazione sottoposto all'inferenza dei modelli presenta una distribuzione composta da 514 funzioni sicure, il 60.4\% del dataset totale, e 337 funzioni vulnerabili, il 39.6\% degli snippet. Questa ripartizione è adatta ad uno scenario realistico dove il codice sicuro è più comune di quello vulnerabile, utile per poter analizzare le performance dei modelli nella rilevazione di vulnerabilità.
 
 \begin{figure}[H]
     \centering
@@ -74,14 +74,8 @@ Poiché l'obiettivo della ricerca è valutare l'efficacia degli attacchi nell'in
 Per tale motivo al termine dell'esecuzione della baseline sono stati creati dei dataset più piccoli a partire dal quello originale:
 
 \begin{itemize}
-    \item \texttt{df\_modello\_TP:} Rappresenta il sottoinsieme dei codici vulnerabili che sono stati correttamente identificati. È strutturato a livello di singolo modello: di conseguenza, uno specifico frammento di codice sarà presente tante volte quanti sono i modelli che lo hanno classificato con successo.
+    \item \texttt{df\_modello\_TP:} Rappresenta il sottoinsieme dei codici vulnerabili che sono stati correttamente identificati. È strutturato a livello di singolo modello: uno specifico frammento di codice sarà presente tante volte quanti sono i modelli che lo hanno classificato con successo.
     \item \texttt{df\_modello\_TN:} Dataset filtrato contenente unicamente i codici sicuri correttamente identificati. I dati sono salvati in modalità modello-snippet, pertanto come per il dataset \texttt{df\_modello\_TP} lo stesso codice sicuro è replicato per ogni modello che lo ha identificato correttamente.
     \item \texttt{df\_modello\_TRUE:} È il dataset nato dalla concatenazione di \texttt{df\_modello\_TP} e \texttt{df\_modello\_TN}. Rappresenta quindi la raccolta, per ogni modello, di tutti i codici vulnerabili e sicuri correttamente identificati.
 \end{itemize}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.60\textwidth]{immagini/True Positive e True Negative.png}
-    \caption{Distribuzione True Positive e True Negative}
-    \label{fig:Tp and Tn}
-\end{figure}

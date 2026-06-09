@@ -1,12 +1,12 @@
 \section{Activation Steering}
-L'Activation Steering rappresenta una tecnica avanzata di manipolazione white-box che interviene direttamente nello spazio latente del modello. Alterando le attivazioni interne durante la fase di inferenza, è possibile deviare la traiettoria generativa dell'LLM verso concetti o comportamenti desiderati. L'efficacia di questa operazione dipende crucialmente da parametri finemente modulabili, in particolare il layer di iniezione, il punto in cui avviene la perturbazione, e il moltiplicatore,l'intensità della perturbazione stessa. 
+L'Activation Steering rappresenta una tecnica avanzata di manipolazione white-box che interviene direttamente nello spazio latente del modello. Alterando le attivazioni interne durante la fase di inferenza, è possibile deviare la traiettoria generativa dell'LLM verso concetti o comportamenti desiderati. L'efficacia di questa operazione dipende fortemente da parametri finemente modulabili, in particolare il layer di iniezione, il punto in cui avviene la perturbazione, e il moltiplicatore, l'intensità della perturbazione stessa. 
 
-Eseguire uno studio di ablazione su questi parametri permette di raggiungere un duplice obiettivo: da un lato, ottimizzare l'attacco per studiare i limiti e la resilienza del modello, individuando le vulnerabilità intrinseche e i layer più deboli della sua architettura Transformer; dall'altro, mappare l'andamento del logico del modello nello spazio latente, osservando come la semantica e la logica si degradano o si trasformano sotto sforzo.
+Eseguire uno studio di ablazione su questi parametri permette di raggiungere un duplice obiettivo: da un lato, ottimizzare l'attacco per studiare i limiti e la resilienza del modello, individuando le vulnerabilità intrinseche e i layer più deboli della sua architettura Transformer; dall'altro, mappare l'andamento logico del modello nello spazio latente, osservando come la semantica e la logica si degradano o si trasformano durante l'elaborazione nella rete.
 
 \subsection{Ricerca del Moltiplicatore}
 Il moltiplicatore agisce come un fattore di scala per il vettore di steering innescato. Un valore troppo basso risulterebbe inefficace, venendo assorbito dalle normali computazioni del modello, mentre un valore troppo alto rischierebbe di distruggere la coerenza del testo generato portando a gibberish.
 
-La ricerca del moltiplicatore ideale per ciascun modello prevede l'esecuzione di uno studio di ablazione fissato al layer medio, considerato in letteratura il punto di transizione semantica più malleabile. In questa fase preliminare, l'attacco di activation steering è stato testato con la seguente progressione di moltiplicatori: 3, 5, 8, 10, 15.
+La ricerca del moltiplicatore ideale per ciascun modello prevede l'esecuzione di uno studio di ablazione fissato al layer medio, considerato in letteratura il punto di transizione semantica più malleabile. In questa fase preliminare, l'attacco di Activation Steering è stato testato con la seguente progressione di moltiplicatori: 3, 5, 8, 10, 15.
 
 L'indagine si configura come la ricerca di un trade-off tra il rateo di successo dell'attacco (ASR) e la percentuale di errori o di testo senza senso. Come avviene per altre tecniche come quella del Logit Bias, è teoricamente possibile forzare il modello per ottenere un ASR quasi perfetto; tuttavia, se questo successo è accompagnato da un'elevata confusione e dalla perdita di logica nella semantica, l'output diventa inutilizzabile. Un attacco white-box efficace deve eludere i filtri di sicurezza mantenendo intatte le capacità di instruction-following e di articolazione del linguaggio del modello. I risultati di questa prima fase sono riportati nella Tabella \ref{tab:valutazione_moltiplicatore}.
 
@@ -88,9 +88,9 @@ Analizzando i dati, emerge un comportamento distintivo della famiglia di modelli
     \label{tab:valutazione_moltiplicatore_aggiunta}
 \end{table}
 
-Come si evince dalla Tabella \ref{tab:valutazione_moltiplicatore_aggiunta}, l'ASR dei modelli Qwen continua a crescere mantenendo nullo il tasso di errore. Sebbene valori estremi, come 40, portino al rateo di successo più alto in assoluto, deformare in modo così aggressivo il vettore nello spazio latente rischia di introdurre instabilità non immediatamente percepibili dalla metrica degli errori, compromettendo l'affidabilità generale del modello, è preferibile quindi adottare una metodologia più conservativa.
+Come si evince dalla Tabella \ref{tab:valutazione_moltiplicatore_aggiunta}, l'ASR dei modelli Qwen continua a crescere mantenendo nullo il tasso di errore. Sebbene valori estremi, come 40, portino al rateo di successo più alto in assoluto, deformare in modo così aggressivo il vettore nello spazio latente rischia di introdurre instabilità non immediatamente percepibili dalla metrica degli errori, compromettendo l'affidabilità generale del modello, E' preferibile quindi adottare una metodologia più conservativa.
 
-Per garantire un'applicazione adeguata, coerente e bilanciata dell'operazione di steering, sono stati definitivamente selezionati i seguenti moltiplicatori per le fasi successive della ricerca:
+Per garantire un'applicazione adeguata, coerente e bilanciata dell'operazione di steering, sono stati selezionati definitivamente i seguenti moltiplicatori per le fasi successive della ricerca:
 
 \begin{itemize}[noitemsep]
     \item Qwen/Qwen2.5-7B-Instruct: 20
@@ -105,7 +105,7 @@ Per garantire un'applicazione adeguata, coerente e bilanciata dell'operazione di
 Esattamente come il moltiplicatore, la scelta del layer di iniezione ha un ruolo fondamentale per massimizzare l'operazione di attacco: se eseguito troppo precocemente in un layer la rete è ancora impegnata nell'analisi lessicale del testo e tende ad assorbire o correggere l'anomalia vettoriale.
 Al contrario l'iniezione effettuata tardivamente il modello ha già consolidato il proprio verdetto logico e la perturbazione risulta ininfluente.
 
-E' stato eseguito un layer sweep su tutti i layer di tutti i modelli con i parametri precedentemente ottenuti. Attraverso un ciclo viene eseguita un'operazione massiva: applicando lo steering ad un layer e cambiandolo con quello successivo ad ogni iterazione è possibile tracciare l'andamento dell'efficacia dell'iniezione.
+E' stato eseguito un layer sweep su tutti i layer di tutti i modelli con i parametri precedentemente ottenuti. Attraverso un ciclo viene eseguita un'operazione massiva: applicando lo steering ad un layer e cambiandolo ad ogni iterazione con quello successivo è possibile tracciare l'andamento dell'efficacia dell'iniezione.
 
 \begin{figure}[H]
     \centering
@@ -161,7 +161,7 @@ E' stato eseguito un layer sweep su tutti i layer di tutti i modelli con i param
     \label{fig:griglia_layer_sweep}
 \end{figure}
 
-Come è possibile osservare dai grafici, l'attacco ottiene un alto ASR generalmente nel layer intermedi dei modelli, confermando la teoria del partizionamento dei layer dei modelli: il basso successo della manipolazione nei layer iniziali e in quelli finali confermano l'effettiva importanza nell'elaborazione della risposta del modello, ponendo un forte accento sui layer intermedi, responsabili del consolidamento semantico e della formazione dei concetti logici complessi come il ragionamento sulla vulnerabilità del codice, prima che questi vengano tradotti in specifici token di output.
+Come è possibile osservare dai grafici, l'attacco ottiene un alto ASR generalmente nel layer intermedi dei modelli, confermando la teoria del partizionamento dei layer dei modelli: il basso successo della manipolazione nei layer iniziali e in quelli finali confermano l'effettiva importanza nell'elaborazione della risposta del modello. Viene posto un forte accento sui layer intermedi, responsabili del consolidamento semantico e della formazione dei concetti logici complessi come il ragionamento sulla vulnerabilità del codice, prima che questi vengano tradotti in specifici token di output.
 Tramite questa operazione è possibile ottenere il layer più influenzabile: il livello che presenta il rateo di successo dello steering più alto, indica la posizione più sensibile a livello architetturale del modello.\ref{tab:esito_layer_sweep}
 
 \begin{table}[H]
@@ -186,7 +186,7 @@ Tramite questa operazione è possibile ottenere il layer più influenzabile: il 
 \end{table}
 
 Attraverso questi risultati è possibile ottenere un "\textit{Golden Layer}" identificativo per la parte di maggior computazione del modello: calcolando la percentuale di profondità del layer sensibile per ogni modello e poi facendo la media di questi si ottiene l'altezza media dei layer per cui, in caso non si potesse eseguire un layer sweep o l'inaccessibilità al modello, è possibile applicare attacchi, o operazioni, nella parte più sensibile.
-Nello specifico con questi sei modelli si può notare come solo per il modello generale di llama il layer più sensibile sia quello centrale, mentre per gli altri modelli è leggermente più spostato ma sempre nella porzione centrale dell'architettura dei modelli.
+Nello specifico con questi sei modelli si può notare come solo per il modello generale di llama il layer più sensibile sia quello centrale, mentre per gli altri modelli è leggermente più spostato ma sempre nella porzione intermedia dell'architettura dei modelli.
 Considerando quindi i dati ottenuti è possibile approssimare il golden layer a circa il 55\% dell'altezza del modello.
 
 Di seguito il calcolo della profondità relativa per ciascun modello:
@@ -202,4 +202,4 @@ Di seguito il calcolo della profondità relativa per ciascun modello:
 Facendo la media delle percentuali calcolate si ottiene:
 $$ \frac{64{,}3+64{,}3+46{,}9+40{,}6+67{,}9+50{,}0}{6} = \frac{334}{6} = 55{,}66\% $$
 
-Ai fini dello studio verranno adottati i layer più sensibili senza approssimare tramite la percentuale, in uno studio in cui la ricerca del layer non fosse possibile sarebbe possibile adottare il layer ottenuto dalla media precedente.
+Ai fini dello studio verranno adottati i layer più sensibili senza approssimare alla percentuale di 56\%, in uno studio in cui la ricerca del layer non fosse possibile sarebbe necessario adottare il livello di profondità ottenuto dalla media precedente.

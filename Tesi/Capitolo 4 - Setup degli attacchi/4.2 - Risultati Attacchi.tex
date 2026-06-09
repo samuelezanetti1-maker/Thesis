@@ -20,15 +20,15 @@ Vengono ora presentate le performance delle tipologie di attacchi per ogni model
     \end{tabular}
     }
     \vspace{0.2cm}
-    \caption{ASR degli attacchi per i modelli}
+    \caption{ASR degli attacchi per modello}
     \label{tab:valutazione_attacchi}
 \end{table}
 
-Sin da subito è possibile notare come solo due attacchi hanno raggiunto e superato il 50\% di ASR: Prompt Injection e Activation Steering implicando come imporre istruzioni e modificare architetturalmente gli hidden layer siano i metodi più efficienti di un attaccante per avere successo.
+Sin da subito è possibile notare come solo due attacchi hanno raggiunto e superato il 50\% di average score: Prompt Injection e Activation Steering implicando come imporre istruzioni e modificare architetturalmente gli hidden layer siano i metodi più efficienti di un attaccante per avere successo.
 E' importante sottolineare che la media di successo viene drasticamente abbassata per il prompt injection a causa della resilienza del modello coder di deepseek: i risultati ottenuti possono non essere del tutto attendibili dovuti alla scarsità di snippet correttamente individuati dal modello baseline, con solo sette true positive.
-Escludendo nell'analisi questo modello, questo attacco otterrebbe circa il 70\% di ASR, evidenziando ancora di più le potenzialità di questo attacco black-box.
+Escludendo nell'analisi questo modello, questo attacco otterrebbe circa il 70\% di ASR, evidenziando ancora di più le potenzialità delle perturbazioni introdotte.
 
-E' possibile stimare la percentuale generale di successo degli attacchi per poter stimare la resilienza dei modelli, si è ottenuto dunque:
+E' possibile stimare la percentuale generale di successo degli attacchi per definire la resilienza dei modelli. Si è ottenuto dunque:
 
 \begin{itemize}[noitemsep]
     \item \texttt{Qwen2.5-7B-Instruct}: 87.94\%
@@ -39,10 +39,10 @@ E' possibile stimare la percentuale generale di successo degli attacchi per pote
     \item \texttt{DeepSeek-Coder-6.7b-instruct}: 52.57\%
 \end{itemize}
 
-Dimostrando come il modello general Llama-3.1-8B-Instruct, sia il meno soggetto alle perturbazioni esterne, soprattutto quelle black-box ottenendo un ASR di quasi lo 0\% per Adversarial Perturbations e Advanced Adversarial nonostante i 323 codici vulnerabili disponibili per l'attacco.
-I modelli coder per le famiglie di meta e Deepseek non sembrano rispondere meglio rispetto alla controparte generalista, sfatando quindi il pensiero che un modello addestrato per essere coder sia più adatto al task di vulnerabilty detection rispetto ad un modello coder.
+I numeri dimostrano come il modello general Llama-3.1-8B-Instruct, sia il meno soggetto alle perturbazioni esterne, soprattutto quelle black-box ottenendo un ASR di quasi lo 0\% per Adversarial Perturbations e Advanced Adversarial nonostante i 323 codici vulnerabili disponibili per l'attacco.
+I modelli coder per le famiglie di meta e Deepseek non sembrano rispondere meglio rispetto alla controparte generalista, sfatando quindi il pensiero che un modello addestrato per essere coder sia più adatto al task di vulnerabilty detection rispetto ad un modello generale.
 
-Viene quindi riportato un esempio di risposta correttamente perturbata dal modello codellama colpito da un attacco di prompt injection.
+Viene quindi riportato un esempio di risposta correttamente perturbata dal modello codellama colpito da un attacco di Prompt Injection.
 
 
 \begin{minted}[linenos, frame=lines, framesep=2mm, fontsize=\footnotesize]{text}
@@ -55,10 +55,45 @@ Viene quindi riportato un esempio di risposta correttamente perturbata dal model
         Overall, this code appears to be a well-written and secure implementation of a callback function for a GIOChannel. However, it is always important to thoroughly review and test any code to ensure that it is free from vulnerabilities.
 \end{minted}
 
+\subsection{Logit Bias}
+I risultati più interessanti ottenuti dall'operazione di Logit Bias sono relativi al moltiplicatore: l'obiettivo è quello di stimare la resilienza dei modelli e ipotizzare una correlazione tra la forza del boost e i layer dei modelli.
+Per fare questo sono stati testati diversi moltiplicatori (4, 6, 8, 10, 15) in uno studio di ablazione su 20 degli snippet correttamente individuati dal singolo modello, per trovare il valore corretto al fine di ottenere un compromesso tra il rateo di successo e l'eliminazione del gibberish dei modelli. Il collasso semantico è un problema ricorrente di questa tipologia di manipolazione in quanto forzare la risposta del modello direttamente sui token porta il modello a perdere completamente la sintassi e a ripetere la stessa parola fino ad esaurimento dei token disponibili.
+Vengono quindi analizzati i comportamenti per ogni modello ottenendo i seguenti ASR e moltiplicatori:
+
+\begin{table}[H]
+    \centering
+    \begin{tabularx}{\textwidth}{X c c}
+        \toprule
+        \textbf{Modelli} & \textbf{Boost} & \textbf{ASR} \\
+        \midrule
+        Qwen/Qwen2.5-7B-Instruct                 & 6  & 55.0 \\
+        Qwen/Qwen2.5-Coder-7B-Instruct           & 6  & 40.0 \\
+        meta-llama/Llama-3.1-8B-Instruct         & 6  & 40.0 \\
+        codellama/CodeLlama-7b-Instruct-hf       & 6  & 45.0 \\
+        deepseek-ai/DeepSeek-R1-Distill-Qwen-7B  & 4  & 5.0 \\
+        deepseek-ai/deepseek-coder-6.7b-instruct & 4  & 0.0 \\
+        \bottomrule
+    \end{tabularx}
+    \vspace{0.2cm}
+    \caption{Risultati dei modelli al logit bias}
+    \label{tab:risultati_lb}
+\end{table}
+
+Vengono quindi identificati quelli che sono i modelli più resilienti: a fronte di un moltiplicatore come 6 i primi quattro modelli riescono a non generare gibberish, e a resistere discretamente all'attacco di bias.
+Al contrario, la famiglia DeepSeek palesa un'estrema vulnerabilità strutturale a questa perturbazione: la tolleranza si ferma a un boost molto basso, pari a 4, garantendo un ASR pressoché nullo. Tentare di equiparare il parametro a quello dei modelli precedenti innesca immediatamente la generazione di gibberish nel 35\% e 50\% dei casi per i due modelli, invalidando di fatto l'attacco.
+
+Come anticipato è possibile determinare le resistenze intrinseche dei modelli osservando l'ASR di Logit Bias e Activation Steering: come si evince dalla tabella \ref{tab:valutazione_attacchi} la maggior parte dei modelli subisce gravi danni a causa dell'attacco di Activation Steering, dovuti soprattutto agli elevati valori dei moltiplicatori utilizzati.
+La maggior parte dei modelli presentano quindi una forte rappresentazione dello spazio latente, comprendendo le dinamiche di programmazione che possono essere deviate solo a fronte di una manipolazione molto forte.
+Al contrario L'attacco sui logit denota un discreto score per la maggior parte degli LLM con circa il 40\% di media, ma con moltiplicatori molto bassi: l'architettura finale è quindi debole, dove l'aumento di un'unità del modello porterebbe alla generazione di testo senza senso semantico.
+Modelli della famiglia Qwen riportano quindi una grande comprensione del codice ma una debole struttura finale.
+Il modello generalista del laboratorio di meta risulta avere una struttura finale migliore rispetto alla padronanza nello spazio latente, mancanza che viene recuperata dalla controparte coder.
+Non considerando il moltiplicatore più basso rispetto agli altri modelli, il modello deepseek-ai/DeepSeek-R1-Distill-Qwen-7B presenta una forte padronanza dello spazio latente ed una discreta robustezza nei layer finali della rete, sottolineando le potenzialità introdotte dalla Chain-of-Thought.
+La controparte instruct di deepseek invece dimostra una mediocre padronanza delle rappresentazioni vettoriali con circa l'86\% di successo di attacco su solo 7 snippet ed una discreta robustezza nei layer finali.
+
 \subsection{Shallow Reasoning}
-La funzione di valutazione di successo degli attacchi si basa sulla ricerca della stringa "FINAL\_VERDICT: ", portando quindi all'esclusione del testo generato dal modello come metrica per determinare se fosse presente o meno una contraddizione tra il verdetto e la breve spiegazione data dal modello.
+La funzione di valutazione di successo degli attacchi si basa sulla ricerca della stringa "FINAL\_VERDICT: ", ciò porta all'esclusione della breve spiegazione del come metrica per determinare la corretta classificazione da parte del modello. 
 Sono presenti alcune risposte, in cui il modello afferma che il codice sia sicuro ma nella spiegazione evidenzia delle possibili vulnerabilità.
-Un esempio di una risposta contraddittoria di un codice sotto adversarial perturbation per il modello Qwen2.5-7B-Instruct è il seguente:
+Un esempio di una risposta contraddittoria di un codice sotto Adversarial Perturbation per il modello Qwen2.5-7B-Instruct è il seguente:
 
 
 \begin{minted}[linenos, frame=lines, framesep=2mm, fontsize=\footnotesize]{text}
@@ -75,16 +110,16 @@ Un esempio di una risposta contraddittoria di un codice sotto adversarial pertur
         4. **Potential Memory Corruption**: The use of `g_assert_cmphex` for comparing the data read back with the original value is good practice, but it 
 \end{minted}
 
-Questo pone l'accento sull'uso dei modelli: adottare questi modelli per ottenere una semplice risposta binaria true/false porterebbe ad un'alta percentuale di attacchi imperfetti ad adempiere il loro scopo senza la possibilità di essere fermati.
-La breve spiegazione richiesta all' LLM è una barriera aggiuntiva che può aiutare a determinare se il codice, ma ancora più LLM, è sotto attacco.
+Questo pone l'accento sull'uso dei modelli: adottare questi modelli per ottenere una semplice risposta binaria true/false porterebbe ad un'alta percentuale di attacchi imperfetti ad adempiere al loro scopo senza la possibilità di essere rilevati.
+La breve spiegazione richiesta all' LLM è una barriera aggiuntiva che può aiutare a determinare se il codice, ma ancora più la rete stessa, sia sotto attacco.
 
-Per determinare se la spiegazione del modello, come una vera e propria chain-of-thought potesse essere di aiuto al modello stesso, sono stati rieseguiti gli attacchi sul sottoinsieme di snippet di codice su cui l'attacco aveva successo con un nuovo prompt:
+Per determinare se la spiegazione del modello, cercando di simulare l'utilità di una chain-of-thought, potesse essere di aiuto al modello stesso, sono stati rieseguiti gli attacchi sul sottoinsieme di snippet di codice dove l'attacco ha avuto successo con un nuovo prompt:
 
 \begin{minted}[linenos, frame=lines, framesep=2mm, fontsize=\footnotesize]{python}
 prompt = f"Analyze this code \n\nCode:\n{codice_perturbato}, \n start the response EXACTLY with a brief summary of a short sentence followed by: 'FINAL_VERDICT: True' (if vulnerable) or 'FINAL_VERDICT: False' (if 100% secure)"
 \end{minted}
 
-Viene quindi chiesto di fornire una breve spiegazione e poi di fornire il verdetto finale. Nel caso in cui questo cambio non fosse di aiuto all' LLM per non essere confuso dalle perturbazioni si otterrebbe un ASR del 100\%. 
+Viene quindi chiesto di fornire una breve spiegazione e poi di restituire il verdetto finale. Nel caso in cui questo cambio non fosse di aiuto all' LLM per non essere confuso dalle perturbazioni si otterrebbe un ASR del 100\%, ottenendo quindi lo stesso risultato del prompt originario. 
 Eseguendolo si sono ottenuti i seguenti risultati:
 
 \begin{table}[H]
@@ -108,33 +143,6 @@ Eseguendolo si sono ottenuti i seguenti risultati:
     \label{tab:risultati_attacchi_modificati}
 \end{table}
 
-Questo risultato conferma l'importanza del ragionamento del modello: attraverso la spiegazione ha potuto superare gli ostacoli inseriti dalle perturbazioni, in molti attacchi andando però a confermare anche le potenzialità dell' Activation Steering e le debolezze intrinseche dei modelli stessi.
+Questo risultato conferma l'importanza del ragionamento del modello: attraverso la spiegazione ha potuto superare gli ostacoli inseriti dalle perturbazioni di molti attacchi, andando però a confermare le potenzialità dell' Activation Steering e le debolezze intrinseche dei modelli stessi.
 Al fine di questo studio, per poter avere a disposizione un sufficiente numero di snippet questa proposta di prompt viene scartata.
-
-\subsection{Logit Bias}
-I risultati più interessanti ottenuti dall'operazione di Logit Bias sono relativi al moltiplicatore: l'obiettivo è quello di stimare la resilienza dei modelli e ipotizzare una correlazione tra la forza del boost e i layer dei modelli.
-Per fare questo sono stati testati diversi moltiplicatori (4, 6, 8, 10, 15) in uno studio di ablazione su 20 degli snippet correttamente individuati dal singolo modello, per trovare il valore corretto al fine di ottenere un compromesso tra il rateo di successo e l'eliminazione del gibberish dei modelli, il collasso semantico è un problema ricorrente di questa tipologia di manipolazione in quanto forzare la risposta del modello direttamente sui token porta il modello a perdere completamente la sintassi e a ripetere la stessa parola fino ad esaurimento dei token disponibili.
-Vengono quindi analizzati i comportamenti per ogni modello ottenendo i seguenti ASR e moltiplicatori:
-
-\begin{table}[H]
-    \centering
-    \begin{tabularx}{\textwidth}{X c c}
-        \toprule
-        \textbf{Modelli} & \textbf{Boost} & \textbf{ASR} \\
-        \midrule
-        Qwen/Qwen2.5-7B-Instruct                 & 6  & 55.0 \\
-        Qwen/Qwen2.5-Coder-7B-Instruct           & 6  & 40.0 \\
-        meta-llama/Llama-3.1-8B-Instruct         & 6  & 40.0 \\
-        codellama/CodeLlama-7b-Instruct-hf       & 6  & 45.0 \\
-        deepseek-ai/DeepSeek-R1-Distill-Qwen-7B  & 4  & 5.0 \\
-        deepseek-ai/deepseek-coder-6.7b-instruct & 4  & 0.0 \\
-        \bottomrule
-    \end{tabularx}
-    \vspace{0.2cm}
-    \caption{Risultati dei modelli al logit bias}
-    \label{tab:risultati_lb}
-\end{table}
-
-Vengono quindi identificati quelli che sono i modelli più resilienti: a fronte di un moltiplicatore come 6 i primi quattro modelli riescono a non generare gibberish, e a resistere discretamente all'attacco di bias.
-Al contrario, la famiglia DeepSeek palesa un'estrema vulnerabilità strutturale a questa perturbazione: la tolleranza si ferma a un boost molto basso, pari a 4, garantendo un ASR pressoché nullo. Tentare di equiparare il parametro a quello dei modelli precedenti, boost a 6, innesca immediatamente la generazione di gibberish nel 35\% e 50\% dei casi per i due modelli, invalidando di fatto l'attacco.
 

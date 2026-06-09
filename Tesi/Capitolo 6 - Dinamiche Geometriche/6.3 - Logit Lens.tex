@@ -3,7 +3,7 @@ Al fine di comprendere in che modo le perturbazioni generate dagli attacchi Blac
 
 In un'architettura Transformer standard le rappresentazioni nello spazio latente assumono un significato testuale solo al termine dell'intero processo di elaborazione, il forward pass, quando l'ultimo layer applica la matrice di unembedding per mappare le coordinate geomtriche sul vocabolario, generando la distribuzione di probabilità, ovvero i logit, per il token successivo. La tecnica della Logit Lens ha il compito di anticipare questo processo: applicando la matrice di unembedding agli hidden states intermedi di ogni singolo layer, è possibile ottenere una proiezione sul vocabolario dello stato decisionale in corso dell'intera rete. Questo processo permette di analizzare l'evoluzione della convinzione logica del modello.
 
-L'estrazione dei dati è stata separata in due pipeline speculari per isolare le attivazioni in caso di successo dell'attacco  dove il modello viene ingannato, emettendo il token "False", e in caso di fallimento dove il modello resiste, emettendo "True". L'infrastruttura di analisi opera secondo due paradigmi radicalmente diversi a seconda della natura dell'attacco:
+L'estrazione dei dati è stata separata in due pipeline speculari per isolare le attivazioni in caso di successo dell'attacco  dove il modello viene ingannato, emettendo il token "False", e in caso di fallimento dove il modello resiste, emettendo "True". L'infrastruttura di analisi opera secondo due processi radicalmente diversi a seconda della natura dell'attacco:
 
 \textbf{Estrazione Statica (Attacchi Black-Box):} Per le manipolazioni testuali (Advanced Adversarial, Prompt Injection, Adversarial Perturbation), l'estrazione si basa sul naturale scorrimento del testo. Il modello esegue due forward pass paralleli per ogni campione: uno sul codice sorgente originale per stabilire la Baseline, e uno sul codice perturbato testualmente per registrarne lo scostamento.
 
@@ -63,7 +63,7 @@ In seguito si osservano i risultati ottenuti per ciascun attacco, selezionando i
     \label{fig:griglia_layer_sweep_ll_pi}
 \end{figure}
 
-Vengono riportati per l'attacco di Prompt Injection i risultati ottenuti per i modelli Qwen Instruct e CodeLlama\ref{fig:griglia_layer_sweep_ll_pi}: si può osservare come in entrambi gli attacchi l'attacco di Prompt Injection abbia abbassato drasticamente il delta in prossimità del layer che precedentemente era stato individuato come il picco di vulnerabilità, ovvero il layer 18 per Qwen Instruct e il layer 13 per CodeLlama. 
+Vengono riportati per l'attacco di Prompt Injection i risultati ottenuti per i modelli Qwen Instruct e CodeLlama\ref{fig:griglia_layer_sweep_ll_pi}: si può osservare come in entrambi gli attacchi l'attacco di Prompt Injection abbia innalzato drasticamente il valore assoluto in prossimità del layer che precedentemente era stato individuato come il picco di vulnerabilità, ovvero il layer 18 per Qwen Instruct e il 13 per CodeLlama, portando ad un valore negativo molto alto. 
 
 
 \begin{figure}[H]
@@ -73,7 +73,7 @@ Vengono riportati per l'attacco di Prompt Injection i risultati ottenuti per i m
     \label{fig:ll  ap qwen coder}
 \end{figure}
 
-Il modello su cui l'attacco di Adversarial Perturbation ha avuto più successo è stato Qwen Coder, come mostrato in Figura \ref{fig:ll  ap qwen coder}: anche in questo caso si osserva un drastico abbassamento del delta in prossimità del layer di picco di vulnerabilità, ovvero il layer 18, confermando come la perturbazione abbia alterato la traiettoria decisionale del modello, facendo smarrire la rete nello spazio latente.
+Il modello su cui l'attacco di Adversarial Perturbation ha avuto più successo è stato Qwen Coder, come mostrato in Figura \ref{fig:ll  ap qwen coder}: anche in questo caso si osserva un abbassamento del delta in prossimità del layer di picco di vulnerabilità, il layer 18, confermando come la perturbazione abbia alterato la traiettoria decisionale del modello, facendo smarrire la rete nello spazio latente.
 
 \begin{figure}[H]
     \centering
@@ -82,7 +82,7 @@ Il modello su cui l'attacco di Adversarial Perturbation ha avuto più successo �
     \label{fig:ll aa qwen instruct}
 \end{figure}
 
-Anche per l'attacco di Advanced Adversarial, il modello su cui ha avuto più successo è stato Qwen Instruct, come mostrato in Figura \ref{fig:ll aa qwen instruct}: anche in questo caso si osserva un drastico abbassamento del delta in prossimità del layer di picco di vulnerabilità, ovvero il layer 18, confermando di nuovo come la perturbazione abbia alterato la traiettoria decisionale del modello.
+L'attacco di Advanced Adversarial ha avuto più successo su Qwen Instruct, come mostrato in Figura \ref{fig:ll aa qwen instruct}: anche in questo caso si osserva la dinamica di innalzamento del valore assoluto del delta nella parte negativa.
 
 \begin{figure}[H]
     \centering
@@ -93,8 +93,8 @@ Anche per l'attacco di Advanced Adversarial, il modello su cui ha avuto più suc
 
 Per l'attacco di Activation Steering, il modello su cui ha avuto più successo è stato Deepseek Coder, come mostrato in Figura \ref{fig:ll steering deepseek coder}: anche in questo caso si osserva un drastico abbassamento del delta in prossimità del layer di picco di vulnerabilità, questa volta però dovuto all'iniezione dell'attacco, si può infatti notare come il delta iniziale sia pressocché identico sia in caso di attacco riuscito che in caso di attacco fallito.
 
-Tutti i risultati mostrano come le perturbazioni generate dagli attacchi Black-Box agiscano in modo più aggressivo in prossimità del layer di picco di vulnerabilità.
-E' interessante osservare i risultati per il modello generale di deepseek che presenta la modalità di reasoning
+L'evidenza portata dall'analisi mostra che le perturbazioni indotte dagli attacchi Black-Box colpiscono con massima intensità in prossimità del layer di picco della vulnerabilità. Tuttavia, l'impatto di tali manipolazioni subisce una forte amplificazione nei livelli finali dell'architettura: una volta compromesso lo stato latente, l'errore vettoriale si propaga e si dilata in quegli strati in cui la decisione della rete è ormai consolidata e irreversibile
+Un caso studio interessante è rappresentato dal modello Reasoning DeepSeek R1 (Figura \ref{fig:ll AP deepseek }).
 
 \begin{figure}[H]
     \centering
@@ -103,10 +103,11 @@ E' interessante osservare i risultati per il modello generale di deepseek che pr
     \label{fig:ll AP deepseek }
 \end{figure}
 
-Un caso studio interessante è rappresentato dal modello Reasoning DeepSeek R1 (Figura \ref{fig:ll AP deepseek }). A differenza dei modelli Instruct tradizionali, in cui la Baseline si stacca per raggiungere valori chiaramente indicativi di un verdetto positivo o negativo, in R1 si osserva un comportamento quasi del tutto immutato. Sia la Baseline che la traiettoria dell'attacco rimangono quasi del tutto simili.
+A differenza dei modelli Instruct tradizionali, in cui la Baseline si stacca per raggiungere valori chiaramente indicativi di un verdetto positivo o negativo, in R1 si osserva un comportamento quasi del tutto immutato. Sia la Baseline che la traiettoria dell'attacco rimangono quasi del tutto simili.
 
-Questo fenomeno visualizza la natura del processo decisionale indotto dal Chain-of-Thought (CoT). Forzando il modello a emettere immediatamente il \texttt{FINAL\_VERDICT} tramite Fast-Forwarding senza permettergli di generare i token intermedi di ragionamento, si estrae uno stato latente ancora non del tutto sviluppato. Al livello dell'ultimo token del prompt, i layer finali del modello non hanno ancora maturato una convinzione semantica decisa. 
-La motivazione per cui è stata mantenuta la stessa metodologia anche per un modello di reasoning come deepseek è di natura metodologica: l'obiettivo è quello di misurare il valore dell'impatto della perturbazione sull'esatto e identico token per tutti i modelli.
+Questo fenomeno visualizza la natura del processo decisionale indotto dal Chain-of-Thought (CoT). Forzando il modello a emettere immediatamente il \texttt{FINAL\_VERDICT} tramite Fast-Forwarding senza permettergli di generare i token intermedi di ragionamento, si estrae uno stato latente ancora non del tutto sviluppato. Al livello dell'ultimo token del prompt, i layer finali del modello non hanno ancora sviluppato una convinzione semantica decisa. 
+La motivazione per cui è stata mantenuta lo stesso procedimento anche per un modello di reasoning come deepseek è di natura metodologica: l'obiettivo è quello di misurare il valore dell'impatto della perturbazione sull'esatto e identico token per tutti i modelli.
+Al fine però di avere una visione completa dei processi del modello viene lasciata generare la chain of thought invece di costringere subito il modello a rispondere si permette una generazione libera, dopodiché il codice cattura il testo appena generato e viene reciso esattamente nel punto in cui viene restituito il tag "</think>".
 
 \begin{minted}[linenos, frame=lines, framesep=2mm, fontsize=\footnotesize]{python}
 if "DeepSeek-R1" in model_name:
@@ -131,8 +132,6 @@ if "DeepSeek-R1" in model_name:
     testo_finale = testo_base + pensiero_puro + "FINAL_VERDICT:"
 \end{minted}
 
-
-Viene lasciata generare la chain of thought invece di costringere subito il modello a rispondere si permette una generazione libera, dopodiché il codice cattura il testo appena generato e viene reciso esattamente nel punto in cui viene restituito il tag "</think>".
 Concatenando il ragionamento appena estratto al prompt originale viene effettuato il forward pass per poter effettuare l'estrazione facendo rileggere alla rete il blocco completo per estrarre le sue attivazioni interne.
 Ottenendo i seguenti risultati:
 
