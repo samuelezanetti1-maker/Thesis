@@ -1,7 +1,7 @@
 \section{Logit Lens}
 Al fine di comprendere in che modo le perturbazioni generate dagli attacchi Black-Box alterino la traiettoria decisionale del modello, viene adottata la tecnica della Logit Lens. Questa metodologia consente di proiettare anticipatamente gli stati latenti intermedi sul vocabolario, sondando l'evoluzione della convinzione del modello layer dopo layer, quantificando il differenziale di probabilità tra la classificazione del codice come "Vulnerabile" e "Sicuro".
 
-In un'architettura Transformer standard le rappresentazioni nello spazio latente assumono un significato testuale solo al termine dell'intero processo di elaborazione, il forward pass, quando l'ultimo layer applica la matrice di unembedding per mappare le coordinate geomtriche sul vocabolario, generando la distribuzione di probabilità, ovvero i logit, per il token successivo. La tecnica della Logit Lens ha il compito di anticipare questo processo: applicando la matrice di unembedding agli hidden states intermedi di ogni singolo layer, è possibile ottenere una proiezione sul vocabolario dello stato decisionale in corso dell'intera rete. Questo processo permette di analizzare l'evoluzione della convinzione logica del modello.
+In un'architettura Transformer standard le rappresentazioni nello spazio latente assumono un significato testuale solo al termine dell'intero processo di elaborazione, il forward pass, quando l'ultimo layer applica la matrice di unembedding per mappare le coordinate geomtriche sul vocabolario, generando la distribuzione di probabilità, ovvero i logit, per il token successivo. La tecnica della Logit Lens ha il compito di anticipare questo processo: applicando la matrice di unembedding agli hidden states intermedi di ogni singolo layer è possibile ottenere una proiezione sul vocabolario dello stato decisionale in corso dell'intera rete. Questo processo permette di analizzare l'evoluzione della convinzione logica del modello.
 
 L'estrazione dei dati è stata separata in due pipeline speculari per isolare le attivazioni in caso di successo dell'attacco  dove il modello viene ingannato, emettendo il token "False", e in caso di fallimento dove il modello resiste, emettendo "True". L'infrastruttura di analisi opera secondo due processi radicalmente diversi a seconda della natura dell'attacco:
 
@@ -63,8 +63,6 @@ In seguito si osservano i risultati ottenuti per ciascun attacco, selezionando i
     \label{fig:griglia_layer_sweep_ll_pi}
 \end{figure}
 
-Vengono riportati per l'attacco di Prompt Injection i risultati ottenuti per i modelli Qwen Instruct e CodeLlama\ref{fig:griglia_layer_sweep_ll_pi}: si può osservare come in entrambi gli attacchi l'attacco di Prompt Injection abbia innalzato drasticamente il valore assoluto in prossimità del layer che precedentemente era stato individuato come il picco di vulnerabilità, ovvero il layer 18 per Qwen Instruct e il 13 per CodeLlama, portando ad un valore negativo molto alto. 
-
 
 \begin{figure}[H]
     \centering
@@ -73,8 +71,6 @@ Vengono riportati per l'attacco di Prompt Injection i risultati ottenuti per i m
     \label{fig:ll  ap qwen coder}
 \end{figure}
 
-Il modello su cui l'attacco di Adversarial Perturbation ha avuto più successo è stato Qwen Coder, come mostrato in Figura \ref{fig:ll  ap qwen coder}: anche in questo caso si osserva un abbassamento del delta in prossimità del layer di picco di vulnerabilità, il layer 18, confermando come la perturbazione abbia alterato la traiettoria decisionale del modello, facendo smarrire la rete nello spazio latente.
-
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.80\textwidth]{immagini/Logit Lens/Assoluto_Delta_AA_Qwen_Qwen2.5-7B-Instruct.png}
@@ -82,7 +78,7 @@ Il modello su cui l'attacco di Adversarial Perturbation ha avuto più successo �
     \label{fig:ll aa qwen instruct}
 \end{figure}
 
-L'attacco di Advanced Adversarial ha avuto più successo su Qwen Instruct, come mostrato in Figura \ref{fig:ll aa qwen instruct}: anche in questo caso si osserva la dinamica di innalzamento del valore assoluto del delta nella parte negativa.
+Analizzando l'impatto dei tre attacchi Black-Box sulle rappresentazioni interne dei modelli, emerge una dinamica comportamentale coerente: le perturbazioni alterano significativamente la traiettoria computazionale costringendo la rete ad una deviazione. Indipendentemente dal tipo di minaccia, si osserva infatti un innalzamento drastico del valore assoluto del delta con un picco verso i valori negativi esattamente in corrispondenza dei layer precedentemente identificati come i principali colli di bottiglia per il rilevamento delle vulnerabilità. Questo pattern è chiaramente visibile nella Prompt Injection su Qwen Instruct (layer 18) e CodeLlama (layer 13) (Figura \ref{fig:griglia_layer_sweep_ll_pi}), ed è confermato anche dai successi dell'Adversarial Perturbation su Qwen Coder (Figura \ref{fig:ll ap qwen coder}) e dell'Advanced Adversarial su Qwen Instruct (Figura \ref{fig:ll aa qwen instruct}). In tutti i casi, l'attacco sfrutta i layer critici per disorientare il modello nel momento esatto in cui cerca di estrarre le feature di sicurezza.
 
 \begin{figure}[H]
     \centering
@@ -93,7 +89,7 @@ L'attacco di Advanced Adversarial ha avuto più successo su Qwen Instruct, come 
 
 Per l'attacco di Activation Steering, il modello su cui ha avuto più successo è stato Deepseek Coder, come mostrato in Figura \ref{fig:ll steering deepseek coder}: anche in questo caso si osserva un drastico abbassamento del delta in prossimità del layer di picco di vulnerabilità, questa volta però dovuto all'iniezione dell'attacco, si può infatti notare come il delta iniziale sia pressocché identico sia in caso di attacco riuscito che in caso di attacco fallito.
 
-L'evidenza portata dall'analisi mostra che le perturbazioni indotte dagli attacchi Black-Box colpiscono con massima intensità in prossimità del layer di picco della vulnerabilità. Tuttavia, l'impatto di tali manipolazioni subisce una forte amplificazione nei livelli finali dell'architettura: una volta compromesso lo stato latente, l'errore vettoriale si propaga e si dilata in quegli strati in cui la decisione della rete è ormai consolidata e irreversibile
+L'evidenza portata dall'analisi mostra che nonostante l'applicazione degli attacchi black-box sia presente ancora prima dell'analisi del modello, queste colpiscono con massima intensità in prossimità del layer di picco della vulnerabilità. Tuttavia, l'impatto di tali manipolazioni subisce una forte amplificazione nei livelli finali dell'architettura: una volta compromesso lo stato latente, l'errore vettoriale si propaga e si dilata negli strati in cui la decisione della rete è ormai consolidata e irreversibile
 Un caso studio interessante è rappresentato dal modello Reasoning DeepSeek R1 (Figura \ref{fig:ll AP deepseek }).
 
 \begin{figure}[H]
@@ -132,8 +128,7 @@ if "DeepSeek-R1" in model_name:
     testo_finale = testo_base + pensiero_puro + "FINAL_VERDICT:"
 \end{minted}
 
-Concatenando il ragionamento appena estratto al prompt originale viene effettuato il forward pass per poter effettuare l'estrazione facendo rileggere alla rete il blocco completo per estrarre le sue attivazioni interne.
-Ottenendo i seguenti risultati:
+Concatenando il ragionamento appena estratto al prompt originale viene effettuato il forward pass per poter effettuare l'estrazione facendo rileggere alla rete il blocco completo per estrarre le sue attivazioni interne \ref{fig:ll AP deepseek corretto}.
 
 \begin{figure}[H]
     \centering

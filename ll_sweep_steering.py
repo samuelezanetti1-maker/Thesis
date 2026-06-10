@@ -107,7 +107,7 @@ for model_name, config in models_config.items():
         vettore_numpy = np.load(path_steering)
         vettore_tensore = torch.tensor(vettore_numpy, dtype=model.dtype, device=model.device)
 
-        steered_states_list = []
+        stati_steered_list = []
         base_states_list = []
 
         # -- FUNZIONE 1: Estrai tutti i layer BASE (Senza Difesa) --
@@ -160,11 +160,17 @@ for model_name, config in models_config.items():
             ]
             
             testo_base = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+            
+            # ATTACCHIAMO L'HOOK SUBITO, PRIMA DI GENERARE LA CoT
+            hook_handle = model.model.layers[layer_locus].register_forward_hook(
+                crea_hook_offensiva(vettore_tensore, moltiplicatore_target)
+            )
 
             # --- LOGICA 2-STEP PER MODELLI REASONING ---
             if "DeepSeek-R1" in model_name:
                 inputs_gen = tokenizer([testo_base], return_tensors="pt").to(model.device)
-                # Il modello PENSA senza essere attaccato (Hook staccato)
+                
+                # Il modello PENSA SOTTO ATTACCO
                 with torch.no_grad():
                     output_ids = model.generate(
                         **inputs_gen,
@@ -174,6 +180,7 @@ for model_name, config in models_config.items():
                     )
                 token_generati = output_ids[0][inputs_gen.input_ids.shape[1]:]
                 testo_generato = tokenizer.decode(token_generati, skip_special_tokens=False)
+                
                 if "</think>" in testo_generato:
                     pensiero_puro = testo_generato.split("</think>")[0] + "</think>\n"
                 else:
@@ -186,29 +193,29 @@ for model_name, config in models_config.items():
 
             inputs = tokenizer([testo_finale], return_tensors="pt").to(model.device)
             
-            # Iniezione dell'hook ESATTAMENTE sull'ultimo token (dopo il ragionamento)
-            hook_handle = model.model.layers[layer_locus].register_forward_hook(
-                crea_hook_offensiva(vettore_tensore, moltiplicatore_target)
-            )
-            
+            # Forward pass finale per estrarre gli stati nascosti (l'hook è ancora attivo)
             with torch.no_grad():
                 out = model(**inputs, output_hidden_states=True)
                 
+            # RIMUOVIAMO L'HOOK ALLA FINE
             hook_handle.remove()
             return torch.stack([layer_state[0, -1, :] for layer_state in out.hidden_states])
 
         print(f" -> Esecuzione Forward Pass Multi-Layer...")
+        stati_steered_list = []
+        
         for codice in codici_da_testare:
             stati_base = get_all_hidden_states(codice)
             stati_steered = get_all_hidden_states_steered(codice)
             
-            # Calcoliamo lo shift di tutti i layer in un colpo solo
-            steered_states_list.append(stati_steered)
+            # Salviamo gli stati assoluti, NON la differenza
+            stati_steered_list.append(stati_steered)
             base_states_list.append(stati_base)
 
         # Media vettoriale: [Num_Layers, Hidden_Dim]
-        vettore_steered_all_layers = torch.mean(torch.stack(steered_states_list), dim=0) # <-- MODIFICA 3
+        vettore_steered_all_layers = torch.mean(torch.stack(stati_steered_list), dim=0)
         vettore_base_all_layers = torch.mean(torch.stack(base_states_list), dim=0)
+
         # ==========================================
         # 5. LOGIT LENS SU TUTTI I LAYER
         # ==========================================
@@ -224,32 +231,39 @@ for model_name, config in models_config.items():
         print(f" -> Mappatura Logit Lens su {num_layers_totali} layer...")
 
         for layer_idx in range(num_layers_totali):
-            v_steered = vettore_steered_all_layers[layer_idx].to(model.dtype) # <-- MODIFICA 5
-            # Applicazione RMSNorm e Prodotto Scalare
-            v_steered_scaled = v_steered * final_layernorm.weight # <-- MODIFICA 6
-            steered_logit_true = torch.dot(v_steered_scaled, w_true).item() # <-- MODIFICA 7
-            steered_logit_false = torch.dot(v_steered_scaled, w_false).item() # <-- MODIFICA 8
-            delta_steered = steered_logit_true - steered_logit_false # <-- MODIFICA 9
-
+            # 1. CALCOLO ASSOLUTO STATO BASE
             v_base = vettore_base_all_layers[layer_idx].to(model.dtype)
-            v_base_scaled = v_base * final_layernorm.weight
-            base_logit_true = torch.dot(v_base_scaled, w_true).item()
-            base_logit_false = torch.dot(v_base_scaled, w_false).item()
-            delta_base = base_logit_true - base_logit_false
+            v_base_norm = final_layernorm(v_base)
+            logit_true_base = torch.dot(v_base_norm, w_true).item()
+            logit_false_base = torch.dot(v_base_norm, w_false).item()
+            
+            # Valore Logit assoluto della rete sana (True - False)
+            assoluto_base = logit_true_base - logit_false_base
+
+            # 2. CALCOLO ASSOLUTO STATO STEERED
+            v_steered = vettore_steered_all_layers[layer_idx].to(model.dtype)
+            v_steered_norm = final_layernorm(v_steered)
+            logit_true_steered = torch.dot(v_steered_norm, w_true).item()
+            logit_false_steered = torch.dot(v_steered_norm, w_false).item()
+            
+            # Valore Logit assoluto della rete attaccata (True - False)
+            assoluto_steered = logit_true_steered - logit_false_steered
+
+            # 3. CALCOLO DEL PURO SHIFT (Il vero Delta)
+            puro_shift = assoluto_steered - assoluto_base
             
             risultati_sweep_difesa.append({
                 "MODELLO": model_name,
                 "LAYER": layer_idx,
-                "Locus_Iniezione": layer_locus, 
-                "Spinta_Vulnerabile_(True)": steered_logit_true, # <-- MODIFICA 10
-                "Spinta_Sicuro_(False)": steered_logit_false, # <-- MODIFICA 11
-                "DELTA_STEERED": delta_steered, # <-- MODIFICA 12 (Nome più chiaro)
-                "BASE": delta_base
+                "Locus_Iniezione": layer_locus,
+                "Base_Steer": assoluto_base,    # <-- Nominato già per il tuo plotting!
+                "Delta_Steer": puro_shift       # <-- ORA È IL PURO SHIFT!
             })
 
         print(" [+] Salvataggio dati completato.")
 
-        del model, tokenizer, vettore_tensore, steered_states_list, vettore_steered_all_layers 
+
+        del model, tokenizer, vettore_tensore, stati_steered_list, base_states_list, vettore_steered_all_layers, vettore_base_all_layers
         gc.collect()
         torch.cuda.empty_cache()
 

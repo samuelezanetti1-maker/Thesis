@@ -12,7 +12,7 @@ Per ciascun codice vulnerabile del dataset, il modello viene sottoposto a due it
     \item Inferenza Attaccata: Lo stesso codice, ma con perturbazione testuale, viene processato dal modello.
 \end{itemize}
 
-In entrambe le fasi, viene estratto l'attivazione vettoriale corrispondente all'esatto istante precedente la generazione finale momento di massima densità informativa per il verdetto, ovvero l'ultimo token della sequenza in input.\\
+In entrambe le fasi, viene estratta l'attivazione vettoriale corrispondente all'esatto istante precedente la generazione finale, momento di massima densità informativa per il verdetto nonché l'ultimo token della sequenza in input.\\
 
 \textbf{FASE 2: Calcolo dello Shift Vettoriale Individuale}\\
 Una volta estratti gli hidden states per ogni livello dell'architettura del modello, viene calcolato lo \textit{Shift Vettoriale}, definito come la differenza vettoriale tra lo stato latente attaccato e lo stato di riferimento pulito:
@@ -48,16 +48,21 @@ cos_sim = F.cosine_similarity(shift_text, vettore_steering_originale, dim=0).ite
 
 \textbf{FASE 3: Calcolo dell'Isomorfismo}\\
 Dopo aver calcolato lo shift direzionale del vettore dell'attacco Black-Box, viene eseguita la cosine similarity tra tutti i codici in cui l'attacco ha avuto successo e il vettore di steering. \\
-La \textit{Cosine Similarity}, o similarità del coseno, è una metrica matematica utilizzata per misurare quanto due vettori sono simili tra loro in uno spazio multidimensionale. Infatti, calcola il coseno dell'angolo compreso tra due vettori valutandone l'orientamento, ignorando la loro lunghezza, o magnitudine.
+La \textit{Cosine Similarity}, o similarità del coseno, è una metrica matematica utilizzata per misurare quanto due vettori sono simili tra loro in uno spazio multidimensionale. Infatti, calcola il coseno dell'angolo compreso tra due vettori valutandone l'orientamento ed ignorando la loro lunghezza.
 L'equazione è definita come:
 
 \begin{equation}
     \text{Cosine Similarity} = cos(\theta) = \frac{A \cdot B}{||A|| ~~ ||B||}
 \end{equation}
 
-Il Numeratore $(A\cdot B)$: È il prodotto scalare tra i due vettori: se vanno nella stessa direzione, questo numero cresce; se vanno in direzioni opposte, diventa negativo.
 
-Il Denominatore ($||A|| \cdot ||B||$): È il prodotto delle magnitudini, ovvero la lunghezza dei due vettori. Dividendo il prodotto scalare per le lunghezze, l'equazione viene normalizzata, in modo tale che indipendentemente dalla lunghezza del vettore ciò che verrà preso in esame sarà solo l'angolo tra i due vettori.
+
+\begin{itemize}[noitemsep]
+    \item \textit{Il Numeratore $(A\cdot B)$}: È il prodotto scalare tra i due vettori: se vanno nella stessa direzione, questo numero cresce; se vanno in direzioni opposte, diventa negativo.
+    \item \textit{Il Denominatore ($||A|| \cdot ||B||$)}: È il prodotto delle magnitudini, ovvero la lunghezza dei due vettori. 
+\end{itemize}
+Dividendo il prodotto scalare per le lunghezze l'equazione viene normalizzata in modo tale che, indipendentemente dalla lunghezza del vettore, ciò che verrà preso in esame sarà solo l'angolo tra i due vettori.
+
 L'uso della cosine similarity quindi permette di dire l'angolazione di un vettore rispetto ad un altro, indicando quanto questi siano simili: vettori semanticamente simili saranno paralleli, ottenendo una Cosine Similarity di $1$ o $-1$ a seconda del verso. Al contrario, vettori rappresentanti concetti semantici completamente incongruenti o scorrelati risulteranno ortogonali nello spazio ad alta dimensionalità, restituendo un valore prossimo allo $0$.
 Invece di calcolare un singolo vettore medio, che rischierebbe di annullare le direzioni divergenti, viene calcolata la media di tutti gli shift per quel layer.
 
@@ -123,7 +128,7 @@ Invece di calcolare un singolo vettore medio, che rischierebbe di annullare le d
 
 I risultati rivelano una dinamica spaziale fondamentale per la comprensione delle vulnerabilità dei Large Language Models. La Cosine Similarity media registrata è prossima allo zero, rispettivamente $0.231$, $0.128$ e $0.085$ per le tre classi di attacco Advanced Adversarial, Advanced Perturbation e Prompt Injection, indicando che i vettori rappresentanti gli attacchi formano angoli vicini ai $90^\circ$ rispetto al vettore di steering.
 
-Ciò dimostra una quasi totale assenza di parallelismo di azione: gli attacchi Black-Box non ingannano il modello spingendolo lungo il naturale asse semantico che separa la vulnerabilità dalla sicurezza. Al contrario, le perturbazioni come l'inserimento di codice morto o istruzioni di override spingono l'elaborazione latente in dimensioni completamente ortogonali. Il modello non viene propriamente confuso che il codice sia sicuro nel senso stretto, ma viene deragliato in una regione dello spazio vettoriale di confusione geometrica, dove i filtri di rilevamento delle minacce perdono la loro efficacia direzionale, portando la rete a collassare sul verdetto di baseline true/false.
+Ciò dimostra una quasi totale assenza di parallelismo di azione: gli attacchi Black-Box non ingannano il modello spingendolo lungo il naturale asse semantico che separa la vulnerabilità dalla sicurezza. Al contrario, le perturbazioni come l'inserimento di codice morto o istruzioni di override spingono l'elaborazione latente in dimensioni completamente ortogonali. Il modello non viene propriamente portato a pensare che il codice sia sicuro nel senso stretto, ma viene deragliato in una regione dello spazio vettoriale di confusione geometrica, dove i filtri di rilevamento delle minacce perdono la loro efficacia direzionale, portando la rete a collassare sul verdetto di baseline true/false.
 
 \subsection{Similarità Black-Box}
 Al fine di ottenere una panoramica più completa sulla similarità tra attacchi, viene eseguita l'analisi della cosine similarity tra i vettori degli attacchi Black-Box per verificare se esiste un parallelismo tra le modalità di attacco delle perturbazioni.
@@ -196,7 +201,7 @@ I risultati mostrano risultati diversi rispetto a quanto ottenuto con l'isomorfi
     \item Adversarial Perturbation e Prompt Injection: 0.35 (69.51$^\circ$)
 \end{itemize}
 
-considerando l'alta dimensionalità in cui vengono posizionati i vettori le perturbazioni di Advanced Adversarial e Adversarial Pertubration dimostrano avere un valore di cosine similarity molto alto di $0.57$, evidenziando un alta somiglianza tra le metodologie dei due attacchi.
+Considerando l'alta dimensionalità in cui vengono posizionati i vettori, le perturbazioni di Advanced Adversarial e Adversarial Pertubration dimostrano avere un valore di cosine similarity molto alto di $0.57$, evidenziando un alta somiglianza tra le metodologie dei due attacchi.
 Prompt Injection e Adversarial Pertubration hanno un valore di circa 0.37, mentre Advanced Adversarial e Prompt Injection di 0.25. Questi valori indicano una discreta somiglianza non del tutto trascurabile di questi attacchi: nonostante l'angolazione non sia parallela sono numeri maggiori rispetto allo steering.
 Le motivazioni di questi valori risiedono nelle metodologie degli attacchi stessi: gli attacchi Advanced Adversarial e Adversarial Perturbation lavorano entrambi sul codice offuscando variabili, aggiungendo codice morto o alterando la sintassi, rimanendo all'interno della logica di programmazione.
 Prompt Injection è invece diverso: non offusca il codice ma inietta un comando diretto lavorando sull'ubbidienza e non sulla sintassi, ponendosi quindi distante dagli altri due.

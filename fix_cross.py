@@ -3,8 +3,8 @@ import glob
 
 # Trova tutti i file CSV che hai generato per Logit Lens e Isomorfismo
 file_da_pulire = [
-    "CSV tesi/Logit_Lens/Risultati_Contrastive_All_Layers.csv",
-    "CSV tesi/Logit_Lens/Risultati_Contrastive_All_Layers_fallimenti.csv",
+    "CSV tesi/Logit_Lens/Risultati_Sweep_Steering.csv",
+    "CSV tesi/Logit_Lens/Risultati_Sweep_Steering_FALLIMENTI.csv",
 ]
 
 for file_csv in file_da_pulire:

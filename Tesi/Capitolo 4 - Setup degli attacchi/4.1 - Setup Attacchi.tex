@@ -71,7 +71,7 @@ def prompt_injection(codice):
 \end{minted}
 
 \subsection{Advanced Adversarial}
-Con il termine Advanced Adversarial ci si riferisce ad un'etichetta ombrello che descrive tecniche di jailbreak, superando le semplici manipolazioni linguistiche. Si vuole alterare i segnali che il modello usa per riconoscere i pattern di vulnerabilità. Vengono utilizzate manipolazioni strutturali e semantiche per eludere i controlli di sicurezza del modello forzando il modello a rispondere a richeste dannose o illecite.
+Con il termine Advanced Adversarial ci si riferisce ad un'etichetta ombrello che descrive tecniche di jailbreak, superando le semplici manipolazioni linguistiche. Si vogliono alterare i segnali che il modello usa per riconoscere i pattern di vulnerabilità. Vengono utilizzate manipolazioni strutturali e semantiche per eludere i controlli di sicurezza del modello forzando il modello a rispondere a richeste dannose o illecite.
 Di nuovo, vengono presentate tre tecniche di Advanced Adversarial che vengono applicate assieme a tutti i codici riconosciuti correttamente come vulnerabili dal modello.\\
 
 Il Semantic Renaming, o accecamento lessicale, sostituisce tutti i token trigger che le reti neurali associano statisticamente alle vulnerabilità con termini neutri o rassicuranti. Durante il training i modelli imparano che variabili come buffer, src o dest sono spesso collegati a vulnerabilità classiche che possono portare a Buffer Overflow, soprattutto con linguaggi a basso livello come il C: sostituendo questi termini con nomi più generici vengono recisi i collegamenti assimilati durante l'addestramento. Annullando l'operazione di ricerca di possibili vulnerabilità tramite un pattern matching il modello dovrebbe essere in grado di analizzare correttamente il codice durante il suo flusso logico e operazioni matematiche perché il task di vulnerability detection venga effettuato efficientemente.
@@ -90,8 +90,8 @@ def semantic_renaming(codice):
 \end{minted}
 
 L'attacco di Opaque Predicates, vuole inserire diramazioni logiche, come if o cicli while, che sembrano complesse e rilevanti per l'esecuzione ma che sono sempre false o ininfluenti nel caso di questi attacchi.
-Vengono iniettati direttamente nel cuore del flusso di esecuzione: se un compilatore avrebbe rimosso un'operazione palesemente falsa, un LLM, al contrario, deve elaborare sequenzialmente questi token e allocare pesi di attenzione a questa condizione.
-Viene creato un dirottamente del funzionamento dell'attenzione che spreca capacità per tracciare variabili \textit{dummy} e rami condizionali irraggiungibili, diluendo l'attenzione che dovrebbe essere invece riservata alle istruzioni vulnerabili reali.
+Vengono iniettati direttamente nel cuore del flusso di esecuzione: un compilatore rimuove un'operazione palesemente falsa, un LLM, al contrario, deve elaborare sequenzialmente questi token e allocare pesi di attenzione a questa condizione.
+Viene creato un dirottamento del funzionamento dell'attenzione che spreca capacità per tracciare variabili \textit{dummy} e rami condizionali irraggiungibili, diluendo l'attenzione che dovrebbe essere invece riservata alle istruzioni vulnerabili reali.
 
 \begin{minted}[linenos, frame=lines, framesep=2mm, fontsize=\footnotesize]{python}
 def opaque_predicates(codice):
@@ -127,7 +127,7 @@ E' dimostrato che un LLM non pone in modo casuale i vettori dei concetti nello s
 
 L'attacco si articola in due fasi: una prima fase dove si calcola il Vettore di Steering e una seconda dove questo vettore viene sommato o sottratto agli hidden states originali in strati intermedi.
 Per calcolare il Vettore di Steering è necessario prendere in esame le attivazioni ottenute da tutti i codici vulnerabili e sicuri correttamente identificati dal modello. Per ogni modello vengono quindi calcolati due centroidi: uno per i codici vulnerabili e uno per i codici sicuri, che sono la media dei punti appartenenti alla rispettiva categoria.
-Ottenuti gli estremi il vettore non sarà altro che la differenza tra questi:
+Ottenuti gli estremi, il vettore non sarà altro che la differenza tra questi:
 
 \begin{minted}[linenos, frame=lines, framesep=2mm, fontsize=\footnotesize]{python}
     steering_vector = media_vulnerabile - media_sicuro
@@ -157,5 +157,5 @@ Normalmente, una funzione softmax converte questi punteggi in probabilità per c
 L'attacco Logit Bias si inserisce in questo esatto passaggio: l'attaccante esegue un ovveride applicando un moltiplicatore positivo alla parola "FALSE" e una penalità alla parola "TRUE".
 Il modello viene quindi costretto a stampare un verdetto di sicurezza, anche se i suoi stati latenti interni e la sua attenzione indicavano la presenza di un difetto.
 
-"Il Logit Bias non altera i calcoli interni della rete, ma si limita a truccare i punteggi delle parole un attimo prima che vengano generate. Pur essendo un attacco post-architetturale che non tocca lo spazio latente, la sua presenza in questo studio ha un ruolo ben preciso: fare da baseline di controllo.
+Il Logit Bias non altera i calcoli interni della rete, ma si limita a truccare i punteggi delle parole un attimo prima che vengano generate. Pur essendo un attacco post-architetturale che non tocca lo spazio latente, la sua presenza in questo studio ha un ruolo ben preciso: fare da baseline di controllo.
 Paragonare questo attacco all'Activation Steering permette di misurare la differenza tra ciò che il modello ha realmente compreso del codice e ciò che viene forzato a stampare a schermo. In pratica, il Logit Bias funziona come uno \textit{stress test} iniziale: ci aiuta a misurare quanto sia facile piegare le risposte dei vari LLM, offrendo un punto di partenza chiaro per confrontare la loro resilienza.
