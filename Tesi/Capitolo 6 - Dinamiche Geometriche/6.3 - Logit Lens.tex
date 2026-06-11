@@ -46,14 +46,14 @@ In seguito si osservano i risultati ottenuti per ciascun attacco, selezionando i
     
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{immagini/Logit Lens/Assoluto_Delta_PI_Qwen_Qwen2.5-7B-Instruct.png} 
+        \includegraphics[width=\textwidth]{immagini/SWEEP LL/Assoluto_Delta_PI_Qwen_Qwen2.5-7B-Instruct.png} 
         \caption{Qwen Instruct}
         \label{fig:pi qwen-7b-instruct-ll}
     \end{subfigure}
     \hfill 
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{immagini/Logit Lens/Assoluto_Delta_PI_codellama_CodeLlama-7b-Instruct-hf.png}
+        \includegraphics[width=\textwidth]{immagini/SWEEP LL/Assoluto_Delta_PI_codellama_CodeLlama-7b-Instruct-hf.png}
         \caption{CodeLlama}
         \label{fig:pi codellama-7b-instruct-ll}
     \end{subfigure}
@@ -66,14 +66,14 @@ In seguito si osservano i risultati ottenuti per ciascun attacco, selezionando i
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.80\textwidth]{immagini/Logit Lens/Assoluto_Delta_AP_Qwen_Qwen2.5-Coder-7B-Instruct.png}
+    \includegraphics[width=0.80\textwidth]{immagini/SWEEP LL/Assoluto_Delta_AP_Qwen_Qwen2.5-Coder-7B-Instruct.png}
     \caption{Adversarial Perturbation - Qwen Coder}
     \label{fig:ll  ap qwen coder}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.80\textwidth]{immagini/Logit Lens/Assoluto_Delta_AA_Qwen_Qwen2.5-7B-Instruct.png}
+    \includegraphics[width=0.80\textwidth]{immagini/SWEEP LL/Assoluto_Delta_AA_Qwen_Qwen2.5-7B-Instruct.png}
     \caption{Advanced Adversarial - Qwen Instruct}
     \label{fig:ll aa qwen instruct}
 \end{figure}
@@ -82,7 +82,7 @@ Analizzando l'impatto dei tre attacchi Black-Box sulle rappresentazioni interne 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.80\textwidth]{immagini/Logit Lens/Assoluto_Delta_Steer_deepseek-ai_deepseek-coder-6.7b-instruct.png}
+    \includegraphics[width=0.80\textwidth]{immagini/SWEEP LL/Assoluto_Delta_Steer_deepseek-ai_deepseek-coder-6.7b-instruct.png}
     \caption{Activation Steering - Deepseek Coder}
     \label{fig:ll steering deepseek coder}
 \end{figure}
@@ -94,7 +94,7 @@ Un caso studio interessante è rappresentato dal modello Reasoning DeepSeek R1 (
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.80\textwidth]{immagini/Logit Lens/Assoluto_Delta_AP_deepseek-ai_DeepSeek-R1-Distill-Qwen-7B.png}
+    \includegraphics[width=0.80\textwidth]{immagini/SWEEP LL/Assoluto_Delta_AP_deepseek-ai_DeepSeek-R1-Distill-Qwen-7B.png}
     \caption{Adversarial Pertubration - Deepseek}
     \label{fig:ll AP deepseek }
 \end{figure}
@@ -132,16 +132,14 @@ Concatenando il ragionamento appena estratto al prompt originale viene effettuat
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.80\textwidth]{immagini/Logit Lens/Assoluto_Delta_AP_deepseek-ai_DeepSeek-R1-Distill-Qwen-7B_corretto.png}
+    \includegraphics[width=0.80\textwidth]{immagini/SWEEP LL/Assoluto_Delta_AP_deepseek-ai_DeepSeek-R1-Distill-Qwen-7B.png}
     \caption{Adversarial Pertubration - Deepseek v.2}
     \label{fig:ll AP deepseek corretto}
 \end{figure}
 
-Nel Forward Pass a freddo, noi carichiamo tutto il testo in blocco (Prompt + CoT + FINAL_VERDICT:). Non c'è generazione autoregressiva. Il calcolo avviene in un singolo istante di clock.
-Il tuo hook ([:, -1, :]) si attiva una volta sola, ed esattamente sui due punti finali di FINAL_VERDICT:.
-Questo non simula l'attacco reale, ma risponde a una domanda scientifica molto più profonda: "Qual è la forza matematica istantanea dell'attacco contro la forza matematica istantanea della verità del modello?"
+I risultati ottenuti per i modelli con reasoning presentano un'impennata nell'ultimo layer: quest'ultimo opera come un vero e proprio controllore di coerenza, dove di fronte alla forte dissonanza cognitiva introdotta dallo steering innesca un effetto di autocorrezione che in letteratura prende il nome di \textit{Late-Layer Rebound}, in grado di limitare l'anomalia vettoriale e ripristinare la corretta convergenza probabilistica verso la reale vulnerabilità del codice sorgente.
 
-L'analisi tramite Logit Lens ha rivelato che un singolo impulso vettoriale (anche a moltiplicatori elevatissimi) non è sufficiente per piegare la decisione finale di DeepSeek-R1, poiché i layer terminali (Layer 27) innescano un potente effetto di autocorrezione (Late-Layer Rebound) che ripristina la verità logica del codice sorgente (+1.03). >
-    Affinché l'attacco abbia successo (e produca il 'False' visto nel dataset), lo Steering Vector non deve colpire solo il token di decisione, ma deve operare come un'infezione continua e autoregressiva durante tutta la generazione della Chain-of-Thought (CoT). Solo saturando il KV-Cache di deviazioni continue l'attacco riesce a superare la soglia critica oltre la quale l'autocorrezione dell'ultimo layer collassa."
+Affinché l'attacco di steering abbia successo, producendo l'output false ottenuto dal modello, il vettore offensivo non si limita ad alterare la decisione sul token finale, al contrario l'attacco deve operare come un'infezione continua e iterativa, sovrascrivendo iterativamente l'intera generazione della CoT.
 
-In pratica, hai appena dimostrato perché i modelli come DeepSeek-R1 sono più resistenti degli altri (hanno l'autocorrezione) e hai dimostrato esattamente qual è la condizione tecnica (avvelenamento continuo della CoT) necessaria per abbattere quella difesa.
+L'impiego della Contrastive Logit Lens attraverso un forward pass statico, l'elaborazione simultanea dell'intero contesto testuale, comprensivo di prompt, chain of thought e stringa terminale, introduce un processo molto diverso rispetto alla normale generazione autoregressiva: l'azione dello steering interviene ad una singola iniezione vettoriale applicata esclusivamente all'ultimo token. 
+Per poter rispecchiare a pieno il processo di activation steering, a differenza degli attacchi black-box, è necessario simulare l'attacco propagato per ogni token con \texttt{generate}, attraverso la sottrazione di tutto l'array simultaneamente.
