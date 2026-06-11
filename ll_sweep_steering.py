@@ -57,7 +57,7 @@ def crea_hook_offensiva(vettore_tensore, moltiplicatore):
         vettore_locale = vettore_norm.to(tensore_modificato.device)
         
         if len(tensore_modificato.shape) == 3:
-            tensore_modificato[:, -1, :] = tensore_modificato[:, -1, :] - (vettore_locale * moltiplicatore)
+            tensore_modificato = tensore_modificato - (vettore_locale * moltiplicatore)
         elif len(tensore_modificato.shape) == 2:
             tensore_modificato = tensore_modificato - (vettore_locale * moltiplicatore)
             

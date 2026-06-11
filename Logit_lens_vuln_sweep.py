@@ -48,7 +48,7 @@ for model_name, config in models_config.items():
                 dtype=torch.float16
             )
 
-        shift_aa_list, shift_pj_list, shift_ap_list = [], [], []
+        h_adv_aa_list, h_adv_pi_list, h_adv_ap_list = [], [], []
         h_clean_aa_list, h_clean_pi_list, h_clean_ap_list = [], [], []
 
         def get_all_hidden_states(codice):
@@ -96,38 +96,34 @@ for model_name, config in models_config.items():
             # Estraiamo gli hidden states dell'ultimo token
             return torch.stack([layer_state[0, -1, :] for layer_state in out.hidden_states])
 
-        print("Calcolo delle direzioni vettoriali su tutti i layer")
+        print("Calcolo delle attivazioni assolute su tutti i layer...")
+        
         # --- Advanced Adversarial ---
         for cod_orig in codici_aa:
-            cod_hackerato = df_aa[(df_aa['modello'] == model_name) & (df_aa['codice_originale'] == cod_orig)]['codice_perturbato'].values[0]
-            
-            h_clean = get_all_hidden_states(cod_orig)
-            h_adv = get_all_hidden_states(cod_hackerato)
-            shift_aa_list.append(h_adv - h_clean)
-            h_clean_aa_list.append(h_clean)
+            # CERCHIAMO IN df_aa_fail, NON IN df_aa_succ!
+            cod_hackerato = df_aa_fail[(df_aa_fail['modello'] == model_name) & (df_aa_fail['codice_originale'] == cod_orig)]['codice_perturbato'].values[0]
+            h_clean_aa_list.append(get_all_hidden_states(cod_orig))
+            h_adv_aa_list.append(get_all_hidden_states(cod_hackerato))
 
         # --- Prompt Injection ---
         for cod_orig in codici_pi:
-            cod_hackerato = df_pi[(df_pi['modello'] == model_name) & (df_pi['codice_originale'] == cod_orig)]['codice_perturbato'].values[0]
-            
-            h_clean = get_all_hidden_states(cod_orig)
-            h_pi = get_all_hidden_states(cod_hackerato)
-            shift_pj_list.append(h_pi - h_clean)
-            h_clean_pi_list.append(h_clean)
+            # CERCHIAMO IN df_pi_fail
+            cod_hackerato = df_pi_fail[(df_pi_fail['modello'] == model_name) & (df_pi_fail['codice_originale'] == cod_orig)]['codice_perturbato'].values[0]
+            h_clean_pi_list.append(get_all_hidden_states(cod_orig))
+            h_adv_pi_list.append(get_all_hidden_states(cod_hackerato))
 
         # --- Adversarial Perturbation ---
         for cod_orig in codici_ap:
-            cod_hackerato = df_ap[(df_ap['modello'] == model_name) & (df_ap['codice_originale'] == cod_orig)]['codice_perturbato'].values[0]
-            
-            h_clean = get_all_hidden_states(cod_orig)
-            h_ap = get_all_hidden_states(cod_hackerato)
-            shift_ap_list.append(h_ap - h_clean)
-            h_clean_ap_list.append(h_clean)
+            # CERCHIAMO IN df_ap_fail
+            cod_hackerato = df_ap_fail[(df_ap_fail['modello'] == model_name) & (df_ap_fail['codice_originale'] == cod_orig)]['codice_perturbato'].values[0]
+            h_clean_ap_list.append(get_all_hidden_states(cod_orig))
+            h_adv_ap_list.append(get_all_hidden_states(cod_hackerato))
 
-        vettore_aa_all_layers = torch.mean(torch.stack(shift_aa_list), dim=0) if shift_aa_list else None
-        vettore_pj_all_layers = torch.mean(torch.stack(shift_pj_list), dim=0) if shift_pj_list else None
-        vettore_ap_all_layers = torch.mean(torch.stack(shift_ap_list), dim=0) if shift_ap_list else None
-        
+        # Medie vettoriali (Layer x Dimension)
+        v_adv_aa_all = torch.mean(torch.stack(h_adv_aa_list), dim=0) if h_adv_aa_list else None
+        v_adv_pi_all = torch.mean(torch.stack(h_adv_pi_list), dim=0) if h_adv_pi_list else None
+        v_adv_ap_all = torch.mean(torch.stack(h_adv_ap_list), dim=0) if h_adv_ap_list else None
+       
         v_base_aa_all = torch.mean(torch.stack(h_clean_aa_list), dim=0) if h_clean_aa_list else None
         v_base_pi_all = torch.mean(torch.stack(h_clean_pi_list), dim=0) if h_clean_pi_list else None
         v_base_ap_all = torch.mean(torch.stack(h_clean_ap_list), dim=0) if h_clean_ap_list else None
@@ -140,46 +136,41 @@ for model_name, config in models_config.items():
         w_true = lm_head.weight[id_true]
         w_false = lm_head.weight[id_false]
 
-        def calcola_delta(vettore_layer):
+        # Nuova funzione calcola_logit_assoluto
+        def calcola_logit_assoluto(vettore_layer):
             if vettore_layer is None: return np.nan
             v_calc = vettore_layer.to(model.dtype)
-            
-            v_calc_scaled = v_calc * final_layernorm.weight
-            
-            logit_true = torch.dot(v_calc_scaled, w_true).item()
-            logit_false = torch.dot(v_calc_scaled, w_false).item()
+            v_calc_norm = final_layernorm(v_calc)  # RMSNorm Reale!
+            logit_true = torch.dot(v_calc_norm, w_true).item()
+            logit_false = torch.dot(v_calc_norm, w_false).item()
             return logit_true - logit_false
 
-        num_layers_totali = vettore_aa_all_layers.shape[0] if vettore_aa_all_layers is not None else len(model.model.layers) + 1
+        num_layers_totali = len(model.model.layers) + 1
 
         print(f"Eseguendo Logit Lens su {num_layers_totali} layer")
         
         for layer_idx in range(num_layers_totali):
             
-            path_steering = f"attivazioni_totali/steering_vector_{nome_file_safe}_layer_{layer_idx}.npy"
-            vettore_steering_layer = None
-            if os.path.exists(path_steering):
-                vettore_steering_layer = torch.tensor(np.load(path_steering), dtype=model.dtype, device=model.device)
+            # Calcolo dei logit assoluti per i codici hackerati
+            abs_adv_aa = calcola_logit_assoluto(v_adv_aa_all[layer_idx] if v_adv_aa_all is not None else None)
+            abs_adv_pi = calcola_logit_assoluto(v_adv_pi_all[layer_idx] if v_adv_pi_all is not None else None)
+            abs_adv_ap = calcola_logit_assoluto(v_adv_ap_all[layer_idx] if v_adv_ap_all is not None else None)
 
-            v_aa_layer = vettore_aa_all_layers[layer_idx] if vettore_aa_all_layers is not None else None
-            v_pj_layer = vettore_pj_all_layers[layer_idx] if vettore_pj_all_layers is not None else None
-            v_ap_layer = vettore_ap_all_layers[layer_idx] if vettore_ap_all_layers is not None else None
+            # Calcolo dei logit assoluti per le basi
+            base_aa = calcola_logit_assoluto(v_base_aa_all[layer_idx] if v_base_aa_all is not None else None)
+            base_pi = calcola_logit_assoluto(v_base_pi_all[layer_idx] if v_base_pi_all is not None else None)
+            base_ap = calcola_logit_assoluto(v_base_ap_all[layer_idx] if v_base_ap_all is not None else None)
 
-            # calcolo i 4 Delta
-            delta_steer = calcola_delta(vettore_steering_layer)
-            delta_aa = calcola_delta(v_aa_layer)
-            delta_pj = calcola_delta(v_pj_layer)
-            delta_ap = calcola_delta(v_ap_layer)
+            # Calcolo del puro shift
+            delta_aa = abs_adv_aa - base_aa if not pd.isna(abs_adv_aa) else np.nan
+            delta_pi = abs_adv_pi - base_pi if not pd.isna(abs_adv_pi) else np.nan
+            delta_ap = abs_adv_ap - base_ap if not pd.isna(abs_adv_ap) else np.nan
 
-            base_aa = calcola_delta(v_base_aa_all[layer_idx] if v_base_aa_all is not None else None)
-            base_pi = calcola_delta(v_base_pi_all[layer_idx] if v_base_pi_all is not None else None)
-            base_ap = calcola_delta(v_base_ap_all[layer_idx] if v_base_ap_all is not None else None)
             risultati_totali.append({
                 "MODELLO": model_name,
                 "LAYER": layer_idx,
-                "Delta_Steering": delta_steer,
                 "Delta_AA": delta_aa,
-                "Delta_PI": delta_pj,
+                "Delta_PI": delta_pi,
                 "Delta_AP": delta_ap,
                 "Base_AA": base_aa,
                 "Base_PI": base_pi,
@@ -188,17 +179,13 @@ for model_name, config in models_config.items():
 
         print("Salvataggio dati layer completato.")
 
-        del model
-        del tokenizer
+        del model, tokenizer
+        del h_adv_aa_list, h_adv_pi_list, h_adv_ap_list
+        del h_clean_aa_list, h_clean_pi_list, h_clean_ap_list
+        del v_adv_aa_all, v_adv_pi_all, v_adv_ap_all
+        del v_base_aa_all, v_base_pi_all, v_base_ap_all
         
-        del shift_aa_list, shift_pj_list, shift_ap_list
-        del vettore_aa_all_layers, vettore_pj_all_layers, vettore_ap_all_layers
-        
-    
-        import gc
         gc.collect()
-        gc.collect() 
-        
         torch.cuda.empty_cache()
 
     except Exception as e:
