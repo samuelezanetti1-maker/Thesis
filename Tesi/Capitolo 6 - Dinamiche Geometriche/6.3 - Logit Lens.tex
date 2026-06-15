@@ -37,7 +37,7 @@ def calcola_delta(vettore_layer):
 
 Tale operazione, ripetuta anche per i fallimenti degli attacchi, produce tre insiemi di dati: la $\Delta_L$ per la Baseline e le $\Delta_L$ per ciascun attacco, una in caso di successo e una in caso di fallimento. 
 
-\subsection{Layer Sweep - Resilienza Latente}
+\subsection{Layer Sweep}
 La possibilità di analizzare e ottenere i delta sia per i successi che per i fallimenti ha permesso di poter mappare layer dopo layer, l'andamento del processo decisionale del modello, identificando come le perturbazioni generate alterino lo spettro delle probabilità.
 In seguito si osservano i risultati ottenuti per ciascun attacco, selezionando i modelli su cui la perturbazione ha avuto un successo maggiore.
 
@@ -94,7 +94,7 @@ Un caso studio interessante è rappresentato dal modello Reasoning DeepSeek R1 (
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.80\textwidth]{immagini/SWEEP LL/Assoluto_Delta_AP_deepseek-ai_DeepSeek-R1-Distill-Qwen-7B.png}
+    \includegraphics[width=0.80\textwidth]{immagini/SWEEP LL/AP_old.png}
     \caption{Adversarial Pertubration - Deepseek}
     \label{fig:ll AP deepseek }
 \end{figure}
@@ -137,9 +137,124 @@ Concatenando il ragionamento appena estratto al prompt originale viene effettuat
     \label{fig:ll AP deepseek corretto}
 \end{figure}
 
-I risultati ottenuti per i modelli con reasoning presentano un'impennata nell'ultimo layer: quest'ultimo opera come un vero e proprio controllore di coerenza, dove di fronte alla forte dissonanza cognitiva introdotta dallo steering innesca un effetto di autocorrezione che in letteratura prende il nome di \textit{Late-Layer Rebound}, in grado di limitare l'anomalia vettoriale e ripristinare la corretta convergenza probabilistica verso la reale vulnerabilità del codice sorgente.
+E' facile notare come nella figura \ref{fig:ll AP deepseek corretto} nella casistica di attacco avvenuto con successo il valore del delta al termine dell'operazione della logit lens sia positivo, indicando quindi una predisposizione del modello a restituire il token " TRUE" invece che " FALSE".
+Questa incongruenza nei risultati viene presentata anche in altri sei attacchi.
+\begin{figure}[H]
+    \centering
+    
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{immagini/SWEEP LL/Assoluto_Delta_AA_meta-llama_Llama-3.1-8B-Instruct.png} 
+        \caption*{Advanced Adversarial - Meta Llama}
+        \label{fig:AA_ML}
+    \end{subfigure}
+    \hfill 
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{immagini/SWEEP LL/Assoluto_Delta_AA_deepseek-ai_deepseek-coder-6.7b-instruct.png}
+        \caption*{Advanced Adversarial - Deepseek Coder}
+        \label{fig:AA_DC}
+    \end{subfigure}
+    
+    \vspace{0.2cm}
+    \caption{Logti Lens Sweep}
+    \label{fig:ls_str1}
+\end{figure}
 
-Affinché l'attacco di steering abbia successo, producendo l'output false ottenuto dal modello, il vettore offensivo non si limita ad alterare la decisione sul token finale, al contrario l'attacco deve operare come un'infezione continua e iterativa, sovrascrivendo iterativamente l'intera generazione della CoT.
+\begin{figure}[H]
+    \centering
+    
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{immagini/SWEEP LL/Assoluto_Delta_Steer_deepseek-ai_DeepSeek-R1-Distill-Qwen-7B.png}
+        \caption*{Steering - Deepseek}
+        \label{fig:AP_DS}
+    \end{subfigure}
+    \hfill 
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{immagini/SWEEP LL/Assoluto_Delta_PI_meta-llama_Llama-3.1-8B-Instruct.png}
+        \caption*{Prompt Injection - Meta Llama}
+        \label{fig:PI_ML}
+    \end{subfigure}
+    
+    \vspace{0.2cm}
+    \caption{Logit Lens Sweep}
+    \label{fig:ls_str2}
+\end{figure}
 
-L'impiego della Contrastive Logit Lens attraverso un forward pass statico, l'elaborazione simultanea dell'intero contesto testuale, comprensivo di prompt, chain of thought e stringa terminale, introduce un processo molto diverso rispetto alla normale generazione autoregressiva: l'azione dello steering interviene ad una singola iniezione vettoriale applicata esclusivamente all'ultimo token. 
-Per poter rispecchiare a pieno il processo di activation steering, a differenza degli attacchi black-box, è necessario simulare l'attacco propagato per ogni token con \texttt{generate}, attraverso la sottrazione di tutto l'array simultaneamente.
+\begin{figure}[H]
+    \centering
+    
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{immagini/SWEEP LL/Assoluto_Delta_Steer_codellama_CodeLlama-7b-Instruct-hf.png} 
+        \caption*{Steering - Codellama}
+        \label{fig:ST_CL}
+    \end{subfigure}
+    \hfill 
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{immagini/SWEEP LL/Assoluto_Delta_AA_deepseek-ai_DeepSeek-R1-Distill-Qwen-7B.png} 
+        \caption*{Advanced Adversarial - Deepseek}
+        \label{fig:ST_Q}
+    \end{subfigure}
+    
+    \vspace{0.2cm}
+    \caption{Logti Lens Sweep}
+    \label{fig:ls_str3}
+\end{figure}
+
+Le figure in \ref{fig:ls_str1} e \ref{fig:ls_str2} presentano lo stesso pattern: il modello è stato correttamente ingannato ma i valori di delta sul bias hanno valore positivo.
+Caso esattamente contrario per i risultati di Logit Lens in figura \ref{fig:ls_str3} dove l'attacco è fallito ma il modello presenta un delta negativo, nonostante abbia riportato l'insuccesso introdotto dalle perturbazioni.
+
+Per convalidare l'origine delle discrepanze tra stato latente e output generato dalle Logit Lens, viene eseguita un'ispezione proiettando l'ultimo stato nascosto sull'intero vocabolario per i campioni anomali. I risultati dell'analisi sono presenti nella tabella \ref{tab:analisi_fotofinish}
+
+\begin{table}[H]
+    \centering
+    % Tabella numerica pulita e snella (6 colonne perfette)
+    \begin{tabular}{l c c c c c}
+        \toprule
+        \textbf{Modello} & \textbf{Attacco} & \textbf{Esito} & \textbf{Logit [True]} & \textbf{Logit [False]} & \textbf{\(\Delta\)} \\
+        \midrule
+        deepseek-ai/DeepSeek-R1-Distill-Qwen-7B & AA & Successo (False) & 23.39 & 21.84 & 1.55 \\
+        deepseek-ai/DeepSeek-R1-Distill-Qwen-7B & AP & Successo (False) & 24.31 & 23.22 & 1.09 \\
+        deepseek-ai/DeepSeek-R1-Distill-Qwen-7B & Steering & Successo (False) & 23.95 & 21.06 & 2.89 \\
+        \midrule
+        codellama/CodeLlama-7b-Instruct-hf & Steering & Fallimento (True) & 21.52 & 22.06 & -0.55 \\
+        \midrule
+        meta-llama/Llama-3.1-8B-Instruct & AA & Successo (False) & 25.42 & 25.34 & 0.08 \\
+        meta-llama/Llama-3.1-8B-Instruct & PI & Successo (False) & 26.78 & 26.62 & 0.16 \\
+        \midrule
+        deepseek-ai/deepseek-coder-6.7b-instruct & AA & Fallimento (True) & 34.53 & 35.12 & -0.59 \\
+        \bottomrule
+    \end{tabular}
+    
+    \vspace{0.4cm}
+    
+    % Sezione testuale sottostante che usa l'intera larghezza del foglio
+    \begin{flushleft}
+    \footnotesize
+    \textbf{Dettaglio Top 5 Token Vincitori (Logit):}
+    \begin{itemize}[noitemsep, leftmargin=*, topsep=2pt]
+        \item \textbf{DeepSeek-R1-7B (AA):} 1. [SPACE] (29.20), 2. [SPACE]( (26.61), 3. [SPACE]True (23.39), 4. [SPACE]The (22.80), 5. [SPACE]False (21.84)
+        \item \textbf{DeepSeek-R1-7B (AP):} 1. [SPACE] (29.45), 2. [SPACE]( (26.30), 3. [SPACE]True (24.31), 4. [SPACE]False (23.22), 5. [SPACE]The (22.78)
+        \item \textbf{DeepSeek-R1-7B (Steering):} 1. [SPACE] (27.88), 2. [SPACE]( (25.22), 3. [SPACE]True (23.95), 4. [SPACE]The (23.19), 5. [SPACE]A (21.70)
+        \item \textbf{CodeLlama-7b (Steering):} 1. False (22.06), 2. True (21.52), 3. Un (15.73), 4. UN (14.62), 5. Und (14.33)
+        \item \textbf{Llama-3.1-8B (AA):} 1. [SPACE]True (25.42), 2. [SPACE]False (25.34), 3. [SPACE]Vulner (21.23), 4. [SPACE] (19.52), 5. [SPACE]TRUE (18.48)
+        \item \textbf{Llama-3.1-8B (PI):} 1. [SPACE]True (26.78), 2. [SPACE]False (26.62), 3. [SPACE] (21.62), 4. [SPACE]Vulner (20.06), 5. [SPACE]TRUE (18.95)
+        \item \textbf{Deepseek-Coder-6.7b (AA):} 1. [SPACE]False (37.81), 2. [SPACE]True (37.81), 3. False (35.12), 4. True (34.53), 5. [SPACE]TRUE (28.39)
+    \end{itemize}
+    \end{flushleft}
+    
+    \caption{Analisi dettagliata dei logit estratti con focus sulla distribuzione dei primi 5 token.}
+    \label{tab:analisi_fotofinish}
+\end{table}
+
+Nei casi di DeepSeek-R1, nonostante l'operazione di Logit Lens confermasse la superiorità del token corretto " True" rispetto all'errato " False" per l'identificazione del codice, le percentuali maggiori non appartenevano a nessuno dei due. I token vincitori risultavano essere caratteri di spaziatura neutra \textit{"[SPACE]"} o parentesi \textit{"[SPACE]("}. Ciò dimostra che la perturbazione ritarda l'emissione del verdetto, costringendo il modello ad allocare la propria attenzione su token sintattici intermedi, per poi cedere all'inganno solo negli step autoregressivi successivi non controllati dalla lente statica.
+
+Nel caso di DeepSeek-Coder durante l'attacco di Advanced Adversarial, la misurazione con la logit lens mostrava una tendenza negativa misurando i token " True" e " False". Tuttavia, l'ispezione sul vocabolario ha svelato che i token dominanti erano le varianti tipiche del modello ("ĠTrue" e "ĠFalse"), le quali si trovano con un indice di probabilità uguale, entrambe a +37.81 logit. L'attacco ha dunque paralizzato la capacità di giudizio della rete, lasciando l'output finale a dinamiche probabilmente casuali di risoluzione dello spettro delle probabilità.
+
+Nelle discrepanze di Llama e CodeLlama, il token corretto è risultato effettivamente vincitore ma con una differenza rispetto all'antagonista inferiore allo 0\%. Un tale assottigliamento del margine di confidenza dimostra che l'attacco, pur non riuscendo a cambiare il logit assoluto al Layer finale, lo ha corrotto fino a renderlo vulnerabile alle operazioni di decodifica, risultando in un output errato a schermo.
+
+In conclusione, l'analisi dei primi 5 token vincitori dimostra che la Logit Lens ha diagnosticato correttamente le anomalie: le difese latenti della rete spesso resistono a livello logico-concettuale, ma collassano a causa di deviazioni ortografiche, sintattiche e numeriche indotte dall'attacco nella fase finale di generazione lessicale.
