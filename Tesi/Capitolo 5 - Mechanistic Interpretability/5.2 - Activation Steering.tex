@@ -1,5 +1,5 @@
 \section{Activation Steering}
-L'Activation Steering rappresenta una tecnica avanzata di manipolazione white-box che interviene direttamente nello spazio latente del modello. Alterando le attivazioni interne durante la fase di inferenza, è possibile deviare la traiettoria generativa dell'LLM verso concetti o comportamenti desiderati. L'efficacia di questa operazione dipende fortemente da parametri finemente modulabili, in particolare il layer di iniezione, il punto in cui avviene la perturbazione, e il moltiplicatore, l'intensità della perturbazione stessa. 
+L'Activation Steering rappresenta una tecnica avanzata di manipolazione White-Box che interviene direttamente nello spazio latente del modello. Alterando le attivazioni interne durante la fase di inferenza, è possibile deviare la traiettoria generativa dell'LLM verso concetti o comportamenti desiderati. L'efficacia di questa operazione dipende fortemente da parametri finemente modulabili, in particolare il layer di iniezione, il punto in cui avviene la perturbazione, e il moltiplicatore, l'intensità della perturbazione stessa. 
 
 Eseguire uno studio di ablazione su questi parametri permette di raggiungere un duplice obiettivo: da un lato, ottimizzare l'attacco per studiare i limiti e la resilienza del modello, individuando le vulnerabilità intrinseche e i layer più deboli della sua architettura Transformer; dall'altro, mappare l'andamento logico del modello nello spazio latente, osservando come la semantica e la logica si degradano o si trasformano durante l'elaborazione nella rete.
 
@@ -8,7 +8,7 @@ Il moltiplicatore agisce come un fattore di scala per il vettore di steering inn
 
 La ricerca del moltiplicatore ideale per ciascun modello prevede l'esecuzione di uno studio di ablazione fissato al layer medio, considerato in letteratura il punto di transizione semantica più malleabile. In questa fase preliminare, l'attacco di Activation Steering è stato testato con la seguente progressione di moltiplicatori: 3, 5, 8, 10, 15.
 
-L'indagine si configura come la ricerca di un trade-off tra il rateo di successo dell'attacco (ASR) e la percentuale di errori o di testo senza senso. Come avviene per altre tecniche come quella del Logit Bias, è teoricamente possibile forzare il modello per ottenere un ASR quasi perfetto; tuttavia, se questo successo è accompagnato da un'elevata confusione e dalla perdita di logica nella semantica, l'output diventa inutilizzabile. Un attacco white-box efficace deve eludere i filtri di sicurezza mantenendo intatte le capacità di instruction-following e di articolazione del linguaggio del modello. I risultati di questa prima fase sono riportati nella Tabella \ref{tab:valutazione_moltiplicatore}.
+L'indagine si configura come la ricerca di un trade-off tra il rateo di successo dell'attacco (ASR) e la percentuale di errori o di testo senza senso. Come avviene per altre tecniche come quella del Logit Bias, è teoricamente possibile forzare il modello per ottenere un ASR quasi perfetto; tuttavia, se questo successo è accompagnato da un'elevata confusione e dalla perdita di logica nella semantica, l'output diventa inutilizzabile. Un attacco White-Box efficace deve eludere i filtri di sicurezza mantenendo intatte le capacità di instruction-following e di articolazione del linguaggio del modello. I risultati di questa prima fase sono riportati nella Tabella \ref{tab:valutazione_moltiplicatore}.
 
 
 \begin{table}[H]
@@ -61,7 +61,7 @@ L'indagine si configura come la ricerca di un trade-off tra il rateo di successo
     \label{tab:valutazione_moltiplicatore}
 \end{table}
 
-Analizzando i dati, emerge un comportamento distintivo della famiglia di modelli Qwen: a differenza di Llama, che subisce un rapido collasso semantico all'aumentare della perturbazione, i modelli Qwen registrano un errore percentuale costantemente pari a zero accompagnato da un ASR in lenta ma costante crescita. Questa spiccata robustezza topologica ha reso necessaria l'esecuzione di un secondo studio di ablazione mirato esclusivamente ai modelli di Alibaba, applicando moltiplicatori decisamente più elevati (20, 25, 30 e 40) per forzare il superamento dei filtri.
+Analizzando i dati, emerge un comportamento distintivo della famiglia di modelli Qwen: a differenza di Llama, che subisce un rapido collasso semantico all'aumentare della forza della perturbazione, i modelli Qwen registrano un errore percentuale costantemente pari a zero accompagnato da un ASR in lenta ma costante crescita. Questa spiccata robustezza topologica ha reso necessaria l'esecuzione di un secondo studio di ablazione mirato esclusivamente ai modelli di Alibaba, applicando moltiplicatori decisamente più elevati (20, 25, 30 e 40) per forzare il superamento dei filtri.
 
 \begin{table}[H]
     \centering
@@ -103,9 +103,9 @@ Per garantire un'applicazione adeguata, coerente e bilanciata dell'operazione di
 
 \subsection{Layer Sweep}
 Esattamente come il moltiplicatore, la scelta del layer di iniezione ha un ruolo fondamentale per massimizzare l'operazione di attacco: se eseguito troppo precocemente in un layer la rete è ancora impegnata nell'analisi lessicale del testo e tende ad assorbire o correggere l'anomalia vettoriale.
-Al contrario, l'iniezione effettuata tardivamente il modello ha già consolidato il proprio verdetto logico e la perturbazione risulta ininfluente.
+Al contrario, quando l'iniezione viene effettuata tardivamente, il modello ha già consolidato il proprio verdetto logico e la perturbazione risulta inefficace.
 
-E' stato eseguito un layer sweep su tutti i layer di tutti i modelli con i parametri precedentemente ottenuti. Attraverso un ciclo viene eseguita un'operazione massiva: applicando lo steering ad un layer e cambiandolo ad ogni iterazione con quello successivo è possibile tracciare l'andamento dell'efficacia dell'iniezione.
+E' stato eseguito un layer sweep su tutti i layer di tutti i modelli con i parametri dei moltiplicatori precedentemente ottenuti. Attraverso un ciclo viene eseguita un'operazione massiva: applicando lo steering ad un layer e cambiandolo ad ogni iterazione con quello successivo è possibile tracciare l'andamento dell'efficacia dell'iniezione.
 
 \begin{figure}[H]
     \centering
@@ -161,8 +161,8 @@ E' stato eseguito un layer sweep su tutti i layer di tutti i modelli con i param
     \label{fig:griglia_layer_sweep}
 \end{figure}
 
-Come è possibile osservare dai grafici, l'attacco ottiene un alto ASR generalmente nel layer intermedi dei modelli, confermando la teoria del partizionamento dei layer dei modelli: il passo successo della manipolazione nei layer iniziali e in quelli finali confermano l'effettiva importanza nell'elaborazione della risposta del modello. Viene posto un forte accento sui layer intermedi, responsabili del consolidamento semantico e della formazione dei concetti logici complessi come il ragionamento sulla vulnerabilità del codice, prima che questi vengano tradotti in specifici token di output.
-Tramite questa operazione è possibile ottenere il layer più influenzabile: il livello che presenta il rateo di successo dello steering più alto, indica la posizione più sensibile a livello architetturale del modello.\ref{tab:esito_layer_sweep}
+Come è possibile osservare dai grafici, l'attacco ottiene un alto ASR generalmente nel layer intermedi dei modelli, confermando la teoria del partizionamento dei layer: il basso successo della manipolazione nei layer iniziali e in quelli finali confermano l'effettiva importanza nell'elaborazione della risposta del modello. Viene posto un forte accento sui layer intermedi, responsabili del consolidamento semantico e della formazione dei concetti logici complessi come il ragionamento sulla vulnerabilità del codice, prima che questi vengano tradotti in specifici token di output.
+Tramite questa operazione è possibile ottenere il layer più influenzabile: il livello che presenta il rateo di successo dello steering più alto, indica la posizione più sensibile a livello architetturale del modello.
 
 \begin{table}[H]
     \centering
@@ -186,8 +186,8 @@ Tramite questa operazione è possibile ottenere il layer più influenzabile: il 
 \end{table}
 
 Attraverso questi risultati è possibile ottenere un "\textit{Golden Layer}" identificativo per la parte di maggior computazione del modello: calcolando la percentuale di profondità del layer sensibile per ogni modello e poi facendo la media di questi si ottiene l'altezza media dei layer per cui, in caso non si potesse eseguire un layer sweep o l'inaccessibilità al modello, è possibile applicare attacchi, o operazioni, nella parte più sensibile.
-Nello specifico con questi sei modelli si può notare come solo per il modello generale di llama il layer più sensibile sia quello centrale, mentre per gli altri modelli è leggermente più spostato ma sempre nella porzione intermedia dell'architettura dei modelli.
-Considerando quindi i dati ottenuti è possibile approssimare il golden layer a circa il 55\% dell'altezza del modello.
+Nello specifico con questi sei modelli si può notare come solo per il modello generale di llama il layer più sensibile sia quello centrale, mentre per gli altri modelli è leggermente più spostato ma sempre nella porzione intermedia dell'architettura.
+Considerando quindi i dati ottenuti è possibile approssimare il golden layer a circa il 55\% dell'altezza della rete.
 
 Di seguito il calcolo della profondità relativa per ciascun modello:
 \begin{itemize}[noitemsep]

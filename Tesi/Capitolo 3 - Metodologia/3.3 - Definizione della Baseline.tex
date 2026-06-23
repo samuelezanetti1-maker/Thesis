@@ -15,7 +15,7 @@ model = AutoModelForCausalLM.from_pretrained(
 )
 \end{minted}
 
-Al fine di garantire la sistematicità e la riproducibilità degli esperimenti su tutte le architetture testate, l'interazione con i modelli è stata vincolata sfruttando i Chat Template nativi di ciascun tokenizer.
+Al fine di garantire la sistematicità e la riproducibilità degli esperimenti su tutte le architetture testate, l'interazione con i modelli è stata vincolata sfruttando i chat template nativi di ciascun tokenizer.
 Ad ogni modello è stato sottoposto il seguente costrutto:
 
 \begin{minted}[linenos, frame=lines, framesep=2mm, fontsize=\footnotesize]{python}
@@ -31,15 +31,15 @@ Questa configurazione permette di impostare funzioni fondamentali:
 \begin{itemize}
     \item Assegnare al modello il ruolo di “esperto di sicurezza informatica” attivando quindi le zone associate al dominio semantico della programmazione e della Cybersecurity
     \item Forzare il modello a fornire una risposta che contenga obbligatoriamente la stringa esatta “FINAL\_VERDICT: True/False” permettendo quindi l'eliminazione dell'ambiguità tipica della generazione del linguaggio naturale e semplificando ad una risposta binaria l'esito del modello.
-    \item E' stato impostato di rispondere false solo se il modello fosse 100\% sicuro poiché il modello avrebbe potuto mantenere i suoi vettori in una zona grigia. Costringendo a valutare se fosse completamente sicuro ha portato il modello a polarizzare il suo spazio latente, in modo che quando il modello incontri una vulnerabilità questo scatti con molta più forza verso la zona di allarme
+    \item E' stato richiesto di rispondere false solo se il modello fosse 100\% sicuro poiché avrebbe potuto mantenere i suoi vettori in una zona grigia. Costringendo a valutare se fosse completamente sicuro, ha portato il modello a polarizzare il suo spazio latente, in modo che all'incontro con una vulnerabilità questo scatti con molta più forza verso la zona di allarme
 \end{itemize}
 
-Per adempiere correttamente allo scopo dello studio e limitare l'output di ogni modello alla stringa ricercata e ad una breve spiegazione sono stati imposti due token limit.
+Per adempiere correttamente allo scopo dello studio e limitare l'output di ogni modello alla stringa ricercata e ad una breve spiegazione, sono stati imposti due token limit.
 Per quasi la totalità dei modelli Instruct-Tuned il limite è stato impostato a 250, rivelandosi una soglia ottimale per consentire al modello di stampare il versetto binario seguito da una giustificazione tecnica sintetica, prevenendo divagazioni e riducendo i tempi di esecuzione.
-E' stato necessario introdurre una eccezione per il modello DeepSeek-R1-Distill-Qwen-7B, per i quali il limite è stato innalzato a 1500 token. Questa finestra estesa è stata introdotta a causa della presenza della chain of thought del modello. A causa della sua natura, questo modello antepone un esteso blocco deduttivo racchiuso nei tag <think> prima di generare la stringa di output richiesta.
+E' stato necessario introdurre una eccezione per il modello DeepSeek-R1-Distill-Qwen-7B, per i quali il limite è stato innalzato a 1500 token. Questa finestra estesa è stata introdotta a causa della presenza della Chain-of-Thought del modello. A causa della sua natura, questo modello antepone un esteso blocco deduttivo racchiuso nei tag $<$think$>$ prima di generare la stringa di output richiesta.
 Adottare lo stesso limite utilizzato anche per le famiglie Qwen e Llama avrebbe causato un troncamento prematuro del ragionamento impedendo al modello di restituire la stringa “FINAL\_VERDICT” invalidando la successiva fase di parsing per il calcolo delle metriche.
 
-Per automatizzare la valutazione su larga scala, l'estrazione del verdetto è stata implementata tramite un'espressione regolare (Regex) una funzione di parsing di stringhe progettata per isolare esclusivamente la sequenza 'FINAL\_VERDICT: True/False' nei primi token generati, scartando la successiva chain-of-thought o spiegazione discorsiva.
+Per automatizzare la valutazione su larga scala, l'estrazione del verdetto è stata implementata tramite un'espressione regolare (Regex): una funzione di parsing di stringhe progettata per isolare esclusivamente la sequenza 'FINAL\_VERDICT: True/False' nei primi token generati, scartando la successiva Chain-of-Thought o spiegazione discorsiva.
 
 \subsection{Analisi delle Performance}
 Per poter procedere all'analisi e al calcolo delle metriche della baseline dei modelli, ogni risposta è stata salvata in un CSV con label specifiche per facilitare le operazioni successive, quali:\\
@@ -72,14 +72,14 @@ Vengono quindi riportati gli esiti della baseline e l'accuracy\ref{tab:baseline_
     \resizebox{\textwidth}{!}{%
     \begin{tabular}{@{} l c c c c c @{}}
         \toprule
-        \textbf{Modello} & \textbf{Accuracy} & \textbf{TP} & \textbf{FN} & \textbf{FP} & \textbf{TN} \\
+        \textbf{Modello} & \textbf{Accuracy} & \textbf{TP}  & \textbf{FP}  & \textbf{FN} &\textbf{TN} \\
         \midrule
-        Qwen2.5-7B-Instruct & 55.35\% & 11.0\% (94) & 28.6\% (243) & 16.1\% (137) & 44.3\% (377) \\
-        Qwen2.5-Coder-7B-Instruct & 58.99\% & 9.5\% (81) & 30.1\% (256) & 10.9\% (93) & 49.5\% (421) \\
-        Llama-3.1-8B-Instruct & 40.52\% & 38.0\% (323) & 1.5\% (13) & 58.0\% (492) & 2.5\% (21) \\
-        CodeLlama-7b-Instruct-hf & 52.29\% & 23.4\% (199) & 16.2\% (138) & 31.5\% (268) & 28.9\% (246) \\
-        DeepSeek-R1-Distill-Qwen-7B & 42.34\% & 33.0\% (263) & 6.5\% (52) & 51.1\% (407) & 9.3\% (74) \\
-        DeepSeek-Coder-6.7b-instruct & 60.99\% & 0.8\% (7) & 38.8\% (330) & 0.2\% (2) & 60.2\% (512) \\
+        Qwen2.5-7B-Instruct & 55.35\% & 11.0\% (94) & 16.1\% (137) & 28.6\% (243) & 44.3\% (377) \\
+        Qwen2.5-Coder-7B-Instruct & 58.99\% & 9.5\% (81) & 10.9\% (93) & 30.1\% (256)& 49.5\% (421) \\
+        Llama-3.1-8B-Instruct & 40.52\% & 38.0\% (323) & 58.0\% (492)& 1.5\% (13) & 2.5\% (21) \\
+        CodeLlama-7b-Instruct-hf & 52.29\% & 23.4\% (199) & 31.5\% (268) & 16.2\% (138)& 28.9\% (246) \\
+        DeepSeek-R1-Distill-Qwen-7B & 42.34\% & 33.0\% (263) & 51.1\% (407) & 6.5\% (52)& 9.3\% (74) \\
+        DeepSeek-Coder-6.7b-instruct & 60.99\% & 0.8\% (7) & 0.2\% (2) & 38.8\% (330)& 60.2\% (512) \\
         \bottomrule
     \end{tabular}%
     }
@@ -104,9 +104,9 @@ Il modello, come il gemello specifico per il coding, sembra identificare molto s
 Il modello del laboratorio Meta presenta un'accuracy più bassa rispetto agli altri modelli, riportando la corretta identificazione dei codici al 40.52\%.
 Nonostante venga identificata la quasi totalità dei codici vulnerabili, ben 323 su 337, questa percentuale è giustificata dal comportamento del modello: questo tende ad assumere un atteggiamento di natura preventiva, etichettando la maggior parte dei codici sicuri come vulnerabili, portando quindi ad un eccessivo carico umano per la revisione di codice in realtà sicuro, non lasciando però spazio ad approvare codici vulnerabili che potrebbero portare a risultati gravi nella sicurezza.
 
-Il modello DeepSeek-R1-Distill-Qwen-7B utilizzando la meccanica della chain of thought presenta un'accuracy del 42.34\% ed un atteggiamento simile al modello generico Llama-3.1-8B-Instruct:
+Il modello DeepSeek-R1-Distill-Qwen-7B utilizzando la meccanica della Chain-of-Thought presenta un'accuracy del 42.34\% ed un atteggiamento simile al modello generico Llama-3.1-8B-Instruct:
 vengono identificati correttamente 263 codici vulnerabili ma solo 74 di quelli sicuri. 
-Nonostante l'utilizzo della chain of thought il modello presenta una bassa percentuale di True negative, portando invece ad un alto numero di falsi positivi.
+Nonostante l'utilizzo della Chain-of-Thought il modello presenta una bassa percentuale di True Negative, portando invece ad un alto numero di falsi positivi.
 Come il modello instruct di meta, DeepSeek-R1-Distill-Qwen-7B adotta un comportamento preventivo nell'identificare i codici vulnerabili, portando quindi ad un alto tasso di revisione umana, bloccando però la possibilità che codici vulnerabili possano portare falle nel sistema.
 
 E' possibile notare due tendenze distinte tra i modelli code-tuned e i modelli più generalisti riguardo all'identificazione della natura del codice.
@@ -115,12 +115,12 @@ Il modello coder che sembra contraddire questa tendenza è CodeLLama, che riport
 
 I modelli generalisti presentano invece la tendenza opposta alla controparte coder: vengono identificati più facilmente i codici vulnerabili portando però un alto numero di falsi positivi, ad eccezione di Qwen2.5-7B-Instruct che colleziona un alto tasso di falsi negativi.
 Questo comportamento potrebbe essere dovuto alla natura stessa dei modelli: essere addestrati non solo su codice ha permesso una più facile identificazione di pattern logici di vulnerabilità.
-Questo atteggiamento, nonostante richieda un lavoro supplementare di review da parte di un operatore umano, è molto meno pericoloso rispetto al comportamento della controparte coder che può portare all'adozione di paradigmi e funzioni deboli, suscettibili quindi a possibili attacchi esterni.
+Questo atteggiamento, nonostante richieda un lavoro supplementare di review da parte di un operatore umano, è molto meno pericoloso rispetto al comportamento della controparte coder, che può portare all'adozione di paradigmi e funzioni deboli, suscettibili quindi a possibili attacchi esterni.
 
-L'analisi delle performance di baseline evidenzia come lo stato dell'arte degli LLM open-source da 7/8 miliardi di parametri, siano essi generalisti o code-tuned, presenti ancora forti limitazioni e bias intrinseci, come l'eccesso di Falsi Negativi nei modelli Coder o di Falsi Positivi nei modelli base, nell'identificazione autonoma delle vulnerabilità in linguaggio C.
-Tuttavia, queste limitazioni prestazionali non inficiano, bensì rafforzano, la necessità di testare attacchi basati sulla Mechanistic Interpretability. Il diffuso utilizzo di questi modelli da parte di sviluppatori ignari delle loro carenze di base costituisce già di per sé una superficie d'attacco critica, che una perturbazione potrebbe aggravare silenziosamente.
-In secondo luogo, per garantire il massimo rigore metodologico ed escludere che il successo dell'attacco dipenda dalla naturale confusione del modello, lo studio è stato condotto esclusivamente sul sottoinsieme dei True Positives ovvero i codici vulnerabili originariamente identificati in modo corretto.
-L'obiettivo della ricerca non è infatti valutare l'affidabilità assoluta degli LLM come scanner di sicurezza, ma dimostrare come la rappresentazione latente del concetto di vulnerabilità sia sovrascrivibile da un utente attaccante, anche nei casi di classificazione esatta da parte dei modelli.
+L'analisi delle performance di baseline evidenzia come lo stato dell'arte degli LLMs open-source da 7/8 miliardi di parametri, siano essi generalisti o code-tuned, presenta ancora forti limitazioni e bias intrinseci nell'identificazione autonoma delle vulnerabilità in linguaggio C, come l'eccesso di falsi negativi nei modelli Coder o di falsi positivi nei modelli base.
+Tuttavia, queste limitazioni prestazionali non inficiano, bensì rafforzano, la necessità di testare attacchi basati sulla Mechanistic Interpretability. Il diffuso utilizzo di questi modelli da parte di sviluppatori ignari delle loro carenze di base, costituisce già di per sé una superficie d'attacco critica, che una perturbazione potrebbe aggravare silenziosamente.
+In secondo luogo, per garantire il massimo rigore metodologico ed escludere che il successo dell'attacco dipenda dalla naturale confusione del modello, lo studio è stato condotto esclusivamente sul sottoinsieme dei True Positive ovvero i codici vulnerabili originariamente identificati in modo corretto.
+L'obiettivo della ricerca non è infatti valutare l'affidabilità assoluta degli LLMs come scanner di sicurezza, ma dimostrare come la rappresentazione latente del concetto di vulnerabilità sia sovrascrivibile da un utente attaccante, anche nei casi di classificazione esatta da parte dei modelli.
 
 \begin{figure}[H]
     \centering

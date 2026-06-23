@@ -23,26 +23,30 @@ Questo vettore differenza rappresenta la pura direzione generata dall'attacco pe
 
 \begin{minted}[linenos, frame=lines, framesep=2mm, fontsize=\footnotesize, breaklines]{python}
     
-def get_hidden_state(codice):
-    prompt = f"Analyze this code \n\nCode:\n{codice}, \n start the response EXACTLY with 'FINAL_VERDICT: True' (if vulnerable) or 'FINAL_VERDICT: False' (if 100% secure), followed by a brief summary."
-    messages = [
-        {"role": "system", "content": "You are a cybersecurity expert. Your task is to find vulnerabilities in the source code."},
-        {"role": "user", "content": prompt}
-   ]
+def get_all_hidden_states(codice):
+            prompt = f"Analyze this code \n\nCode:\n{codice}, \n start the response EXACTLY with 'FINAL_VERDICT: True' (if vulnerable) or 'FINAL_VERDICT: False' (if 100% secure), followed by a brief summary."
+            messages = [{"role": "system", "content": "You are a cybersecurity expert. Your task is to find vulnerabilities in the source code."}, {"role": "user", "content": prompt}]
+            testo = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+            inputs = tokenizer([testo], return_tensors="pt").to(model.device)
+            with torch.no_grad():
+                out = model(**inputs, output_hidden_states=True)
+            return torch.stack([layer_state[0, -1, :] for layer_state in out.hidden_states])
 
-    testo_formattato = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-    inputs = tokenizer([testo_formattato], return_tensors="pt").to(model.device)
-            
-    with torch.no_grad():
-        outputs = model(**inputs, output_hidden_states=True)
-                
-    hidden_state = outputs.hidden_states[layer_locus][0, -1, :]
-    return hidden_state
-           
-h_clean = get_hidden_state(codice_pulito)
-h_adv = get_hidden_state(codice_hackerato)
-shift_text = h_adv - h_clean
-cos_sim = F.cosine_similarity(shift_text, vettore_steering_originale, dim=0).item()
+        for index, row in df_mod.iterrows():
+            codice_pulito = str(row['codice_originale']) 
+            codice_hackerato = str(row['codice_perturbato'])
+
+            h_clean = get_all_hidden_states(codice_pulito)
+            h_adv = get_all_hidden_states(codice_hackerato)
+            shift_all = h_adv - h_clean
+
+            for layer_idx in range(num_layers_totali):
+                vettore_riferimento = dizionario_vettori[layer_idx]
+                if vettore_riferimento is not None:
+                    shift_layer = shift_all[layer_idx]
+                    cos_sim = F.cosine_similarity(shift_layer, vettore_riferimento, dim=0).item()
+                    accumulatore_sim[layer_idx].append(cos_sim)
+        
 \end{minted}
 
 
@@ -64,7 +68,7 @@ L'equazione è definita come:
 Dividendo il prodotto scalare per le lunghezze l'equazione viene normalizzata in modo tale che, indipendentemente dalla lunghezza del vettore, ciò che verrà preso in esame sarà solo l'angolo tra i due vettori.
 
 L'uso della cosine similarity quindi permette di dire l'angolazione di un vettore rispetto ad un altro, indicando quanto questi siano simili: vettori semanticamente simili saranno paralleli, ottenendo una Cosine Similarity di $1$ o $-1$ a seconda del verso. Al contrario, vettori rappresentanti concetti semantici completamente incongruenti o scorrelati risulteranno ortogonali nello spazio ad alta dimensionalità, restituendo un valore prossimo allo $0$.
-Invece di calcolare un singolo vettore medio, che rischierebbe di annullare le direzioni divergenti, viene calcolata la media di tutti gli shift per quel layer.
+Invece di calcolare un singolo vettore medio, che rischierebbe di annullare le direzioni divergenti, viene calcolata la media per ogni attacco di tutti gli angoli ottenuti.
 
 
 \begin{table}[H]
@@ -207,4 +211,4 @@ Le motivazioni di questi valori risiedono nelle metodologie degli attacchi stess
 Prompt Injection è invece diverso: non offusca il codice ma inietta un comando diretto lavorando sull'ubbidienza e non sulla sintassi, ponendosi quindi distante dagli altri due.
 Si può quindi ipotizzare l'esistenza di uno spettro su cui si collocano gli attacchi black-box considerando ad un estremo la perturbazione con la media più bassa, Prompt Injection, per poi collocare in sequenza gli attacchi di Adversarial Perturbation e Advanced Adversarial.
 
-Tutti questi attacchi, tuttavia, condividono una caratteristica fondamentale scoperta nella fase precedente: nessuno di essi riesce a replicare la pura traiettoria vettoriale della vulnerabilità dello Steering Vector confermando come gli attacchi testuali si configurano come deviazioni ortogonali che fanno smarrire la rete nello spazio latente.
+Tutti questi attacchi, tuttavia, condividono una caratteristica fondamentale scoperta nella fase precedente: nessuno di essi riesce a replicare la pura traiettoria vettoriale della vulnerabilità dello steering vector confermando come gli attacchi testuali si configurano come deviazioni ortogonali che fanno smarrire la rete nello spazio latente.

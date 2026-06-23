@@ -1,0 +1,60 @@
+\chapter{Discussione dei Risultati}
+
+\section{Comportamento di Baseline e Bias di Addestramento}
+Il punto di partenza dello studio ha rivelato una importante fragilità dei moderni Large Language Models: l'incapacità da parte dei modelli di classificare correttamente le vulnerabilità software.
+Nonostante il messaggio di input per ogni modello volesse portare una maggior classificazione di True Positive chiedendo ai transformer di riportare codici come sicuri solo se completamente certi di questa idea, è possibile notare due diverse tendenze generali nella baseline: i modelli generalisti sono più inclini ad etichettare i codici come vulnerabili, si guardi ad esempio i modelli come Llama e DeepSeek con rispettivamente 323 e 263 true positive, assieme a 492 e 407 falsi positivi.
+Comportamento diametralmente opposto è presentato dai modelli coder e dal modello generalista di Qwen dove si può osservare una tendenza ad attribuire l'etichetta di sicuro anche a codici vulnerabili portando ad un alto numero di falsi negativi.
+Si può quindi ipotizzare che queste due macro categorie di tendenze siano ampiamente influenzate dal tipo di dati a cui i modelli sono stati sottoposti in fase di addestramento.
+Focalizzare l'addestramento esclusivamente sul codice porta i modelli ad essere negligenti nei confronti di snippet che non causano gravi conseguenze, probabilmente perché non sono stati sottoposti a diversi livelli di gravità.
+Questo tipo di addestramento porta i Transformer ad essere troppo sicuri di sè: nonostante la richiesta fosse quella di rispondere "FALSE" solo in caso di assoluta certezza, l'addestramento ha bypassato il comando.
+Un caso di interesse è dato dal modello CodeLlama-7b-Instruct-hf dove la distribuzione della classificazione è estremamente bilanciata tra tutti i possibili scenari positivi e negativi portando ad una accuracy del 52.29\%, ottenuta non per un'eccessiva tendenza positiva/negativa ma per una comprensione generale dei concetti vulnerabili e sicuri.
+
+L'applicazione delle perturbazioni ai True Positive calcolati nella baseline pone un grave accento su quelle che sono le dinamiche ad alto livello per cui avviene un dirottamento del pensiero del modello.
+Le percentuali di successo medio evidenziano quale disegno di attacco funziona meglio e perché, ottenendo come vincitori indiscussi gli attacchi di Prompt Injection (ASR: 60.78\%) e Activation Steering (ASR: 57.06\%).
+Prompt Injection è un attacco Black-Box che mira a dare false istruzioni attraverso commenti mentre l'attacco di Activation Steering forza il pensiero manualmente nella direzione opposta. Questa completa differenza di target è il motivo per cui queste manipolazioni hanno un ASR alto: concentrandosi in aree di attacco specifiche, invece di perdersi in una ampia visione di minacce, ha permesso di sferrare attacchi con successo.
+L'ipotesi viene confermata dai risultati inferiori al 50\% degli altri attacchi Black-Box di Adversarial Perturbation e Advanced Adversarial: l'attacco genera del rumore senza andare a colpire in modo diretto il modello, assumendo però un ottimo ruolo per attività di valutazione e testing come la rilevazione di difetti in fase di addestramento. Le percentuali di successo di questi attacchi sono molto simili tra modelli appartenenti allo stesso laboratorio di ricerca, sintomo di come la causa della vulnerabilità del modello sia da ricercare nelle pratiche aziendali adottate.
+
+\section{Fragilità dei Modelli}
+L'impiego delle dinamiche di steering ha permesso di osservare l'interno del Transformer invece di considerarlo come una black-box.
+Attraverso l'estrazione dei vettori eseguita in modo sequenziale è stato possibile delineare l'andamento interno dei modelli.
+Viene riconfermato quanto ipotizzato dalla letteratura recente: i modelli eseguono un processo tripartito dove solo nelle sezioni centrali avviene il calcolo computazionale fondamentale per elaborare la risposta.
+Questa affermazione è possibile osservando l'andamento delle percentuali di successo dell'Activation Steering: essendo un attacco White-Box è nella natura stessa di quest'ultimo operare meglio dove il Transformer è più sensibile, portando a volte un rateo del 100\%  di successo.
+
+La combinazione degli attacchi White-Box di Activation Steering e Logit Bias evidenzia esattamente il comportamento di ogni modello: l'unione di un attacco all'interno dell'architettura del modello e di uno appena fuori permette di avere una visione completa di come i Transformer gestiscono lo spazio latente nei layer.
+Nonostante l'attacco di Activation Steering avvenga con moltiplicatori molto alti per la maggior parte dei modelli, l'ASR nei layer finali decresce rapidamente, mentre l'attacco di logit bias non presenta grande successo.
+Lo studio vuole riconfermare l'ipotesi secondo cui la partizione finale del transformer non sia fondamentale ai fini della computazione da parte del modello, o lo sia in minima parte. 
+
+\section{Mechanistic Interpretability}
+La semplice analisi dei risultati degli attacchi non è però sufficiente a comprendere come viene ingannata la rete.
+L'ipotesi iniziale sosteneva che le perturbazioni modificassero la posizione dei vettori e che a determinare se un codice fosse sicuro o vulnerabile sarebbe stata la distanza del pensiero dei modelli dai centroidi di riferimento della baseline.
+Una posizione più vicina al centroide sicuro avrebbe restituito sicuro, al contrario, più vicino al centroide vulnerabile avrebbe restituito vulnerabile.
+
+L'estrazione dei vettori di steering e la ricerca del layer più sensibile alla perturbazione ha permesso di ottenere un elemento di riferimento nello spazio latente: il vettore di steering è di fatto il pensiero naturale del modello, mentre le perturbazioni introdotte sono il tentativo di dirottarlo.
+E' necessario avviare questa ricerca sul layer più sensibile in quanto il più vicino alla massima capacità computazionale dei modelli.
+
+I risultati ottenuti dalla norma L2 e dall'isomorfismo della cosine similarity sono essenziali per valutare come il vettore di steering cambi.
+E' di vitale importanza considerare come i Transformer lavorino a più di 4000 dimensioni, ed uno spostamento fuori dall'asse di steering, anche se minimo, significa un dirottamento completo del pensiero.
+Dai risultati ottenuti è possibile osservare come in tutti gli attacchi avvenga uno spostamento della rappresentazione vettoriale: è impossibile determinare in quale area esatta sia stato spostato il vettore ma è sicuro che questo abbia effettuato uno spostamento, portando la prova incofutabile di come le perturbazioni agiscano e modifichino la rappresentazione latente del modello.
+
+Attraverso i risultati dell'operazione di cosine similarity è risultato come gli attacchi non operino sull'asse di steering anzi, alcuni attacchi sono perpendicolari rispetto al vettore di riferimento suggerendo come la direzione dell'attacco sia diversa.
+Anche attacchi di Activation Steering che avvengono solo ad un determinato layer di profondità manipolando i meccanismi naturali della rete della rappresentazione vettoriale, portano comunque uno shift trasversale nella rappresentazione dello spazio latente.
+
+L'ipotesi iniziale viene quindi parzialmente confermata: l'attacco non agisce sull'asse del vettore di steering ma, quando l'attacco ha successo, nella maggior parte dei casi si può osservare come il vettore sia più vicino al centroide sicuro invece di quello vulnerabile.
+Non è possibile affermare con assoluta certezza anche la seconda parte dell'ipotesi: un attacco riuscito non è necessariamente più lontano dal centroide vulnerabile rispetto a quando l'attacco fallisce. 
+
+La validità dell'ipotesi del Trajectory Shift è stata empiricamente confermata mettendo in correlazione le percentuali di Attack Success Rate con le distanze L2 degli attacchi. È emersa una correlazione diretta tra la vulnerabilità di un modello e la rappresentazione del suo spazio latente. Nell'attacco di Prompt Injection, ad esempio, si osserva un andamento quasi lineare: architetture severamente compromesse come Qwen-7B con un ASR del 93.6\% subiscono uno spostamento vettoriale pari a oltre il 230\% della loro normale distanza decisionale nella metrica di confine, mentre modelli più resilienti come Llama-3.1 (ASR 40.5\%) riescono a contenere il Trajectory Shift a una frazione del 58\%.
+Le metriche di Overshooting confermano che un elevato ASR corrisponde ad un forte spostamento del vettore verso coordinate lontane dal vettore di riferimento, con un'unica e prevedibile eccezione per DeepSeek-R1, il quale, grazie al fenomeno di recovery indotto dal reasoning differito, riesce a mantenere un basso ASR nonostante registri deformazioni latenti paragonabili a quelle dei modelli sconfitti
+
+Per questo motivo lo shift nello spazio latente è collegato in modo indissolubile alla risposta del modello come si può osservare nei risultati dell'operazione di Logit Lens: 
+lo spostamento nello spazio vettoriale introdotto dalle perturbazioni obbliga il modello a cambiare la risposta della baseline con quella corrotta.
+La distanza simile tra l'attacco riuscito e i centroidi della baseline introduce invece incertezza e un conseguente fallimento di una corretta identificazione, motivando il fenomeno per il quale si ottiene una differenza tra i logit "True" e "False" vicina allo zero.
+
+\section{Resilienza Logica e Fragilità Lessicale}
+Durante la ricerca il modello con Chain-of-Thought deepseek-ai/DeepSeek-R1-Distill-Qwen-7B ha portato risultati interessanti.
+La presenza della Chain-of-Thought ha infatti portato gli attacchi ad avere una bassa media di successo, soprattutto quello di steering rispetto alle altre reti.
+Questo è probabilmente dovuto al fenomeno di recovery tipico dei modelli con reasoning.
+L' ipotesi è supportata anche dai risultati della logit lens: i layer finali presentano infatti una spinta verso la corretta classificazione dei codici.
+Questo fenomeno si ripresenta solo altre quattro volte con modelli privi di chain of thought, si può quindi supporre l'esistenza di un meccanismo di recovery nativo delle reti neurali.
+
+Nonostante ciò l'attacco riesce a cambiare il primo token nella risposta, ma non riesce a deviare completamente la classificazione del Transformer in quanto la breve spiegazione del modello presenta una corretta identificazione delle vulnerabilità.
+Questa dinamica suggerisce che l'attacco non distrugge necessariamente la comprensione delle vulnerabilità da parte del modello, quanto più la paralisi e la corruzione del processo di generazione.

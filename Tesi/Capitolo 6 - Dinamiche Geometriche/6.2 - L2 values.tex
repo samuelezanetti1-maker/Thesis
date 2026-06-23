@@ -1,5 +1,5 @@
 \section{L2: Norma Euclidea}
-Se la cosine similarity permette di misurare l'orientamento di due vettori nello spazio latente, calcolando l'angolo tra essi, la norma $L_2$ quantifica invece la distanza euclidea tra due punti, restituendo un valore scalare che rappresenta la magnitudine, ovvero l'estensione, dello spostamento.
+Se la cosine similarity permette di misurare l'orientamento di due vettori nello spazio latente calcolando l'angolo tra essi, la norma $L_2$ quantifica invece la distanza euclidea tra due punti, restituendo un valore scalare che rappresenta la magnitudine, ovvero l'estensione, dello spostamento.
 L'obiettivo è quindi quello di misurare di quanto, in termini di distanza fisica nello spazio latente, un attacco testuale Black-Box allontani la rappresentazione interna del codice vulnerabile dal centroide del cluster di vulnerabilità, spingendola verso il cluster della sicurezza o se le perturbazioni applicate dagli attacchi Black-Box spostino la rappresentazione del modello su nuovi piani dello spazio latente.
 
 Sfruttando la metodologia di estrazione degli hidden states sull'ultimo token del forward pass, è stato effettuato un layer sweep delle attivazioni vettoriali. Per ogni layer dei modelli sono stati calcolati i punti medi rappresentativi:
@@ -75,8 +75,8 @@ Vengono riportate le rappresentazioni con il rateo di successo più alto per gli
     \label{fig:griglia_L2}
 \end{figure}
 
-Per l'attacco di Prompt Injection i risultati ottenuti per i modelli Qwen Instruct e CodeLlama\ref{fig:griglia_L2} sono i più eloquenti: si può osservare come l'attacco abbia traslato i punti nello spazio latente, cambiando l'asse rispetto al vettore di Steering.
-Dinamica resa esplicita tramite l'attacco con $100\%$ di ASR su Codellama \ref{fig:pi codellama-7b-instruct-L2} 
+Per l'attacco di Prompt Injection i risultati ottenuti per i modelli Qwen Instruct e CodeLlama sono i più eloquenti: si può osservare come l'attacco abbia traslato i punti nello spazio latente, cambiando l'asse rispetto al vettore di Steering.
+Dinamica resa esplicita tramite l'attacco con $100\%$ di ASR su Codellama in figura \ref{fig:pi codellama-7b-instruct-L2} 
 
 \begin{figure}[H]
     \centering
@@ -96,8 +96,15 @@ Dinamica resa esplicita tramite l'attacco con $100\%$ di ASR su Codellama \ref{f
     \end{subfigure}
 \end{figure}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.50\textwidth]{immagini/SWEEP L2/Steering_Topologia3D_Qwen_Qwen2.5-7B-Instruct_19.png}
+    \caption{Activation Steering - Qwen Instruct}
+    \label{fig:L2 Qwen Instruct}
+\end{figure}
+
 Gli attacchi Black-Box presentano uno shift spaziale nello spazio vettoriale, evidenziando come l'attacco sposti la convinzione del modello su un piano completamente diverso rispetto a quello della baseline originale.
-L'attacco White-Box di Activation Steering segue invece un pattern diverso: rispecchiando perfettamente la logica dell'attacco, il pensiero del modello viene spinto verso il centroide sicuro della baseline, posizionandosi sullo stesso piano nello spazio latente.
+L'attacco White-Box di Activation Steering segue lo stesso pattern degli attacchi Black-Box ad eccezione del modello coder di Deepseek: come si può notare in figura \ref{fig:L2 Deepseek coder} rispecchia la logica dell'attacco dove il pensiero del modello viene spinto verso il centroide sicuro della baseline, posizionandosi molto vicino nello spazio latente.
 
 \begin{figure}[H]
     \centering
@@ -106,10 +113,10 @@ L'attacco White-Box di Activation Steering segue invece un pattern diverso: risp
     \label{fig:L2 Deepseek coder}
 \end{figure}
 
-E' importante sottolineare che le rappresentazioni presentate sono su uno spazio tridimensionale, mentre l'architettura Transformer lavora su più di 4000 dimensioni. E' facile quindi ignorare il concetto che all'interno della rappresentazione 3D un semplice spostamento orizzontale rispetto ad un asse implica lo spostamento del vettore su molteplici piani non visualizzabili per limitazioni concettuali e fisiche.
-Tutti gli attacchi presentano lo spostamento dei punti legati ai concetti di sicurezza e vulnerabilità nello spazio latente rispetto alla rappresentazione della baseline originale, confermando il fenomeno di trajectory shift, dove il rumore introdotto dall'attacco sposta il vettore in zone grigie dello spazio latente in cui il task di vulnerability detection non è più affrontato allo stesso modo.
+E' importante sottolineare che le rappresentazioni presentate sono in uno spazio tridimensionale, mentre l'architettura Transformer lavora in più di 4000 dimensioni. E' facile quindi ignorare il concetto che all'interno della rappresentazione 3D un semplice spostamento orizzontale rispetto ad un asse implica lo spostamento del vettore su molteplici piani non visualizzabili per limitazioni concettuali e fisiche.
+Tutti gli attacchi presentano lo spostamento dei punti legati ai concetti di sicurezza e vulnerabilità nello spazio latente rispetto alla rappresentazione della baseline originale, confermando il fenomeno di trajectory shift, dove il rumore introdotto dall'attacco sposta il vettore in zone grigie dello spazio latente in cui il task di Vulnerability Detection non è più affrontato allo stesso modo.
 
-L'analisi dei layer successivi rivela che le distanze euclidee tendono ad aumentare progressivamente, consolidando il trajectory shift iniziale, come evidenziato nell'evoluzione dinamica riportate nelle seguenti Figure .
+L'analisi dei layer successivi rivela che le distanze euclidee tendono ad aumentare progressivamente, consolidando il trajectory shift iniziale, come evidenziato nell'evoluzione dinamica riportate nelle seguenti Figure.
 
 \begin{figure}[H]
     \centering
@@ -146,3 +153,12 @@ L'analisi dei layer successivi rivela che le distanze euclidee tendono ad aument
         \label{fig: as deepseek coder}
     \end{subfigure}
 \end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.50\textwidth]{immagini/Andamento/Activation Steering - Qwen2.5-7B-Instruct.png}
+    \caption{Activation Steering - Qwen Instruct}
+    \label{fig:L2Qwen Instruct}
+\end{figure}
+
+E' possibile notare come rispetto alla baseline, l'attacco si sia manifestato con una magnitudine più forte rispetto al vettore di steering: i centroidi sicuri manipolati dall'attacco sono molto distanti rispetto a quelli di riferimento come si evince dalle distanze maggiori di overshooting e forza di attacco.

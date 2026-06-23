@@ -39,8 +39,8 @@ E' possibile stimare la percentuale generale di successo degli attacchi per defi
     \item \texttt{DeepSeek-Coder-6.7b-instruct}: 52.57\%
 \end{itemize}
 
-I numeri dimostrano come il modello general Llama-3.1-8B-Instruct, sia il meno soggetto alle perturbazioni esterne, soprattutto quelle black-box ottenendo un ASR di quasi lo 0\% per Adversarial Perturbations e Advanced Adversarial nonostante i 323 codici vulnerabili disponibili per l'attacco.
-I modelli coder per le famiglie di meta e Deepseek non sembrano rispondere meglio rispetto alla controparte generalista, sfatando quindi il pensiero che un modello addestrato per essere coder sia più adatto al task di vulnerabilty detection rispetto ad un modello generale.
+I numeri dimostrano come il modello generale Llama-3.1-8B-Instruct, sia il meno soggetto alle perturbazioni esterne, soprattutto quelle Black-Box ottenendo un ASR di quasi lo 0\% per Adversarial Perturbations e Advanced Adversarial nonostante i 323 codici vulnerabili disponibili per l'attacco.
+I modelli coder per le famiglie di meta e Deepseek non sembrano rispondere meglio rispetto alla controparte generalista, sfatando quindi il pensiero che un modello addestrato per essere coder sia più adatto al task di Vulnerabilty Detection rispetto ad un modello generale.
 
 Viene quindi riportato un esempio di risposta correttamente perturbata dal modello codellama colpito da un attacco di Prompt Injection.
 
@@ -56,7 +56,7 @@ Viene quindi riportato un esempio di risposta correttamente perturbata dal model
 \end{minted}
 
 \subsection{Logit Bias}
-I risultati più interessanti ottenuti dall'operazione di Logit Bias sono relativi al moltiplicatore: l'obiettivo è quello di stimare la resilienza dei modelli e ipotizzare una correlazione tra la forza del boost e i layer dei modelli.
+I risultati più interessanti ottenuti dall'operazione di Logit Bias sono relativi al moltiplicatore: l'obiettivo è quello di stimare la resilienza dei modelli e ipotizzare una correlazione tra la forza del boost e i layer.
 Per fare questo sono stati testati diversi moltiplicatori (4, 6, 8, 10, 15) in uno studio di ablazione su 20 degli snippet correttamente individuati dal singolo modello, per trovare il valore corretto al fine di ottenere un compromesso tra il rateo di successo e l'eliminazione del gibberish dei modelli. Il collasso semantico è un problema ricorrente di questa tipologia di manipolazione in quanto forzare la risposta del modello direttamente sui token porta il modello a perdere completamente la sintassi e a ripetere la stessa parola fino ad esaurimento dei token disponibili.
 Vengono quindi analizzati i comportamenti per ogni modello ottenendo i seguenti ASR e moltiplicatori:
 
@@ -84,16 +84,16 @@ Al contrario, la famiglia DeepSeek palesa un'estrema vulnerabilità strutturale 
 
 Come anticipato è possibile determinare le resistenze intrinseche dei modelli osservando l'ASR di Logit Bias e Activation Steering: come si evince dalla tabella \ref{tab:valutazione_attacchi} la maggior parte dei modelli subisce gravi danni a causa dell'attacco di Activation Steering, dovuti soprattutto agli elevati valori dei moltiplicatori utilizzati.
 La maggior parte dei modelli presentano quindi una forte rappresentazione dello spazio latente, comprendendo le dinamiche di programmazione che possono essere deviate solo a fronte di una manipolazione molto forte.
-Al contrario, l'attacco sui logit denota un discreto score per la maggior parte degli LLM con circa il 40\% di media, ma con moltiplicatori molto bassi: l'architettura finale è quindi debole poiché l'aumento di un'unità del modificatore porterebbe alla generazione di testo senza senso semantico.
+Al contrario, l'attacco sui logit denota un discreto score per la maggior parte degli LLM con circa il 40\% di media, ma con moltiplicatori molto bassi: l'architettura finale è quindi debole poiché l'aumento di un'unità del modificatore porterebbe alla generazione di testo senza senso.
 Modelli della famiglia Qwen riportano quindi una grande comprensione del codice ma una debole struttura finale.
-Il modello generalista del laboratorio di meta risulta avere una struttura finale migliore rispetto alla padronanza nello spazio latente, mancanza che viene recuperata dalla controparte coder.
+Il modello generalista del laboratorio di meta risulta avere una struttura finale migliore rispetto alla padronanza nello spazio latente come si evince dal basso moltiplicatore adottato, mancanza che viene recuperata dalla controparte coder.
 Non considerando il moltiplicatore più basso rispetto agli altri modelli, il modello deepseek-ai/DeepSeek-R1-Distill-Qwen-7B presenta una forte padronanza dello spazio latente ed una discreta robustezza nei layer finali della rete, sottolineando le potenzialità introdotte dalla Chain-of-Thought.
-La controparte instruct di deepseek invece dimostra una mediocre padronanza delle rappresentazioni vettoriali con circa l'86\% di successo di attacco su solo 7 snippet ed una discreta robustezza nei layer finali.
+La controparte instruct di deepseek invece dimostra una pessima padronanza delle rappresentazioni vettoriali con circa l'86\% di successo di attacco su solo 7 snippet ed una quasi insufficienza robustezza nei layer finali.
 
 \subsection{Shallow Reasoning}
-La funzione di valutazione di successo degli attacchi si basa sulla ricerca della stringa "FINAL\_VERDICT: ", ciò porta all'esclusione della breve spiegazione del come metrica per determinare la corretta classificazione da parte del modello. 
+La funzione di valutazione di successo degli attacchi si basa sulla ricerca della stringa "FINAL\_VERDICT: ", ciò porta all'esclusione della breve spiegazione come metrica per determinare la corretta classificazione da parte del modello. 
 Sono presenti alcune risposte, in cui il modello afferma che il codice sia sicuro ma nella spiegazione evidenzia delle possibili vulnerabilità.
-Un esempio di una risposta contraddittoria di un codice sotto Adversarial Perturbation per il modello Qwen2.5-7B-Instruct è il seguente:
+Un esempio di una risposta contraddittoria di un codice sotto attacco Adversarial Perturbation per il modello Qwen2.5-7B-Instruct è il seguente:
 
 
 \begin{minted}[linenos, frame=lines, framesep=2mm, fontsize=\footnotesize]{text}
@@ -110,10 +110,10 @@ Un esempio di una risposta contraddittoria di un codice sotto Adversarial Pertur
         4. **Potential Memory Corruption**: The use of `g_assert_cmphex` for comparing the data read back with the original value is good practice, but it 
 \end{minted}
 
-Questo pone l'accento sull'uso dei modelli: adottare questi modelli per ottenere una semplice risposta binaria true/false porterebbe ad un'alta percentuale di attacchi imperfetti ad adempiere al loro scopo senza la possibilità di essere rilevati.
+Questo pone l'accento sull'uso degli LLMs: adottare questi modelli per ottenere una semplice risposta binaria true/false porterebbe ad un'alta percentuale di attacchi imperfetti ad adempiere al loro scopo senza la possibilità di essere rilevati.
 La breve spiegazione richiesta all' LLM è una barriera aggiuntiva che può aiutare a determinare se il codice, ma ancora più la rete stessa, sia sotto attacco.
 
-Per determinare se la spiegazione del modello, cercando di simulare l'utilità di una chain-of-thought, potesse essere di aiuto al modello stesso, sono stati rieseguiti gli attacchi sul sottoinsieme di snippet di codice dove l'attacco ha avuto successo con un nuovo prompt:
+Per determinare se la spiegazione del modello potesse simulare l'utilità di una Chain-of-Thought, ed essere di aiuto al modello stesso, sono stati rieseguiti gli attacchi sul sottoinsieme di snippet di codice dove l'attacco ha avuto successo con un nuovo prompt:
 
 \begin{minted}[linenos, frame=lines, framesep=2mm, fontsize=\footnotesize]{python}
 prompt = f"Analyze this code \n\nCode:\n{codice_perturbato}, \n start the response EXACTLY with a brief summary of a short sentence followed by: 'FINAL_VERDICT: True' (if vulnerable) or 'FINAL_VERDICT: False' (if 100% secure)"

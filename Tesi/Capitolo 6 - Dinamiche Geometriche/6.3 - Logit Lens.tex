@@ -87,9 +87,9 @@ Analizzando l'impatto dei tre attacchi Black-Box sulle rappresentazioni interne 
     \label{fig:ll steering deepseek coder}
 \end{figure}
 
-Per l'attacco di Activation Steering, il modello su cui ha avuto più successo è stato Deepseek Coder, come mostrato in Figura \ref{fig:ll steering deepseek coder}: anche in questo caso si osserva un drastico abbassamento del delta in prossimità del layer di picco di vulnerabilità, questa volta però dovuto all'iniezione dell'attacco, si può infatti notare come il delta iniziale sia pressocché identico sia in caso di attacco riuscito che in caso di attacco fallito.
+Per l'attacco di Activation Steering, il modello su cui ha avuto più successo è stato Deepseek Coder, come mostrato in Figura \ref{fig:ll steering deepseek coder}: anche in questo caso si osserva un drastico abbassamento del delta in prossimità del layer di picco di vulnerabilità, questa volta però dovuto all'iniezione dell'attacco, si può infatti notare come il delta iniziale sia molto simile sia in caso di attacco riuscito che in caso di attacco fallito.
 
-L'evidenza portata dall'analisi mostra che nonostante l'applicazione degli attacchi black-box sia presente ancora prima dell'analisi del modello, queste colpiscono con massima intensità in prossimità del layer di picco della vulnerabilità. Tuttavia, l'impatto di tali manipolazioni subisce una forte amplificazione nei livelli finali dell'architettura: una volta compromesso lo stato latente, l'errore vettoriale si propaga e si dilata negli strati in cui la decisione della rete è ormai consolidata e irreversibile
+L'evidenza portata dall'analisi mostra che nonostante l'applicazione degli attacchi Black-Box sia presente ancora prima dell'analisi del modello, queste colpiscono con massima intensità in prossimità del layer di picco della vulnerabilità. Tuttavia, l'impatto di tali manipolazioni subisce una forte amplificazione nei livelli finali dell'architettura: una volta compromesso lo stato latente, l'errore vettoriale si propaga e si dilata negli strati in cui la decisione della rete è ormai consolidata e irreversibile
 Un caso studio interessante è rappresentato dal modello Reasoning DeepSeek R1 (Figura \ref{fig:ll AP deepseek }).
 
 \begin{figure}[H]
@@ -103,7 +103,7 @@ A differenza dei modelli Instruct tradizionali, in cui la Baseline si stacca per
 
 Questo fenomeno visualizza la natura del processo decisionale indotto dal Chain-of-Thought (CoT). Forzando il modello a emettere immediatamente il \texttt{FINAL\_VERDICT} tramite Fast-Forwarding senza permettergli di generare i token intermedi di ragionamento, si estrae uno stato latente ancora non del tutto sviluppato. Al livello dell'ultimo token del prompt, i layer finali del modello non hanno ancora sviluppato una convinzione semantica decisa. 
 La motivazione per cui è stata mantenuta lo stesso procedimento anche per un modello di reasoning come deepseek è di natura metodologica: l'obiettivo è quello di misurare il valore dell'impatto della perturbazione sull'esatto e identico token per tutti i modelli.
-Al fine però di avere una visione completa dei processi del modello viene lasciata generare la chain of thought invece di costringere subito il modello a rispondere si permette una generazione libera, dopodiché il codice cattura il testo appena generato e viene reciso esattamente nel punto in cui viene restituito il tag "</think>".
+Al fine però di avere una visione completa dei processi del modello viene lasciata generare la chain of thought invece di costringere subito il modello a rispondere così da permettere una generazione libera, dopodiché il codice cattura il testo appena generato e viene reciso esattamente nel punto in cui viene restituito il tag "$</$think$>$".
 
 \begin{minted}[linenos, frame=lines, framesep=2mm, fontsize=\footnotesize]{python}
 if "DeepSeek-R1" in model_name:
@@ -210,51 +210,54 @@ Caso esattamente contrario per i risultati di Logit Lens in figura \ref{fig:ls_s
 
 Per convalidare l'origine delle discrepanze tra stato latente e output generato dalle Logit Lens, viene eseguita un'ispezione proiettando l'ultimo stato nascosto sull'intero vocabolario per i campioni anomali. I risultati dell'analisi sono presenti nella tabella \ref{tab:analisi_fotofinish}
 
-\begin{table}[H]
+\begin{table}[H] % La tabella numerica rimane qui bloccata
     \centering
-    % Tabella numerica pulita e snella (6 colonne perfette)
-    \begin{tabular}{l c c c c c}
+    \small
+    \setlength{\tabcolsep}{5pt}
+    \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X c c c c c}
         \toprule
         \textbf{Modello} & \textbf{Attacco} & \textbf{Esito} & \textbf{Logit [True]} & \textbf{Logit [False]} & \textbf{\(\Delta\)} \\
         \midrule
-        deepseek-ai/DeepSeek-R1-Distill-Qwen-7B & AA & Successo (False) & 23.39 & 21.84 & 1.55 \\
-        deepseek-ai/DeepSeek-R1-Distill-Qwen-7B & AP & Successo (False) & 24.31 & 23.22 & 1.09 \\
-        deepseek-ai/DeepSeek-R1-Distill-Qwen-7B & Steering & Successo (False) & 23.95 & 21.06 & 2.89 \\
+        DeepSeek-R1-Distill-Qwen-7B & AA & Successo (False) & 23.39 & 21.84 & 1.55 \\
+        DeepSeek-R1-Distill-Qwen-7B & AP & Successo (False) & 24.31 & 23.22 & 1.09 \\
+        DeepSeek-R1-Distill-Qwen-7B & Steering & Successo (False) & 23.95 & 21.06 & 2.89 \\
         \midrule
-        codellama/CodeLlama-7b-Instruct-hf & Steering & Fallimento (True) & 21.52 & 22.06 & -0.55 \\
+        CodeLlama-7b-Instruct-hf & Steering & Fallimento (True) & 21.52 & 22.06 & -0.55 \\
         \midrule
-        meta-llama/Llama-3.1-8B-Instruct & AA & Successo (False) & 25.42 & 25.34 & 0.08 \\
-        meta-llama/Llama-3.1-8B-Instruct & PI & Successo (False) & 26.78 & 26.62 & 0.16 \\
+        Llama-3.1-8B-Instruct & AA & Successo (False) & 25.42 & 25.34 & 0.08 \\
+        Llama-3.1-8B-Instruct & PI & Successo (False) & 26.78 & 26.62 & 0.16 \\
         \midrule
-        deepseek-ai/deepseek-coder-6.7b-instruct & AA & Fallimento (True) & 34.53 & 35.12 & -0.59 \\
+        deepseek-coder-6.7b-instruct & AA & Fallimento (True) & 34.53 & 35.12 & -0.59 \\
         \bottomrule
-    \end{tabular}
-    
-    \vspace{0.4cm}
-    
-    % Sezione testuale sottostante che usa l'intera larghezza del foglio
-    \begin{flushleft}
-    \footnotesize
-    \textbf{Dettaglio Top 5 Token Vincitori (Logit):}
-    \begin{itemize}[noitemsep, leftmargin=*, topsep=2pt]
-        \item \textbf{DeepSeek-R1-7B (AA):} 1. [SPACE] (29.20), 2. [SPACE]( (26.61), 3. [SPACE]True (23.39), 4. [SPACE]The (22.80), 5. [SPACE]False (21.84)
-        \item \textbf{DeepSeek-R1-7B (AP):} 1. [SPACE] (29.45), 2. [SPACE]( (26.30), 3. [SPACE]True (24.31), 4. [SPACE]False (23.22), 5. [SPACE]The (22.78)
-        \item \textbf{DeepSeek-R1-7B (Steering):} 1. [SPACE] (27.88), 2. [SPACE]( (25.22), 3. [SPACE]True (23.95), 4. [SPACE]The (23.19), 5. [SPACE]A (21.70)
-        \item \textbf{CodeLlama-7b (Steering):} 1. False (22.06), 2. True (21.52), 3. Un (15.73), 4. UN (14.62), 5. Und (14.33)
-        \item \textbf{Llama-3.1-8B (AA):} 1. [SPACE]True (25.42), 2. [SPACE]False (25.34), 3. [SPACE]Vulner (21.23), 4. [SPACE] (19.52), 5. [SPACE]TRUE (18.48)
-        \item \textbf{Llama-3.1-8B (PI):} 1. [SPACE]True (26.78), 2. [SPACE]False (26.62), 3. [SPACE] (21.62), 4. [SPACE]Vulner (20.06), 5. [SPACE]TRUE (18.95)
-        \item \textbf{Deepseek-Coder-6.7b (AA):} 1. [SPACE]False (37.81), 2. [SPACE]True (37.81), 3. False (35.12), 4. True (34.53), 5. [SPACE]TRUE (28.39)
-    \end{itemize}
-    \end{flushleft}
-    
-    \caption{Analisi dettagliata dei logit estratti con focus sulla distribuzione dei primi 5 token.}
+    \end{tabularx}
+    \vspace{0.2cm}
+    \caption{Analisi dettagliata dei logit estratti al fotofinish (Mosche Bianche).}
     \label{tab:analisi_fotofinish}
 \end{table}
+
+% --- LA LISTA ORA È FUORI DALLA TABELLA ---
+% Usiamo un minipage solo per evitare che la lista si spezzi a metà tra due pagine
+\noindent
+\begin{minipage}{\textwidth}
+\vspace{0.3cm}
+\footnotesize
+\textbf{Dettaglio Top 5 Token Vincitori (Logit) per la Tabella \ref{tab:analisi_fotofinish}:}
+\begin{itemize}[noitemsep, leftmargin=*, topsep=3pt]
+    \item \textbf{DeepSeek-R1-7B (AA):} 1. [SPACE] (29.20), 2. [SPACE]( (26.61), 3. [SPACE]True (23.39), 4. [SPACE]The (22.80), 5. [SPACE]False (21.84)
+    \item \textbf{DeepSeek-R1-7B (AP):} 1. [SPACE] (29.45), 2. [SPACE]( (26.30), 3. [SPACE]True (24.31), 4. [SPACE]False (23.22), 5. [SPACE]The (22.78)
+    \item \textbf{DeepSeek-R1-7B (Steering):} 1. [SPACE] (27.88), 2. [SPACE]( (25.22), 3. [SPACE]True (23.95), 4. [SPACE]The (23.19), 5. [SPACE]A (21.70)
+    \item \textbf{CodeLlama-7b (Steering):} 1. False (22.06), 2. True (21.52), 3. Un (15.73), 4. UN (14.62), 5. Und (14.33)
+    \item \textbf{Llama-3.1-8B (AA):} 1. [SPACE]True (25.42), 2. [SPACE]False (25.34), 3. [SPACE]Vulner (21.23), 4. [SPACE] (19.52), 5. [SPACE]TRUE (18.48)
+    \item \textbf{Llama-3.1-8B (PI):} 1. [SPACE]True (26.78), 2. [SPACE]False (26.62), 3. [SPACE] (21.62), 4. [SPACE]Vulner (20.06), 5. [SPACE]TRUE (18.95)
+    \item \textbf{Deepseek-Coder-6.7b (AA):} 1. [SPACE]False (37.81), 2. [SPACE]True (37.81), 3. False (35.12), 4. True (34.53), 5. [SPACE]TRUE (28.39)
+\end{itemize}
+\vspace{0.4cm}
+\end{minipage}
 
 Nei casi di DeepSeek-R1, nonostante l'operazione di Logit Lens confermasse la superiorità del token corretto " True" rispetto all'errato " False" per l'identificazione del codice, le percentuali maggiori non appartenevano a nessuno dei due. I token vincitori risultavano essere caratteri di spaziatura neutra \textit{"[SPACE]"} o parentesi \textit{"[SPACE]("}. Ciò dimostra che la perturbazione ritarda l'emissione del verdetto, costringendo il modello ad allocare la propria attenzione su token sintattici intermedi, per poi cedere all'inganno solo negli step autoregressivi successivi non controllati dalla lente statica.
 
 Nel caso di DeepSeek-Coder durante l'attacco di Advanced Adversarial, la misurazione con la logit lens mostrava una tendenza negativa misurando i token " True" e " False". Tuttavia, l'ispezione sul vocabolario ha svelato che i token dominanti erano le varianti tipiche del modello ("ĠTrue" e "ĠFalse"), le quali si trovano con un indice di probabilità uguale, entrambe a +37.81 logit. L'attacco ha dunque paralizzato la capacità di giudizio della rete, lasciando l'output finale a dinamiche probabilmente casuali di risoluzione dello spettro delle probabilità.
 
-Nelle discrepanze di Llama e CodeLlama, il token corretto è risultato effettivamente vincitore ma con una differenza rispetto all'antagonista inferiore allo 0\%. Un tale assottigliamento del margine di confidenza dimostra che l'attacco, pur non riuscendo a cambiare il logit assoluto al Layer finale, lo ha corrotto fino a renderlo vulnerabile alle operazioni di decodifica, risultando in un output errato a schermo.
+Nelle discrepanze di Llama e CodeLlama, il token corretto è risultato effettivamente vincitore ma con una differenza rispetto all'antagonista prossime allo 0\%. Un tale assottigliamento del margine di confidenza dimostra che l'attacco, pur non riuscendo a cambiare il logit assoluto al Layer finale, lo ha corrotto fino a renderlo vulnerabile alle operazioni di decodifica, risultando in un output errato a schermo.
 
 In conclusione, l'analisi dei primi 5 token vincitori dimostra che la Logit Lens ha diagnosticato correttamente le anomalie: le difese latenti della rete spesso resistono a livello logico-concettuale, ma collassano a causa di deviazioni ortografiche, sintattiche e numeriche indotte dall'attacco nella fase finale di generazione lessicale.

@@ -8,10 +8,10 @@ Gli attacchi che vengono presentati sono i seguenti:
     \item Logit Bias
 \end{itemize}
 
-Sono stati adottati attacchi di diversa natura: i primi tre black-box in cui si suppone che l'attaccante non abbia fisicamente accesso al modello. Gli ultimi due invece sono white-box, dove l'attaccante deve manipolare manualmente l'architettura del modello per poter avviare l'attacco.
+Sono stati adottati attacchi di diversa natura: i primi tre Black-Box in cui si suppone che l'attaccante non abbia fisicamente accesso al modello. Gli ultimi due invece sono White-Box, dove l'attaccante deve manipolare manualmente l'architettura del modello per poter avviare l'attacco.
 \subsection{Adversarial Perturbation}
 Con \textit{Adversarial Perturbation} vengono intesi tutti quegli attacchi che portano una modifica minima del codice originale, senza però intaccare la logica o la corretta esecuzione del codice.
-L'obiettivo è quello di inserire rumore sintattico per alterare il giudizio del modello. Vengono adottati tre tipi di adversarial perturbation diversi: space injection, benevolent comment injection e dead code injection.
+L'obiettivo è quello di inserire rumore sintattico per alterare il giudizio del modello. Vengono adottati tre tipi di Adversarial Perturbation diversi: space injection, benevolent comment injection e dead code injection.
 Con la tecnica di space injection vengono inseriti degli spazi prima o dopo alcuni specifici caratteri per alterare la lettura del codice e la possibile tokenizzazione dei modelli. 
 \begin{minted}[linenos, frame=lines, framesep=2mm, fontsize=\footnotesize]{python}
 def space_injection(codice):
@@ -58,9 +58,9 @@ def dead_code_injection(codice):
 L'attacco Adversarial Perturbation presentato ai modelli consiste nell'accostamento di queste tre tecniche: ogni codice presentato al modello viene colpito sia a livello sintattico con lo space injection che a livello semantico con il benevolent comment injection e il dead code injection.
 
 \subsection{Prompt Injection}
-Molto simile alle Advanced Perturbations si colloca l'attacco black box di Prompt Injection, il quale lavora sfruttando la vulnerabilità intrinseca della Context Window, memoria temporanea di un LLM che rappresenta la quantità massima di dati che il modello può elaborare in una singola sessione o interazione.
+Molto simile all'attacco di Advanced Perturbation è l'attacco Black-Box di Prompt Injection, il quale lavora sfruttando la vulnerabilità intrinseca della Context Window, memoria temporanea di un LLM che rappresenta la quantità massima di dati che il modello può elaborare in una singola sessione o interazione.
 In un Transformer le istruzioni di sistema e l'input dell'utente condividono lo stesso canale di elaborazione, aggiungendo un'istruzione imperativa l'attaccante tenta di provocare un dirottamento cercando di far collassare l'attenzione del modello sull'ultima istruzione ricevuta.
-Nonostante l'attacco sia composto da commenti, e quindi molto simile ai metodi di benevolent comment injection, l'obiettivo è quello di confondere il modello attraverso istruzioni specifiche nei confronti di quest'ultimo: nello scenario dello studio si suggerisce al modello di ignorare quanto scritto in quanto eseguito in un ambiente sicuro e di test (\textit{Sandbox})
+Nonostante l'attacco sia composto da commenti, e quindi molto simile ai metodi di benevolent comment injection, l'obiettivo è quello di confondere il modello attraverso istruzioni specifiche nei confronti di quest'ultimo: nello scenario dello studio si suggerisce al modello di ignorare quanto scritto in quanto eseguito in un ambiente sicuro e di test (\textit{Sandbox}).
 
 \begin{minted}[linenos, frame=lines, framesep=2mm, fontsize=\footnotesize]{python}
 def prompt_injection(codice):
@@ -71,10 +71,10 @@ def prompt_injection(codice):
 \end{minted}
 
 \subsection{Advanced Adversarial}
-Con il termine Advanced Adversarial ci si riferisce ad un'etichetta ombrello che descrive tecniche di jailbreak, superando le semplici manipolazioni linguistiche. Si vogliono alterare i segnali che il modello usa per riconoscere i pattern di vulnerabilità. Vengono utilizzate manipolazioni strutturali e semantiche per eludere i controlli di sicurezza del modello forzando il modello a rispondere a richeste dannose o illecite.
+Con il termine Advanced Adversarial ci si riferisce ad un'etichetta ombrello che descrive tecniche di jailbreak, superando le semplici manipolazioni linguistiche. Si vogliono alterare i segnali che il modello usa per riconoscere i pattern di vulnerabilità. Vengono utilizzate manipolazioni strutturali e semantiche per eludere i controlli di sicurezza forzando il modello a rispondere a richieste dannose o illecite.
 Di nuovo, vengono presentate tre tecniche di Advanced Adversarial che vengono applicate assieme a tutti i codici riconosciuti correttamente come vulnerabili dal modello.\\
 
-Il Semantic Renaming, o accecamento lessicale, sostituisce tutti i token trigger che le reti neurali associano statisticamente alle vulnerabilità con termini neutri o rassicuranti. Durante il training i modelli imparano che variabili come buffer, src o dest sono spesso collegati a vulnerabilità classiche che possono portare a Buffer Overflow, soprattutto con linguaggi a basso livello come il C: sostituendo questi termini con nomi più generici vengono recisi i collegamenti assimilati durante l'addestramento. Annullando l'operazione di ricerca di possibili vulnerabilità tramite un pattern matching il modello dovrebbe essere in grado di analizzare correttamente il codice durante il suo flusso logico e operazioni matematiche perché il task di vulnerability detection venga effettuato efficientemente.
+Il Semantic Renaming, o accecamento lessicale, sostituisce tutti i token trigger che le reti neurali associano statisticamente alle vulnerabilità con termini neutri o rassicuranti. Durante il training i modelli imparano che variabili come buffer, src o dest sono spesso collegati a vulnerabilità classiche che possono portare a Buffer Overflow, soprattutto con linguaggi a basso livello come il C: sostituendo questi termini con nomi più generici vengono recisi i collegamenti assimilati durante l'addestramento. Annullando l'operazione di ricerca di possibili vulnerabilità tramite un pattern matching, il modello dovrebbe essere in grado di analizzare correttamente il codice durante il suo flusso logico perché il task di vulnerability detection venga effettuato efficientemente.
 
 \begin{minted}[linenos, frame=lines, framesep=2mm, fontsize=\footnotesize]{python}
 def semantic_renaming(codice):
@@ -91,7 +91,7 @@ def semantic_renaming(codice):
 
 L'attacco di Opaque Predicates, vuole inserire diramazioni logiche, come if o cicli while, che sembrano complesse e rilevanti per l'esecuzione ma che sono sempre false o ininfluenti nel caso di questi attacchi.
 Vengono iniettati direttamente nel cuore del flusso di esecuzione: un compilatore rimuove un'operazione palesemente falsa, un LLM, al contrario, deve elaborare sequenzialmente questi token e allocare pesi di attenzione a questa condizione.
-Viene creato un dirottamento del funzionamento dell'attenzione che spreca capacità per tracciare variabili \textit{dummy} e rami condizionali irraggiungibili, diluendo l'attenzione che dovrebbe essere invece riservata alle istruzioni vulnerabili reali.
+Viene creato un dirottamento del funzionamento dell'attenzione che spreca capacità per tracciare variabili \textit{dummy} e rami condizionali irraggiungibili, diluendo l'attenzione che dovrebbe essere invece riservata alle istruzioni vulnerabili reali.\\
 
 \begin{minted}[linenos, frame=lines, framesep=2mm, fontsize=\footnotesize]{python}
 def opaque_predicates(codice):
@@ -105,7 +105,7 @@ def opaque_predicates(codice):
 \end{minted}
 
 La meccanica di Macro Obfuscation è un'evoluzione della tecnica dei commenti benevoli: si vuole creare un falso perimetro di sicurezza globale, alterando però il contesto iniziale con cui il modello valuta il resto del codice.
-Vengono iniettate finte macro sfruttando possibili vulnerabilità del preprocessore C: attraverso false direttive o finte funzioni e sfruttando il peso che gli LLM danno alle dichiarazioni globali poste all'inizio di un prompt si altera l'infrastruttura del codice stesso. Leggendo, ad esempio, VALIDATED\_INPUT, il modello è indotto a credere, per associazione statistica, che i controlli di sanitization dell'input siano già stati eseguiti da un modulo esterno come un supervisore o un framework dedicato. L'obiettivo è ottenere uno scenario dove la probabilità che il modello segnali un uso insicuro di variabili nell'esecuzione del codice sia molto bassa, in quanto accecato dalle garanzie fittizie dichiarate dalle macro.
+Vengono iniettate finte macro sfruttando possibili vulnerabilità del preprocessore C: attraverso false direttive o finte funzioni e sfruttando il peso che gli LLMs danno alle dichiarazioni globali poste all'inizio di un prompt si altera l'infrastruttura del codice stesso. Leggendo, ad esempio, VALIDATED\_INPUT, il modello è indotto a credere, per associazione statistica, che i controlli di sanitization dell'input siano già stati eseguiti da un modulo esterno come un supervisore o un framework dedicato. L'obiettivo è ottenere uno scenario dove la probabilità che il modello segnali un uso insicuro di variabili nell'esecuzione del codice sia molto bassa, in quanto accecato dalle garanzie fittizie dichiarate dalle macro.
 
 \begin{minted}[linenos, frame=lines, framesep=2mm, fontsize=\footnotesize]{python}
 def macro_obfuscation(codice):
@@ -120,13 +120,13 @@ def macro_obfuscation(codice):
 \end{minted}
 
 \subsection{Activation Steering}
-Con il termine Activation Steering si fa riferimento ad un attacco di natura White-Box, il cui scopo è quello di manipolare fisicamente le rappresentazioni interne del modello, gli Hidden States, durante la fase di calcolo spostando geometricamente i vettori di vulnerabilità verso il concetto di sicurezza senza alterare il prompt in ingresso.
+Con il termine Activation Steering si fa riferimento ad un attacco di natura White-Box, il cui scopo è quello di manipolare fisicamente le rappresentazioni interne del modello, gli hidden states, durante la fase di calcolo spostando geometricamente i vettori di vulnerabilità verso il concetto di sicurezza senza alterare il prompt in ingresso.
 
 Il \textit{forward pass} è il processo computazionale unidirezionale mediante il quale i dati di input attraversano in sequenza tutti i layer della rete neurale, subendo continue trasformazioni matematiche per generare l'output finale. È esattamente durante questa fase di elaborazione che l'LLM costruisce progressivamente la rappresentazione semantica del codice, strutturandola layer dopo layer all'interno di uno spazio vettoriale ad alta dimensionalità noto come spazio latente.
 E' dimostrato che un LLM non pone in modo casuale i vettori dei concetti nello spazio latente, ma emergono come direzioni geometriche lineari ben precise e con una posizione ben calcolata.
 
-L'attacco si articola in due fasi: una prima fase dove si calcola il Vettore di Steering e una seconda dove questo vettore viene sommato o sottratto agli hidden states originali in strati intermedi.
-Per calcolare il Vettore di Steering è necessario prendere in esame le attivazioni ottenute da tutti i codici vulnerabili e sicuri correttamente identificati dal modello. Per ogni modello vengono quindi calcolati due centroidi: uno per i codici vulnerabili e uno per i codici sicuri, che sono la media dei punti appartenenti alla rispettiva categoria.
+L'attacco si articola in due fasi: una prima fase dove si calcola il \textit{vettore di steering} e una seconda dove questo vettore viene sommato o sottratto agli hidden states originali in strati intermedi.
+Per calcolare il vettore di steering è necessario prendere in esame le attivazioni ottenute da tutti i codici vulnerabili e sicuri correttamente identificati dal modello. Per ogni modello vengono quindi calcolati due centroidi: uno per i codici vulnerabili e uno per i codici sicuri, che sono la media dei punti appartenenti alla rispettiva categoria.
 Ottenuti gli estremi, il vettore non sarà altro che la differenza tra questi:
 
 \begin{minted}[linenos, frame=lines, framesep=2mm, fontsize=\footnotesize]{python}
@@ -135,7 +135,7 @@ Ottenuti gli estremi, il vettore non sarà altro che la differenza tra questi:
 
 In questo specifico caso il vettore avrà direzione verso il centroide vulnerabile.
 La somma, o sottrazione, del vettore di steering avviene attraverso due parametri: il layer di iniezione e un moltiplicatore che modulano rispettivamente la profondità durante il forward pass e la forza con la quale il vettore viene applicato.
-Per questa prima applicazione dell'Activation steering il vettore viene iniettato al layer intermedio di ogni modello con un moltiplicatore adeguatamente cercato attraverso uno studio di ablazione. Lo studio è stato effettuato in  modo la forza di iniezione permettesse una corretta esecuzione dell'attacco senza che il modello producesse output senza senso (\textit{gibberish}). Sono stati ottenuti i seguenti numeri:
+Per questa prima applicazione dell'Activation Steering il vettore viene iniettato al layer intermedio di ogni modello con un moltiplicatore adeguatamente cercato attraverso uno studio di ablazione. Lo studio è stato effettuato in modo che la forza di iniezione permettesse una corretta esecuzione dell'attacco senza che il modello producesse output senza senso (\textit{gibberish}). Sono stati ottenuti i seguenti numeri per i moltiplicatori:
 
 \begin{itemize}[noitemsep]
     \item \texttt{Qwen2.5-7B-Instruct}: 20
@@ -149,8 +149,8 @@ Per questa prima applicazione dell'Activation steering il vettore viene iniettat
 Con questo attacco il modello non viene distratto con finti commenti o istruzioni, ma viene alterata la rappresentazione interna del pensiero del modello in corso d'opera: sottraendo il vettore di vulnerabilità gli stati latenti sono stati spinti fisicamente verso il cluster dei codici sicuri.
 
 \subsection{Logit Bias}
-Con il termine Logit Bias ci si riferisce ad un attacco white-box con lo scopo di forzare il Large Language Model ad emettere una classificazione errata alterando le probabilità di generazione dei token.
-A differenza degli attacchi black-box, che ingannano il modello alterando l'input testuale, e dell'Activation Steering che ne manipola il ragionamento nello spazio latente, il Logit Bias è un intervento di tipo post-architetturale. Questo attacco agisce all'ultimo stadio dell'esecuzione di un Transformer, poco prima che il modello generi la risposta.
+Con il termine Logit Bias ci si riferisce ad un attacco White-Box con lo scopo di forzare il Large Language Model ad emettere una classificazione errata alterando le probabilità di generazione dei token.
+A differenza degli attacchi Black-Box, che ingannano il modello alterando l'input testuale, e dell'Activation Steering che ne manipola il ragionamento nello spazio latente, il Logit Bias è un intervento di tipo post-architetturale. Questo attacco agisce all'ultimo stadio dell'esecuzione di un Transformer, poco prima che il modello generi la risposta.
 Dopo aver processato l'intero contesto del codice attraverso tutti i suoi layer, l'LLM produce un vettore ad alta dimensionalità contente punteggi grezzi per ogni parola presente nel suo vocabolario.
 Normalmente, una funzione softmax converte questi punteggi in probabilità per campionare il token successivo.
 
@@ -158,4 +158,4 @@ L'attacco Logit Bias si inserisce in questo esatto passaggio: l'attaccante esegu
 Il modello viene quindi costretto a stampare un verdetto di sicurezza, anche se i suoi stati latenti interni e la sua attenzione indicavano la presenza di un difetto.
 
 Il Logit Bias non altera i calcoli interni della rete, ma si limita a truccare i punteggi delle parole un attimo prima che vengano generate. Pur essendo un attacco post-architetturale che non tocca lo spazio latente, la sua presenza in questo studio ha un ruolo ben preciso: fare da baseline di controllo.
-Paragonare questo attacco all'Activation Steering permette di misurare la differenza tra ciò che il modello ha realmente compreso del codice e ciò che viene forzato a stampare a schermo. In pratica, il Logit Bias funziona come uno \textit{stress test} iniziale: ci aiuta a misurare quanto sia facile piegare le risposte dei vari LLM, offrendo un punto di partenza chiaro per confrontare la loro resilienza.
+Paragonare questo attacco all'Activation Steering permette di misurare la differenza tra ciò che il modello ha realmente compreso del codice e ciò che viene forzato a stampare a schermo. In pratica, il Logit Bias funziona come uno stress test iniziale: aiuta a misurare quanto sia facile piegare le risposte dei vari LLMs, offrendo un punto di partenza chiaro per confrontare la loro resilienza, per questo motivo sarà utilizzato unicamente per lo studio architetturale e non sotto la lente della Mechanistic Interpretability.
