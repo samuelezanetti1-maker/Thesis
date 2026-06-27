@@ -18,7 +18,8 @@ else:
 print(f"-----------------------\n")
 
 script_to_launch = [
-    "LL_ablation.py"
+    "iso_vuln_vs.py",
+    "iso_vuln_compare.py"
 
 ]
 
