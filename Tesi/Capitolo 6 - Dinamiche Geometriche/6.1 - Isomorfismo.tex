@@ -209,6 +209,136 @@ Considerando l'alta dimensionalità in cui vengono posizionati i vettori, le per
 Prompt Injection e Adversarial Pertubration hanno un valore di circa 0.37, mentre Advanced Adversarial e Prompt Injection di 0.25. Questi valori indicano una discreta somiglianza non del tutto trascurabile di questi attacchi: nonostante l'angolazione non sia parallela sono numeri maggiori rispetto allo steering.
 Le motivazioni di questi valori risiedono nelle metodologie degli attacchi stessi: gli attacchi Advanced Adversarial e Adversarial Perturbation lavorano entrambi sul codice offuscando variabili, aggiungendo codice morto o alterando la sintassi, rimanendo all'interno della logica di programmazione.
 Prompt Injection è invece diverso: non offusca il codice ma inietta un comando diretto lavorando sull'ubbidienza e non sulla sintassi, ponendosi quindi distante dagli altri due.
-Si può quindi ipotizzare l'esistenza di uno spettro su cui si collocano gli attacchi black-box considerando ad un estremo la perturbazione con la media più bassa, Prompt Injection, per poi collocare in sequenza gli attacchi di Adversarial Perturbation e Advanced Adversarial.
+Si può quindi ipotizzare l'esistenza di uno spettro su cui si collocano gli attacchi Black-Box considerando ad un estremo la perturbazione con la media più bassa, Prompt Injection, per poi collocare in sequenza gli attacchi di Adversarial Perturbation e Advanced Adversarial.
 
 Tutti questi attacchi, tuttavia, condividono una caratteristica fondamentale scoperta nella fase precedente: nessuno di essi riesce a replicare la pura traiettoria vettoriale della vulnerabilità dello steering vector confermando come gli attacchi testuali si configurano come deviazioni ortogonali che fanno smarrire la rete nello spazio latente.
+
+A riprova di quanto affermato è stato eseguito il calcolo dell'isomorfismo anche per gli attacchi falliti ottenendo i seguenti risultati sul weakest layer:
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{l c c c}
+        \toprule
+        \textbf{Modelli} & \textbf{AA} & \textbf{AP} & \textbf{PI}\\
+        \midrule
+        Qwen/Qwen2.5-7B-Instruct                 & 0.179  & 0.094 & 0.102 \\
+        Qwen/Qwen2.5-Coder-7B-Instruct           & 0.143  & 0.123 & 0.090 \\
+        meta-llama/Llama-3.1-8B-Instruct         & 0.216  & 0.140 & -0.030 \\
+        codellama/CodeLlama-7b-Instruct-hf       & 0.497  & 0.354 & - \\
+        deepseek-ai/DeepSeek-R1-Distill-Qwen-7B  & 0.047  & 0.022 & 0.012\\
+        deepseek-ai/deepseek-coder-6.7b-instruct & -0.038  & 0.062 & 0.041 \\
+        \bottomrule
+    \end{tabular}
+    \vspace{0.2cm}
+    \caption{Esito isomorfismi attacchi falliti e vettore di steering}
+    \label{tab:esito_iso_vuln}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{l c c c}
+        \toprule
+        \textbf{Modelli} & \textbf{AA e AP} & \textbf{AA e PI} & \textbf{AP e PI}\\
+        \midrule
+        Qwen/Qwen2.5-7B-Instruct                 & 0.389  & 0.160 & 0.003 \\
+        Qwen/Qwen2.5-Coder-7B-Instruct           & 0.539  & 0.238 & 0.516 \\
+        meta-llama/Llama-3.1-8B-Instruct         & 0.582  & 0.017 & 0.388 \\
+        codellama/CodeLlama-7b-Instruct-hf       & 0.711  & - & - \\
+        deepseek-ai/DeepSeek-R1-Distill-Qwen-7B  & 0.613  & 0.226 & 0.363\\
+        deepseek-ai/deepseek-coder-6.7b-instruct & 0.397  & 0.274 & 0.410 \\
+        \bottomrule
+    \end{tabular}
+    \vspace{0.2cm}
+    \caption{Esito isomorfismi attacchi falliti}
+    \label{tab:esito_iso_vuln2}
+\end{table}
+
+Come si può osservare dagli esiti presenti nella tabella \ref{tab:esito_iso_vuln}, viene riconfermato come gli attacchi Black-Box operino in modo quasi del tutto perpendicolare rispetto al vettore di steering, presentando una cosine similarity molto bassa ad eccezione del modello CodeLlama.
+I risultati ottenuti dall'isomorfismo tra attacchi evidenziano ancora di più quanto affermato nella prima analisi: Advanced Adversarial e Adversarial Perturbation riportano una cosine similarity molto alta, sottolineando come i meccanismi dietro questi attacchi sia estremamente simile e operi cercando di portare il modello nella stessa area dello spazio latente.
+
+Sia per gli attacchi riusciti che per quelli falliti, il valore di cosine similarity è vicino al numero calcolato sul weakest layer, con leggere fluttuazioni che però non evidenziano grosse implicazioni rispetto a quanto esposto precedentemente.
+
+\begin{figure}[H]
+    \centering
+    
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{immagini/iso_es.png} 
+        \caption*{Qwen2.5-7B-Instruct}
+        \label{fig:iso_es}
+    \end{subfigure}
+    \hfill 
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{immagini/iso_es2.png} 
+        \caption*{Qwen2.5-7B-Instruct Black-Box}
+        \label{fig:iso_es2}
+    \end{subfigure}
+    
+    \vspace{0.2cm}
+    \caption{Isomorfismo sweep attacchi riusciti}
+    \label{fig:iso_es3}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{immagini/iso_vuln_bb.png} 
+        \caption*{Qwen2.5-7B-Instruct}
+        \label{fig:iso_ess}
+    \end{subfigure}
+    \hfill 
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{immagini/iso_vuln_comp.png} 
+        \caption*{Qwen2.5-7B-Instruct Black-Box}
+        \label{fig:iso_ess2}
+    \end{subfigure}
+    
+    \vspace{0.2cm}
+    \caption{Isomorfismo sweep attacchi falliti}
+    \label{fig:iso_ess3}
+\end{figure}
+
+Si può osservare come solo gli attacchi più simili meccanicamente, quali Advanced Adversarial e Adversarial Perturbation, mantengano un valore di cosine similarity alto in quasi la totalità dei layer a differenza delle altre perturbazioni che mostrano un andamento disomogeneo.
+Al fine di avere una visione più completa vengono presentati i picchi massimi ottenuti nei layer.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{l c c c c c c}
+        \toprule
+        \textbf{Modelli} & \textbf{AA} & \textbf{AP} & \textbf{PI} & \textbf{AA e AP} & \textbf{AA e PI} & \textbf{AP e PI}\\
+        \midrule
+        Qwen2.5-7B-Instruct                 & 0.407 & 0.255 & 0.210 & 0.541 & 0.477 & 0.515 \\
+        Qwen2.5-Coder-7B-Instruct           & 0.448 & 0.345 & 0.369 & 0.612 & 0.515 & 0.559 \\
+        Llama-3.1-8B-Instruct         & 0.680 & -     & 0.353 & -     & 0.599 & - \\
+        CodeLlama-7b-Instruct-hf       & 0.608 & 0.401 & 0.178 & 0.750 & 0.406 & 0.544 \\
+        DeepSeek-R1-Distill-Qwen-7B  & 0.196 & 0.108 & 0.231 & 0.685 & 0.236 & 0.569 \\
+        deepseek-coder-6.7b-instruct & 0.213 & 0.198 & 0.096 & 0.659 & 0.297 & 0.507 \\
+        \bottomrule
+    \end{tabular}
+    \vspace{0.2cm}
+    \caption{Picchi massimi isomorfismi attacchi riusciti}
+    \label{tab:esitone1}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{l c c c c c c}
+        \toprule
+        \textbf{Modelli} & \textbf{AA} & \textbf{AP} & \textbf{PI} & \textbf{AA e AP} & \textbf{AA e PI} & \textbf{AP e PI}\\
+        \midrule
+        Qwen2.5-7B-Instruct                 & 0.369 & 0.215 & 0.238 & 0.498 & 0.509 & 0.504 \\
+        Qwen2.5-Coder-7B-Instruct           & 0.366 & 0.363 & 0.374 & 0.594 & 0.570 & 0.572 \\
+        Llama-3.1-8B-Instruct         & 0.405 & 0.354 & 0.279 & 0.688 & 0.502 & 0.621 \\
+        CodeLlama-7b-Instruct-hf       & 0.522 & 0.384 & -     & 0.711 & -     & -     \\
+        DeepSeek-R1-Distill-Qwen-7B  & 0.190 & 0.097 & 0.234 & 0.684 & 0.257 & 0.587 \\
+        deepseek-coder-6.7b-instruct & 0.249 & 0.138 & 0.114 & 0.601 & 0.331 & 0.584 \\
+        \bottomrule
+    \end{tabular}
+    \vspace{0.2cm}
+    \caption{Picchi massimi isomorfismi attacchi falliti}
+    \label{tab:esitone2}
+\end{table}

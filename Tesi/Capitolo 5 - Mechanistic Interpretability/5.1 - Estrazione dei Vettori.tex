@@ -1,6 +1,8 @@
 \section{Estrazione dei Vettori}
 Nella prospettiva della \textit{Mechanistic Interpretability}, per poter calcolare la direzione vettoriale della vulnerabilità non è sufficiente osservare l'output finale, ma è necessario mappare l'intero processo cognitivo interno della rete. È stato quindi implementata un'infrastruttura di monitoraggio capace di estrarre e registrare gli stati latenti che fluiscono attraverso il \textit{Residual Stream} del Transformer durante l'elaborazione degli snippet di codice. Questa operazione richiede di "aprire" la \textit{black-box} del modello e catturarne lo stato in tempo reale, senza tuttavia alterarne l'architettura originaria o i pesi.
 
+All'interno del Residual Stream di un Transformer, l'informazione fluisce sotto forma di tensori, ovvero matrici multidimensionali di dati. Ad ogni layer la rete proietta ciascun token di testo in uno spazio iperdimensionale, codificandolo attraverso un vettore nello spazio latente. I singoli valori numerici che compongono questo vettore prendono il nome di attivazioni.
+
 L'estrazione massiva dei dati a scopo diagnostico è stata condotta sfruttando le funzionalità native dell'ecosistema HuggingFace. Durante il forward pass, è stato abilitato il parametro output\_hidden\_states=True. Questa scelta architetturale istruisce il modello a preservare e restituire l'intera traiettoria computazionale in una singola inferenza, fornendo accesso simultaneo ai tensori di attivazione di tutti i layer del Transformer, omettendo unicamente il layer di embedding iniziale in quanto considerato di natura lessicale e inutile ai fini dello studio.
 
 \begin{minted}[linenos, frame=lines, framesep=2mm, fontsize=\footnotesize]{python}
@@ -19,8 +21,16 @@ for layer_idx in range(num_layers):
 
 \end{minted}
 
-Un aspetto metodologico cruciale di questa fase riguarda la selezione delle coordinate tensoriali da estrarre. L'output di un layer Transformer è un tensore tridimensionale con dimensioni [Batch, Sequenza, Neuroni]. Per gli scopi di questo studio, l'estrazione si è concentrata esclusivamente sulle attivazioni dell'ultimo token della sequenza, indicizzato come [0, -1, :]. Nei modelli autoregressivi decoder-only, il meccanismo di causal masking impedisce ai token di guardare al futuro, di conseguenza l'ultimo token elaborato in fase di prefill è l'unico ad avere applicato l'attenzione sull'intero prompt di ingresso, aggregando in se l'intera rappresentazione semantica e logica del codice appena letto.
+Un aspetto metodologico cruciale di questa fase riguarda la selezione delle coordinate tensoriali da estrarre. L'output di un layer Transformer è un tensore tridimensionale con dimensioni [Batch, Sequenza, Neuroni]. Per gli scopi di questo studio, l'estrazione si è concentrata esclusivamente sulle attivazioni dell'ultimo token della sequenza, indicizzato come [0, -1, :]. Nei modelli autoregressivi decoder-only, il meccanismo di causal masking impedisce ai token di guardare al futuro, di conseguenza l'ultimo token elaborato in fase di prefill è l'unico ad avere applicato l'attenzione sull'intero prompt di ingresso, aggregando in sé l'intera rappresentazione semantica e logica del codice appena letto.
 
 Una volta ottenuti, i vettori estratti vengono associati ai rispettivi metadati, id dello snippet, ground truth di sicurezza. Questa raccolta di attivazioni latenti costituisce il materiale grezzo su cui verranno successivamente calcolati i centroidi per la generazione dello Steering Vector per quel layer.
 
+\begin{minted}[linenos, frame=lines, framesep=2mm, fontsize=\footnotesize]{python}
+ media_vuln = np.mean(np.stack(attivazioni_vulnerabili[layer_idx]), axis=0)
+            media_sicuro = np.mean(np.stack(attivazioni_sicuri[layer_idx]), axis=0)
+            vettore_steering = media_vuln - media_sicuro
+\end{minted}
+
+I centroidi vengono calcolati esattamente come illustrato nell'attacco di steering: viene eseguita la media dei vettori corrispondenti ai codici vulnerabili e sicuri ottenendo così due vettori. 
+Tramite la differenza vettoriale tra i centroidi si ottiene lo Steering Vector del modello: reiterando questo procedimento ad ogni layer si estrae l'intero asse di riferimento, ricavando per ciascun livello un vettore orientato verso il centroide vulnerabile.
 
