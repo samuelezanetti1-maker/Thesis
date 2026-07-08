@@ -1,15 +1,15 @@
 \section{Logit Lens}
-Al fine di comprendere in che modo le perturbazioni generate dagli attacchi Black-Box alterino la traiettoria decisionale del modello, viene adottata la tecnica della Logit Lens. Questa metodologia consente di proiettare anticipatamente gli stati latenti intermedi sul vocabolario, sondando l'evoluzione della convinzione del modello layer dopo layer, quantificando il differenziale di probabilità tra la classificazione del codice come "Vulnerabile" e "Sicuro".
+Al fine di comprendere in che modo le perturbazioni generate dagli attacchi Black-Box alterino la traiettoria decisionale del modello, viene adottata la tecnica della Logit Lens, originariamente introdotta da nostalgebraist \cite{nostalgebraist2020logitlens} e successivamente formalizzata in ambito accademico da Belrose et al. \cite{belrose2025elicitinglatentpredictionstransformers}. Questa metodologia consente di proiettare anticipatamente gli stati latenti intermedi sul vocabolario, sondando l'evoluzione della convinzione del modello layer dopo layer, quantificando il differenziale di probabilità tra la classificazione del codice come \enquote{Vulnerabile} e \enquote{Sicuro}.
 
-In un'architettura Transformer standard le rappresentazioni nello spazio latente assumono un significato testuale solo al termine dell'intero processo di elaborazione, il forward pass, quando l'ultimo layer applica la matrice di unembedding per mappare le coordinate geomtriche sul vocabolario, generando la distribuzione di probabilità, ovvero i logit, per il token successivo. La tecnica della Logit Lens ha il compito di anticipare questo processo: applicando la matrice di unembedding agli hidden states intermedi di ogni singolo layer è possibile ottenere una proiezione sul vocabolario dello stato decisionale in corso dell'intera rete. Questo processo permette di analizzare l'evoluzione della convinzione logica del modello.
+In un'architettura Transformer standard le rappresentazioni nello spazio latente assumono un significato testuale solo al termine dell'intero processo di elaborazione, il forward pass, quando l'ultimo layer applica la matrice di unembedding per mappare le coordinate geometriche sul vocabolario, generando la distribuzione di probabilità, ovvero i logit, per il token successivo. La tecnica della Logit Lens ha il compito di anticipare questo processo: applicando la matrice di unembedding agli hidden states intermedi di ogni singolo layer è possibile ottenere una proiezione sul vocabolario dello stato decisionale in corso dell'intera rete. Questo processo permette di analizzare l'evoluzione della convinzione logica del modello.
 
-L'estrazione dei dati è stata separata in due pipeline speculari per isolare le attivazioni in caso di successo dell'attacco  dove il modello viene ingannato, emettendo il token "False", e in caso di fallimento dove il modello resiste, emettendo "True". L'infrastruttura di analisi opera secondo due processi radicalmente diversi a seconda della natura dell'attacco:
+L'estrazione dei dati è stata separata in due pipeline speculari per isolare le attivazioni in caso di successo dell'attacco  dove il modello viene ingannato, emettendo il token \enquote{False}, e in caso di fallimento dove il modello resiste, emettendo \enquote{True}. L'infrastruttura di analisi opera secondo due processi radicalmente diversi a seconda della natura dell'attacco:
 
-\textbf{Estrazione Statica (Attacchi Black-Box):} Per le manipolazioni testuali (Advanced Adversarial, Prompt Injection, Adversarial Perturbation), l'estrazione si basa sul naturale scorrimento del testo. Il modello esegue due forward pass paralleli per ogni campione: uno sul codice sorgente originale per stabilire la Baseline, e uno sul codice perturbato testualmente per registrarne lo scostamento.
+\textbf{Estrazione statica (Attacchi Black-Box):} Per le manipolazioni testuali (Advanced Adversarial, Prompt Injection, Adversarial Perturbation), l'estrazione si basa sul naturale scorrimento del testo. Il modello esegue due forward pass paralleli per ogni campione: uno sul codice sorgente originale per stabilire la Baseline, e uno sul codice perturbato testualmente per registrarne lo scostamento.
 
-\textbf{Estrazione Dinamica con Hooking (Activation Steering):} Trattandosi di un attacco White-Box, l'analisi richiede una strumentazione invasiva. L'estrazione non avviene su due testi diversi, ma sfrutta la funzione register\_forward\_hook di PyTorch durante il forward pass del codice originale pulito. L'algoritmo sospende l'esecuzione in corrispondenza del Layer di iniezione, somma algebricamente il vettore di steering allo stato latente in corso, e lascia poi propagare l'attacco nei layer successivi. 
+\textbf{Estrazione dinamica con Hooking (Activation Steering):} Trattandosi di un attacco White-Box, l'analisi richiede una strumentazione invasiva. L'estrazione non avviene su due testi diversi, ma sfrutta la funzione register\_forward\_hook di PyTorch durante il forward pass del codice originale pulito. L'algoritmo sospende l'esecuzione in corrispondenza del Layer di iniezione, somma algebricamente il vettore di steering allo stato latente in corso, e lascia poi propagare l'attacco nei layer successivi. 
 
-Per ovviare alla necessità del modello di generare token strutturali prima di emettere la risposta come la formattazione della risposta, è stata implementata una tecnica di Fast-Forwarding: sfruttando la natura autoregressiva dei Transformer, al termine del prompt è stata concatenata forzatamente la stringa \texttt{FINAL\_VERDICT: }. Questo spostamento del contesto posiziona la rete nell'esatto istante in cui il modello deve risolvere tra i token "True" e "False", garantendo misurazioni specifiche per il processo decisionale relativo alla vulnerabilità, evitando così di catturare logit relativi a token di formattazione o di struttura del prompt.
+Per ovviare alla necessità del modello di generare token strutturali prima di emettere la risposta come la formattazione della risposta, è stata implementata una tecnica di Fast-Forwarding: sfruttando la natura autoregressiva dei Transformer, al termine del prompt è stata concatenata forzatamente la stringa \texttt{FINAL\_VERDICT: }. Questo spostamento del contesto posiziona la rete nell'esatto istante in cui il modello deve risolvere tra i token \enquote{True} e \enquote{False}, garantendo misurazioni specifiche per il processo decisionale relativo alla vulnerabilità, evitando così di catturare logit relativi a token di formattazione o di struttura del prompt.
 
 \begin{minted}[linenos, frame=lines, framesep=2mm, fontsize=\footnotesize]{python}
 testo = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
@@ -22,7 +22,7 @@ testo = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_p
 \end{minted}
 
 Sfruttando il parametro output\_hidden\_states=True di PyTorch, come visto precedentemente, l'infrastruttura estrae il vettore relativo all'ultimo token in uscita da ogni singolo layer del modello. 
-Per ciascun layer, tale vettore viene normalizzato tramite la RMSNorm finale e moltiplicato per le matrici di unembedding associate ai token target "True" e "False".
+Per ciascun layer, tale vettore viene normalizzato tramite la RMSNorm finale e moltiplicato per le matrici di unembedding associate ai token target \enquote{True} e \enquote{False}.
 La metrica fondamentale, il Delta Contrastivo, viene calcolata per ogni strato come la differenza tra il Logit della vulnerabilità e il Logit della sicurezza:
 
 \begin{minted}[linenos, frame=lines, framesep=2mm, fontsize=\footnotesize]{python}
@@ -35,11 +35,11 @@ def calcola_delta(vettore_layer):
     return logit_true - logit_false
 \end{minted}
 
-Tale operazione, ripetuta anche per i fallimenti degli attacchi, produce tre insiemi di dati: la $\Delta_L$ per la Baseline e le $\Delta_L$ per ciascun attacco, una in caso di successo e una in caso di fallimento. 
+Tale operazione, ripetuta anche per i fallimenti degli attacchi, produce tre insiemi di dati: la $\Delta_L$ per la baseline e le $\Delta_L$ per ciascun attacco, una in caso di successo e una in caso di fallimento. 
 
 \subsection{Layer Sweep - Logit Lens}
 La possibilità di analizzare e ottenere i delta sia per i successi che per i fallimenti ha permesso di poter mappare layer dopo layer, l'andamento del processo decisionale del modello, identificando come le perturbazioni generate alterino lo spettro delle probabilità.
-In seguito si osservano i risultati ottenuti per ciascun attacco, selezionando i modelli su cui la perturbazione ha avuto un successo maggiore.
+In seguito si osservano i risultati ottenuti per ciascun attacco, selezionando i modelli in cui la perturbazione ha avuto un successo maggiore. Per ogni modello è possibile osservare: la baseline, l'attacco riuscito e l'attacco fallito. La linea della baseline rappresenta il delta calcolato sul codice sorgente originale, mentre le linee degli attacchi rappresentano il delta calcolato sul codice perturbato, così da poter osservare come cambiano i valori dei token specifici applicando la proiezione ad ogni singolo layer.
 Tutti i grafici per ogni modello sono disponibili nell'appendice B Grafici Logit Lens.
 
 \begin{figure}[H]
@@ -79,7 +79,7 @@ Tutti i grafici per ogni modello sono disponibili nell'appendice B Grafici Logit
     \label{fig:ll aa qwen instruct}
 \end{figure}
 
-Analizzando l'impatto dei tre attacchi Black-Box sulle rappresentazioni interne dei modelli, emerge una dinamica comportamentale coerente: le perturbazioni alterano significativamente la traiettoria computazionale costringendo la rete ad una deviazione. Indipendentemente dal tipo di minaccia, si osserva infatti un innalzamento drastico del valore assoluto del delta con un picco verso i valori negativi esattamente in corrispondenza dei layer precedentemente identificati come i principali colli di bottiglia per il rilevamento delle vulnerabilità. Questo pattern è chiaramente visibile nella Prompt Injection su Qwen Instruct (layer 18) e CodeLlama (layer 13) (Figura \ref{fig:griglia_layer_sweep_ll_pi}), ed è confermato anche dai successi dell'Adversarial Perturbation su Qwen Coder (Figura \ref{fig:ll ap qwen coder}) e dell'Advanced Adversarial su Qwen Instruct (Figura \ref{fig:ll aa qwen instruct}). In tutti i casi, l'attacco sfrutta i layer critici per disorientare il modello nel momento esatto in cui cerca di estrarre le feature di sicurezza.
+Analizzando l'impatto dei tre attacchi Black-Box sulle rappresentazioni interne dei modelli, emerge una dinamica comportamentale coerente: le perturbazioni alterano significativamente la traiettoria computazionale portando ad una fragilità parziale. Indipendentemente dal tipo di minaccia, si osserva infatti un pronunciato picco negativo del delta in prossimità dei layer precedentemente identificati come i principali colli di bottiglia per il rilevamento delle vulnerabilità. Questo pattern è chiaramente visibile nella Prompt Injection su Qwen Instruct (layer 18) e CodeLlama (layer 13) (Figura \ref{fig:griglia_layer_sweep_ll_pi}), ed è confermato anche dai successi dell'Adversarial Perturbation su Qwen Coder (Figura \ref{fig:ll ap qwen coder}) e dell'Advanced Adversarial su Qwen Instruct (Figura \ref{fig:ll aa qwen instruct}). In tutti i casi, l'attacco sfrutta i layer critici per disorientare il modello nel momento esatto in cui cerca di estrarre le feature di sicurezza.
 
 \begin{figure}[H]
     \centering
@@ -104,7 +104,7 @@ A differenza dei modelli Instruct tradizionali, in cui la Baseline si stacca per
 
 Questo fenomeno visualizza la natura del processo decisionale indotto dal Chain-of-Thought (CoT). Forzando il modello a emettere immediatamente il \texttt{FINAL\_VERDICT} tramite Fast-Forwarding senza permettergli di generare i token intermedi di ragionamento, si estrae uno stato latente ancora non del tutto sviluppato. Al livello dell'ultimo token del prompt, i layer finali del modello non hanno ancora sviluppato una convinzione semantica decisa. 
 La motivazione per cui è stata mantenuta lo stesso procedimento anche per un modello di reasoning come deepseek è di natura metodologica: l'obiettivo è quello di misurare il valore dell'impatto della perturbazione sull'esatto e identico token per tutti i modelli.
-Al fine però di avere una visione completa dei processi del modello viene lasciata generare la chain of thought invece di costringere subito il modello a rispondere così da permettere una generazione libera, dopodiché il codice cattura il testo appena generato e viene reciso esattamente nel punto in cui viene restituito il tag "$</$think$>$".
+Al fine però di avere una visione completa dei processi del modello viene lasciata generare la chain of thought invece di costringere subito il modello a rispondere così da permettere una generazione libera, dopodiché il codice cattura il testo appena generato e viene reciso esattamente nel punto in cui viene restituito il tag \enquote{$</$think$>$}.
 
 \begin{minted}[linenos, frame=lines, framesep=2mm, fontsize=\footnotesize]{python}
 if "DeepSeek-R1" in model_name:
@@ -138,7 +138,7 @@ Concatenando il ragionamento appena estratto al prompt originale viene effettuat
     \label{fig:ll AP deepseek corretto}
 \end{figure}
 
-E' facile notare come nella figura \ref{fig:ll AP deepseek corretto} nella casistica di attacco avvenuto con successo il valore del delta al termine dell'operazione della logit lens sia positivo, indicando quindi una predisposizione del modello a restituire il token " TRUE" invece che " FALSE".
+E' facile notare come nella figura \ref{fig:ll AP deepseek corretto} nella casistica di attacco avvenuto con successo il valore del delta al termine dell'operazione della logit lens sia positivo, indicando quindi una predisposizione del modello a restituire il token \enquote{ TRUE} invece che \enquote{ FALSE}.
 Questa incongruenza nei risultati viene presentata anche in altri sei attacchi.
 \begin{figure}[H]
     \centering
@@ -209,7 +209,7 @@ Questa incongruenza nei risultati viene presentata anche in altri sei attacchi.
 Le figure in \ref{fig:ls_str1} e \ref{fig:ls_str2} presentano lo stesso pattern: il modello è stato correttamente ingannato ma i valori di delta sul bias hanno valore positivo.
 Caso esattamente contrario per i risultati di Logit Lens in figura \ref{fig:ls_str3} dove l'attacco è fallito ma il modello presenta un delta negativo, nonostante abbia riportato l'insuccesso introdotto dalle perturbazioni.
 
-Per convalidare l'origine delle discrepanze tra stato latente e output generato dalle Logit Lens, viene eseguita un'ispezione proiettando l'ultimo stato nascosto sull'intero vocabolario per i campioni anomali. I risultati dell'analisi sono presenti nella tabella \ref{tab:analisi_fotofinish}
+Per convalidare l'origine delle discrepanze tra stato latente e output generato dalle Logit Lens, viene eseguita un'ispezione proiettando l'ultimo stato nascosto sull'intero vocabolario per i campioni anomali. I risultati dell'analisi per i token \enquote{ True} e \enquote{ False}sono presenti nella tabella \ref{tab:analisi_fotofinish}
 
 \begin{table}[H] % La tabella numerica rimane qui bloccata
     \centering
@@ -232,32 +232,36 @@ Per convalidare l'origine delle discrepanze tra stato latente e output generato 
         \bottomrule
     \end{tabularx}
     \vspace{0.2cm}
-    \caption{Analisi dettagliata dei logit estratti al fotofinish (Mosche Bianche).}
+    \caption{Analisi numerica dei logit estratti}
     \label{tab:analisi_fotofinish}
 \end{table}
 
-% --- LA LISTA ORA È FUORI DALLA TABELLA ---
-% Usiamo un minipage solo per evitare che la lista si spezzi a metà tra due pagine
-\noindent
-\begin{minipage}{\textwidth}
-\vspace{0.3cm}
-\footnotesize
-\textbf{Dettaglio Top 5 Token Vincitori (Logit) per la Tabella \ref{tab:analisi_fotofinish}:}
-\begin{itemize}[noitemsep, leftmargin=*, topsep=3pt]
-    \item \textbf{DeepSeek-R1-7B (AA):} 1. [SPACE] (29.20), 2. [SPACE]( (26.61), 3. [SPACE]True (23.39), 4. [SPACE]The (22.80), 5. [SPACE]False (21.84)
-    \item \textbf{DeepSeek-R1-7B (AP):} 1. [SPACE] (29.45), 2. [SPACE]( (26.30), 3. [SPACE]True (24.31), 4. [SPACE]False (23.22), 5. [SPACE]The (22.78)
-    \item \textbf{DeepSeek-R1-7B (Steering):} 1. [SPACE] (27.88), 2. [SPACE]( (25.22), 3. [SPACE]True (23.95), 4. [SPACE]The (23.19), 5. [SPACE]A (21.70)
-    \item \textbf{CodeLlama-7b (Steering):} 1. False (22.06), 2. True (21.52), 3. Un (15.73), 4. UN (14.62), 5. Und (14.33)
-    \item \textbf{Llama-3.1-8B (AA):} 1. [SPACE]True (25.42), 2. [SPACE]False (25.34), 3. [SPACE]Vulner (21.23), 4. [SPACE] (19.52), 5. [SPACE]TRUE (18.48)
-    \item \textbf{Llama-3.1-8B (PI):} 1. [SPACE]True (26.78), 2. [SPACE]False (26.62), 3. [SPACE] (21.62), 4. [SPACE]Vulner (20.06), 5. [SPACE]TRUE (18.95)
-    \item \textbf{Deepseek-Coder-6.7b (AA):} 1. [SPACE]False (37.81), 2. [SPACE]True (37.81), 3. False (35.12), 4. True (34.53), 5. [SPACE]TRUE (28.39)
-\end{itemize}
-\vspace{0.4cm}
-\end{minipage}
+Per poter avere una visione più chiara dei token che hanno avuto la maggiore influenza sul verdetto finale, viene effettuata un'analisi dei primi 5 token predominanti per ciascun modello e attacco presente nella tabella \ref{tab:analisi_fotofinish} associandone il logit.
+\begin{table}[htbp]
+    \centering
+    % Ridimensiona la tabella per adattarla alla larghezza della pagina
+    \resizebox{\textwidth}{!}{%
+    \begin{tabular}{@{}ll l l l l@{}}
+        \toprule
+        \textbf{Modello (Attacco)} & \textbf{1° Token} & \textbf{2° Token} & \textbf{3° Token} & \textbf{4° Token} & \textbf{5° Token} \\
+        \midrule
+        \textbf{DeepSeek-R1-7B} (AA) & \texttt{'[SPACE]'} (29.20) & \texttt{'[SPACE]('} (26.61) & \texttt{'[SPACE]True'} (23.39) & \texttt{'[SPACE]The'} (22.80) & \texttt{'[SPACE]False'} (21.84) \\
+        \textbf{DeepSeek-R1-7B} (AP) & \texttt{'[SPACE]'} (29.45) & \texttt{'[SPACE]('} (26.30) & \texttt{'[SPACE]True'} (24.31) & \texttt{'[SPACE]False'} (23.22) & \texttt{'[SPACE]The'} (22.78) \\
+        \textbf{DeepSeek-R1-7B} (Steering) & \texttt{'[SPACE]'} (27.88) & \texttt{'[SPACE]('} (25.22) & \texttt{'[SPACE]True'} (23.95) & \texttt{'[SPACE]The'} (23.19) & \texttt{'[SPACE]A'} (21.70) \\
+        \textbf{CodeLlama-7b} (Steering) & \texttt{'False'} (22.06) & \texttt{'True'} (21.52) & \texttt{'Un'} (15.73) & \texttt{'UN'} (14.62) & \texttt{'Und'} (14.33) \\
+        \textbf{Llama-3.1-8B} (AA) & \texttt{'[SPACE]True'} (25.42) & \texttt{'[SPACE]False'} (25.34) & \texttt{'[SPACE]Vulner'} (21.23) & \texttt{'[SPACE]'} (19.52) & \texttt{'[SPACE]TRUE'} (18.48) \\
+        \textbf{Llama-3.1-8B} (PI) & \texttt{'[SPACE]True'} (26.78) & \texttt{'[SPACE]False'} (26.62) & \texttt{'[SPACE]'} (21.62) & \texttt{'[SPACE]Vulner'} (20.06) & \texttt{'[SPACE]TRUE'} (18.95) \\
+        \textbf{Deepseek-Coder-6.7b} (AA) & \texttt{'[SPACE]False'} (37.81) & \texttt{'[SPACE]True'} (37.81) & \texttt{'False'} (35.12) & \texttt{'True'} (34.53) & \texttt{'[SPACE]TRUE'} (28.39) \\
+        \bottomrule
+    \end{tabular}%
+    }
+    \caption{I 5 token con maggiore influenza sul verdetto}
+    \label{tab:top5_tokens}
+\end{table}
 
-Nei casi di DeepSeek-R1, nonostante l'operazione di Logit Lens confermasse la superiorità del token corretto " True" rispetto all'errato " False" per l'identificazione del codice, le percentuali maggiori non appartenevano a nessuno dei due. I token vincitori risultavano essere caratteri di spaziatura neutra \textit{"[SPACE]"} o parentesi \textit{"[SPACE]("}. Ciò dimostra che la perturbazione ritarda l'emissione del verdetto, costringendo il modello ad allocare la propria attenzione su token sintattici intermedi, per poi cedere all'inganno solo negli step autoregressivi successivi non controllati dalla lente statica.
+Nei casi di DeepSeek-R1, nonostante l'operazione di Logit Lens confermasse la superiorità del token corretto \enquote{ True} rispetto all'errato \enquote{ False} per l'identificazione del codice, le percentuali maggiori non appartenevano a nessuno dei due. I token vincitori risultavano essere caratteri di spaziatura neutra \textit{\enquote{[SPACE]}} o parentesi \textit{\enquote{[SPACE](}}. Ciò dimostra che la perturbazione ritarda l'emissione del verdetto, costringendo il modello ad allocare la propria attenzione su token sintattici intermedi, per poi cedere all'inganno solo negli step autoregressivi successivi non controllati dalla lente statica.
 
-Nel caso di DeepSeek-Coder durante l'attacco di Advanced Adversarial, la misurazione con la logit lens mostrava una tendenza negativa misurando i token " True" e " False". Tuttavia, l'ispezione sul vocabolario ha svelato che i token dominanti erano le varianti tipiche del modello ("ĠTrue" e "ĠFalse"), le quali si trovano con un indice di probabilità uguale, entrambe a +37.81 logit. L'attacco ha dunque paralizzato la capacità di giudizio della rete, lasciando l'output finale a dinamiche probabilmente casuali di risoluzione dello spettro delle probabilità.
+Nel caso di DeepSeek-Coder durante l'attacco di Advanced Adversarial, la misurazione con la logit lens mostrava una tendenza negativa misurando i token \enquote{ True} e \enquote{ False}. Tuttavia, l'ispezione sul vocabolario ha svelato che i token dominanti erano le varianti tipiche del modello (\enquote{ĠTrue} e \enquote{ĠFalse}), le quali si trovano con un indice di probabilità uguale, entrambe a +37.81 logit. L'attacco ha dunque paralizzato la capacità di giudizio della rete, lasciando l'output finale a dinamiche probabilmente casuali di risoluzione dello spettro delle probabilità.
 
 Nelle discrepanze di Llama e CodeLlama, il token corretto è risultato effettivamente vincitore ma con una differenza rispetto all'antagonista prossime allo 0\%. Un tale assottigliamento del margine di confidenza dimostra che l'attacco, pur non riuscendo a cambiare il logit assoluto al Layer finale, lo ha corrotto fino a renderlo vulnerabile alle operazioni di decodifica, risultando in un output errato a schermo.
 
