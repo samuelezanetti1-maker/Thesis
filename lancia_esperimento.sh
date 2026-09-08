@@ -19,15 +19,15 @@ echo "======================="
 python3 -c "import torch; print('>>> GPU VISTA DA PYTORCH;', torch.cuda.is_available()); print('>>> MODELLO GPU:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'Nessuna')"
 echo "======================"
 
-export MIO_SCRATCH="/scratch_share/bislab/HF_USER_CACHE/$USER"
+export MIO_SCRATCH=
 
 mkdir -p "$MIO_SCRATCH/modelli_tesi"
 mkdir -p job_logs
 
-export HF_HUB_CACHE="$MIO_SCRATCH/modelli_tesi"
-export HF_HOME="$HOME/.cache/huggingface"
+export HF_HUB_CACHE=
+export HF_HOME=
 export HF_HUB_DISABLE_FILE_LOCKS=1
-export HF_TOKEN="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"
+export HF_TOKEN=
 
 pwd; hostname; date
 
