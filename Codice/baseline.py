@@ -1,7 +1,7 @@
 from config import models_config, df_globale
 import os
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = 
+os.environ["HF_HOME"] = 
 
 import pandas as pd
 import torch
@@ -104,8 +104,8 @@ for model_name, config in models_config.items():
     except NameError:
         pass 
 
-    gc.collect() # Invoca il Garbage Collector di Python
-    torch.cuda.empty_cache() # Svuota fisicamente la memoria video della scheda grafica
+    gc.collect() 
+    torch.cuda.empty_cache() 
 
 
 file_csv = "CSV tesi/risultati_baseline.csv"
