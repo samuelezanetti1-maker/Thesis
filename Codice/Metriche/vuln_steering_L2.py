@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from config import models_config 
 
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = 
+os.environ["HF_HOME"] = 
 
 # --- 1. CONFIGURAZIONE ---
 moltiplicatori_per_modello = {
