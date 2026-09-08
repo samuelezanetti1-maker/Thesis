@@ -1,8 +1,8 @@
 from config import models_config
 import os
 
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = 
+os.environ["HF_HOME"] = 
 
 import pandas as pd
 import torch
@@ -184,4 +184,4 @@ for model_name, config in models_config.items():
         print(f"Errore critico durante lo sweep su {model_name}: {e}")
         continue
 
-print("\n LAYER SWEEP COMPLETATO! Tutti i risultati sono nella cartella 'CSV tesi/Sweep/'")
+print("\n LAYER SWEEP COMPLETATO. Tutti i risultati sono nella cartella 'CSV tesi/Sweep/'")
