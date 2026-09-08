@@ -5,9 +5,9 @@ import pandas as pd
 import torch
 from transformers import BitsAndBytesConfig
 
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
-os.environ["HF_TOKEN"] = "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"
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = 
+os.environ["HF_HOME"] = 
+os.environ["HF_TOKEN"] = 
 
 
 config_4bit = BitsAndBytesConfig(
