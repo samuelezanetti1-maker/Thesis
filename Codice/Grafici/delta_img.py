@@ -47,17 +47,14 @@ for modello in modelli:
         # Estrazione Dati: SUCCESSI (Inganno)
         base_succ = dati_succ_mod[col_base].values
         delta_succ = dati_succ_mod[col_delta].values
-        finale_succ = base_succ + delta_succ  # L'Equazione Fondamentale!
+        finale_succ = base_succ + delta_succ  
 
         # Estrazione Dati: FALLIMENTI (Resilienza)
         base_fail = dati_fail_mod[col_base].values
         delta_fail = dati_fail_mod[col_delta].values
-        finale_fail = base_fail + delta_fail  # L'Equazione Fondamentale!
+        finale_fail = base_fail + delta_fail  
 
-        # =========================================================
-        # Creazione del Grafico (SIDE-BY-SIDE / DUE PANNELLI)
-        # =========================================================
-        # Creiamo una figura larga con due sottomenu (ax1, ax2). sharey=True è fondamentale!
+        
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 7), sharey=True)
 
         # Colori Originali
@@ -70,9 +67,7 @@ for modello in modelli:
         fig.suptitle(f"{nome_attacco}\n{modello}", 
                      fontweight='bold', fontsize=16, y=0.98)
 
-        # ---------------------------------------------------------
         # PANNELLO 1 (SINISTRA): ATTACCO FALLITO (ARANCIONE)
-        # ---------------------------------------------------------
         ax1.axhline(0, color='#2c3e50', linestyle='-', linewidth=1.5, alpha=0.8, zorder=1)
         
         ax1.plot(layers, base_fail, color=c_resiliente_base, linestyle=':', linewidth=2, 
@@ -92,9 +87,7 @@ for modello in modelli:
         ax1.set_xticks(range(0, max(layers)+1, 2))
         ax1.legend(loc='best', framealpha=0.9)
 
-        # ---------------------------------------------------------
         # PANNELLO 2 (DESTRA): ATTACCO RIUSCITO (VIOLA)
-        # ---------------------------------------------------------
         ax2.axhline(0, color='#2c3e50', linestyle='-', linewidth=1.5, alpha=0.8, zorder=1)
         
         ax2.plot(layers, base_succ, color=c_ingannato_base, linestyle=':', linewidth=2, 
@@ -114,9 +107,6 @@ for modello in modelli:
         ax2.set_xticks(range(0, max(layers)+1, 2))
         ax2.legend(loc='best', framealpha=0.9)
 
-        # =========================================================
-        # Salvataggio
-        # =========================================================
         sns.despine(ax=ax1, bottom=True, left=True)
         sns.despine(ax=ax2, bottom=True, left=True)
         plt.tight_layout(rect=[0, 0, 1, 0.93])
