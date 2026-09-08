@@ -6,8 +6,8 @@ import numpy as np
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from config import models_config
 
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = 
+os.environ["HF_HOME"] = 
 
 moltiplicatori_per_modello = {
     "Qwen/Qwen2.5-7B-Instruct": 20,
@@ -207,7 +207,7 @@ for model_name, config in models_config.items():
                 "Delta_Steer": puro_shift       
             })
 
-        print(" [+] Salvataggio dati completato.")
+        print(" Salvataggio dati completato.")
 
         del model, tokenizer, vettore_tensore
         gc.collect()
