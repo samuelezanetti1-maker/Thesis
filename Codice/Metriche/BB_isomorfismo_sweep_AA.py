@@ -6,8 +6,8 @@ import numpy as np
 import torch.nn.functional as F
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = 
+os.environ["HF_HOME"] =
 
 df_attacchi = pd.read_csv("CSV tesi/Fixed/risultati_attacco_advanced.csv")
 df_aa_succ = df_attacchi[df_attacchi['target_predetto_adv'] == 'Sicuro']
