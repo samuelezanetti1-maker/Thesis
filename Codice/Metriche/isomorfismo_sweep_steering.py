@@ -6,8 +6,8 @@ import torch.nn.functional as F
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from config import models_config
 
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = 
+os.environ["HF_HOME"] = 
 
 # 1. CARICAMENTO DATI
 df_TP = pd.read_csv("CSV tesi/Dataset/dataset_TP.csv")
@@ -160,4 +160,4 @@ for model_name, config in models_config.items():
 os.makedirs("CSV tesi/Isomorfismo_Sweep", exist_ok=True)
 df_finale = pd.DataFrame(risultati_isomorfismo_sweep)
 df_finale.to_csv("CSV tesi/Isomorfismo_Sweep/sweep_isomorfismo_multi_vector_Steering.csv", index=False)
-print("\n[+] Salvataggio completato in 'CSV tesi/Isomorfismo_Sweep/sweep_isomorfismo_multi_vector_Steering.csv'")
+print("\n Salvataggio completato in 'CSV tesi/Isomorfismo_Sweep/sweep_isomorfismo_multi_vector_Steering.csv'")
