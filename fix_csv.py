@@ -3,7 +3,7 @@ import os
 
 print("Avvio riparazione CSV...")
 
-# 1. Carichiamo il dataset dei True Positives (che contiene il codice pulito)
+# 1. Carichiamo il dataset dei True Positives 
 percorso_tp = "CSV tesi/Dataset/dataset_TP.csv"
 if not os.path.exists(percorso_tp):
     print(f"Errore: Non trovo {percorso_tp}")
@@ -36,8 +36,8 @@ for file_csv in file_attacchi:
         
         # Sovrascriviamo il file
         df_attacco.to_csv(file_output, index=False)
-        print(f"[+] Sistemato con successo: {file_csv}")
+        print(f"Sistemato con successo: {file_csv}")
     else:
-        print(f"[-] File non trovato (verrà saltato): {file_csv}")
+        print(f"File non trovato (verrà saltato): {file_csv}")
 
-print("\nRiparazione completata! Sei pronto per l'Isomorfismo.")
+print("\nRiparazione completata")
