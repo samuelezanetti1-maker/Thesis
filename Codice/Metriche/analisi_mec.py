@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 import json
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = 
+os.environ["HF_HOME"] = 
 
 os.makedirs("attivazioni_totali", exist_ok=True)
 os.makedirs("grafici_campana", exist_ok=True)
