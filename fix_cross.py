@@ -14,7 +14,7 @@ for file_csv in file_da_pulire:
     try:
         df = pd.read_csv(file_csv)
         
-        # 1. Rimuoviamo il layer 0 (l'Embedding)
+        # 1. Rimuoviamo il layer 0 
         df_pulito = df[df['LAYER'] != 0].copy()
         
         # 2. Scaliamo gli indici di 1 per allinearli ai blocchi Transformer (da 0 a 27)
@@ -27,4 +27,4 @@ for file_csv in file_da_pulire:
     except FileNotFoundError:
         print(f"File non trovato, lo salto: {file_csv}")
 
-print("Tutti i CSV sono ora perfettamente allineati allo Steering (0 -> N-1)!")
+print("Tutti i CSV sono ora allineati allo Steering")
