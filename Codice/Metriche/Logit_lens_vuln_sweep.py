@@ -6,8 +6,8 @@ import numpy as np
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from config import models_config
 
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = 
+os.environ["HF_HOME"] = 
 
 df_baseline = pd.read_csv("CSV tesi/Dataset/dataset_TRUE.csv")
 os.makedirs("CSV tesi/Logit_Lens", exist_ok=True) 
