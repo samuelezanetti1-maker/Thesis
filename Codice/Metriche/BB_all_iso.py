@@ -7,8 +7,8 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from config import models_config
 import gc
 
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = 
+os.environ["HF_HOME"] = 
 
 # 1. CARICAMENTO DEI 3 CSV DEGLI ATTACCHI
 df_adv = pd.read_csv("CSV tesi/Fixed/risultati_attacco_advanced.csv")
