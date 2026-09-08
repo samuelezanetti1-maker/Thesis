@@ -31,7 +31,7 @@ attacks_config = [
     }
 ]
 
-# 2. Pre-caricamento e filtraggio dei DataFrame (teniamo solo quelli in cui l'attacco ha successo: 'Sicuro')
+# 2. Pre-caricamento e filtraggio dei DataFrame 
 dfs_attacchi = {}
 for atk in attacks_config:
     if os.path.exists(atk["csv_in"]):
@@ -105,7 +105,7 @@ for model_name, config in models_config.items():
                 out = model(**inputs, output_hidden_states=True)
             return torch.stack([layer_state[0, -1, :] for layer_state in out.hidden_states])
 
-        # 4. Itero sui 3 tipi di attacco (usando il modello già caricato in VRAM)
+        # 4. Itero sui 3 tipi di attacco 
         for atk in attacks_config:
             atk_id = atk["id"]
             df_mod = da_analizzare[atk_id]
@@ -163,4 +163,4 @@ for atk in attacks_config:
     if len(risultati_isomorfismo[atk["id"]]) > 0:
         df_finale = pd.DataFrame(risultati_isomorfismo[atk["id"]])
         df_finale.to_csv(atk["csv_out"], index=False)
-        print(f"\n[+] Salvataggio completato in '{atk['csv_out']}'")
+        print(f"\n Salvataggio completato in '{atk['csv_out']}'")
