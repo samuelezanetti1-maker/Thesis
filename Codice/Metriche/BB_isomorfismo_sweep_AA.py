@@ -117,4 +117,4 @@ for model_name, config in models_config.items():
 os.makedirs("CSV tesi/Isomorfismo_Sweep", exist_ok=True)
 df_finale = pd.DataFrame(risultati_isomorfismo)
 df_finale.to_csv("CSV tesi/Isomorfismo_Sweep/sweep_isomorfismo_multi_vector_AA.csv", index=False)
-print("\n[+] Salvataggio completato in 'CSV tesi/Isomorfismo_Sweep/sweep_isomorfismo_multi_vector_AA.csv'")
+print("\n Salvataggio completato in 'CSV tesi/Isomorfismo_Sweep/sweep_isomorfismo_multi_vector_AA.csv'")
