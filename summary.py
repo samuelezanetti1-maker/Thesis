@@ -30,7 +30,7 @@ for nome_attacco, percorso_file in percorsi.items():
         df_attacco = pd.read_csv(percorso_file)
         colonna_pred = colonne_predizione[nome_attacco]
         
-        # Raggruppiamo per modello e calcoliamo l'ASR
+        # calcolo l'ASR
         for modello in df_attacco['modello'].unique():
             df_modello = df_attacco[df_attacco['modello'] == modello]
             totale_attacchi = len(df_modello)
@@ -50,14 +50,11 @@ for nome_attacco, percorso_file in percorsi.items():
 
 df_riepilogo = pd.DataFrame(dati_riepilogo)
 
-# Ora facciamo la "Magia" (Pivot): trasformiamo la tabella per avere le Colonne come Tipi di Attacco
 if not df_riepilogo.empty:
     tabella_finale = df_riepilogo.pivot(index="Modello", columns="Attacco", values="ASR (%)")
     
-    # Riempiamo eventuali buchi con 0.0 (nel caso un modello non abbia subito un certo attacco)
     tabella_finale = tabella_finale.fillna(0.0)
     
-    # Salviamo il CSV bellissimo e pronto per Excel/LaTex
     percorso_salvataggio = "CSV tesi/RIEPILOGO_FINALE_ASR.csv"
     tabella_finale.to_csv(percorso_salvataggio)
     
