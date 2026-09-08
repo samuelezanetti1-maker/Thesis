@@ -6,8 +6,8 @@ import numpy as np
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from config import models_config
 
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-os.environ["HF_HOME"] = "/scratch_share/bislab/HF_HUB_CACHE/"
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = 
+os.environ["HF_HOME"] = 
 
 moltiplicatori_per_modello = {
     "Qwen/Qwen2.5-7B-Instruct": 20,
@@ -65,7 +65,7 @@ for model_name, config in models_config.items():
     layer_locus = layer_per_modello.get(model_name)
     nome_file_safe = model_name.replace('/', '_')
     
-    # Filtro: Modello ingannato dall'attacco (Successo hacker)
+    # Filtro: Modello ingannato dall'attacco
     df_fallimenti = df_steering_results[
         (df_steering_results['modello'] == model_name) & 
         (df_steering_results['predizione_post_steering'] == 'Vulnerabile') & 
@@ -205,7 +205,7 @@ for model_name, config in models_config.items():
                 "Delta_Steer": puro_shift       
             })
 
-        print(" [+] Salvataggio dati completato.")
+        print(" Salvataggio dati completato.")
 
         del model, tokenizer, vettore_tensore
         gc.collect()
