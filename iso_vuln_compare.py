@@ -29,10 +29,10 @@ for model_name, config in models_config.items():
 
     # Se TUTTI e tre sono a zero, allora saltiamo
     if len(df_aa_succ) == 0 and len(df_pi_succ) == 0 and len(df_ap_succ) == 0:
-        print(f"  [!] Nessun successo per nessun attacco su {model_name}. Salto totale.")
+        print(f"  Nessun successo per nessun attacco su {model_name}. Salto totale.")
         continue
 
-    print(f"  -> Campioni in analisi: AA ({len(df_aa_succ)}), PI ({len(df_pi_succ)}), AP ({len(df_ap_succ)})")
+    print(f" Campioni in analisi: AA ({len(df_aa_succ)}), PI ({len(df_pi_succ)}), AP ({len(df_ap_succ)})")
 
     try:
         tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -127,4 +127,4 @@ df_finale = pd.DataFrame(risultati_isomorfismo_layer)
 df_finale.to_csv(percorso_csv, index=False)
 
 print("\n" + "="*70)
-print(f" Elaborazione finita! Dati salvati in: {percorso_csv}")
+print(f" Elaborazione finita. Dati salvati in: {percorso_csv}")
